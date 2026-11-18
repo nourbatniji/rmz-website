@@ -1,4 +1,19 @@
-import type { HomepageContent } from "../types";
+import type { HeroBanner, HomepageContent } from "../types";
+
+/**
+ * Banner 1 uses a real photographic sequence of a woman lifting a silver cloche lid.
+ *  - default: SIX independently generated keyframes (explicit frame manifest, ordered closed → highest).
+ *  - HERO_CLOCHE_VARIANT=interpolated: EXPERIMENTAL 41-frame motion-interpolated set made from those six
+ *    keyframes (visible ghosting around hand/sleeve/tray — for comparison only).
+ */
+const interpolated = process.env.HERO_CLOCHE_VARIANT === "interpolated";
+const clocheSequence: HeroBanner["sequence"] = interpolated
+  ? { pattern: "/media/hero/cloche-interpolated/{n}.webp", frameCount: 41, startAt: 1, digits: 3 }
+  : {
+      frames: [1, 2, 3, 4, 5, 6].map((n) => `/media/hero/cloche/${String(n).padStart(3, "0")}.webp`),
+    };
+const clochePoster = interpolated ? "/media/hero/cloche-interpolated/poster.webp" : "/media/hero/cloche/poster.webp";
+
 
 /**
  * DEVELOPMENT CONTENT — the single place media references live until the CMS exists.
@@ -33,9 +48,10 @@ export const devHomepageContent: HomepageContent = {
         number: "01",
         label: "Identity",
         accent: "#FFCA26",
-        description: "Banner 1, Identity: a scene that plays forward and backward as you scroll the page.",
-        poster: { src: "/media/dev/hero/banner-1/poster.webp", alt: "", width: 1600, height: 1000 },
-        sequence: { pattern: "/media/dev/hero/banner-1/{n}.webp", frameCount: 50, startAt: 1, digits: 3 },
+        description:
+          "Banner 1, Identity: a woman in a yellow coat and straw hat lifts the lid of a silver cloche on a green background as you scroll.",
+        poster: { src: clochePoster, alt: "", width: 1672, height: 941 },
+        sequence: clocheSequence,
       },
       {
         id: "campaign",
