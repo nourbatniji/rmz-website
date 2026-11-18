@@ -2,16 +2,18 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { HeroContent } from "@/content/types";
+import { pingPongProgress } from "./config";
 import { PrismEngine } from "./prism-engine";
 
 /**
  * HeroWall — a ribbed wall that is a 3-sided prism. Two INDEPENDENT systems:
  *
- *  A. Frame playback — driven only by the global page scroll position
- *     progress = scrollY / (documentHeight − viewportHeight), clamped 0..1.
+ *  A. Frame playback — driven only by the absolute page scroll position (anywhere on the page).
+ *     progress = pingPongProgress(scrollY) — one full sequence per `sequenceScrollDistancePx`
+ *     (see ./config.ts), then back again, continuously (first → last → first …).
  *     Every banner has its own image sequence and shows frame round(progress × (count − 1)).
- *     Absolute position, not wheel events: the same position always shows the same frame,
- *     scrolling stops → frame holds, scrolling up → reverse. No wheel capture, no autoplay.
+ *     Same position → same frame; scrolling stops → frame holds; scrolling up → exact reverse.
+ *     No wheel capture, no autoplay.
  *
  *  B. Banner changes — a five-second timer (after the prism has settled) turns the prism to the next
  *     banner. Manual controls (chips, arrow keys, swipe, click) also turn it and reset the timer.
@@ -90,14 +92,8 @@ export function HeroWall({ hero }: { hero: HeroContent }) {
     onResize();
 
     // One shared normalised progress for the whole document (not tied to the hero's own box).
-    const progress = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      engine.setProgress(max > 0 ? window.scrollY / max : 0);
-    };
+    const progress = () => engine.setProgress(pingPongProgress(window.scrollY));
     window.addEventListener("scroll", progress, { passive: true });
-    window.addEventListener("resize", progress);
-    const heightWatch = new ResizeObserver(progress); // document grows/shrinks as sections load
-    heightWatch.observe(document.body);
 
     const io = new IntersectionObserver(([e]) => {
       progress(); // make sure progress is current before drawing on re-entry
@@ -108,9 +104,7 @@ export function HeroWall({ hero }: { hero: HeroContent }) {
 
     return () => {
       window.removeEventListener("scroll", progress);
-      window.removeEventListener("resize", progress);
       ro.disconnect();
-      heightWatch.disconnect();
       io.disconnect();
       engine.dispose();
       engineRef.current = null;
