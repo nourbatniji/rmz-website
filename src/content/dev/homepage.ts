@@ -68,4 +68,89 @@ export const devHomepageContent: HomepageContent = {
       },
     ],
   },
+  // Copy below is taken verbatim from the approved canvas (board "HOME - TEXT SECTION").
+  statement: {
+    label: "Statement",
+    lead: ["RMZ,", "when", "expectations"],
+    connector: ["are"],
+    words: ["broken", "rewritten", "exceeded", "challenged"],
+  },
+  // Copy below is taken verbatim from the approved canvas (board "HOME - MINDS SECTION", actually services fins).
+  // PROVISIONAL / REPEATED — see docs/content-flags.md: items 01–07 repeat the services dial's copy; the intro
+  // sentence describes the design mechanic; images are not delivered (placeholders are shown).
+  serviceFins: {
+    label: "Capabilities — fins of one wall",
+    intro:
+      "Eight services hang from the top like architectural fins. Select one: it unrolls into a plate. Colour blocks echo the logo.",
+    initialOpenId: "creative-direction",
+    items: [
+      {
+        id: "brand-strategy",
+        number: "01",
+        title: "Brand Strategy",
+        description:
+          "Positioning, naming and the idea a brand stands on. We start wide, with the whole market in frame.",
+        image: null,
+        imagePosition: "50% 40%",
+      },
+      {
+        id: "brand-identity",
+        number: "02",
+        title: "Brand Identity",
+        description: "Marks, systems, type and guidelines. One distinctive detail, drawn so it works everywhere.",
+        image: null,
+        imagePosition: "50% 40%",
+      },
+      {
+        id: "creative-direction",
+        number: "03",
+        title: "Creative Direction",
+        description:
+          "One point of view across every frame, format and channel. We set the direction, then keep it consistent from the first sketch to the last post.",
+        image: null,
+        imagePosition: "50% 25%",
+      },
+      {
+        id: "advertising-campaigns",
+        number: "04",
+        title: "Advertising & Campaigns",
+        description: "Campaign ideas, scripts and production. One idea, carried across coordinated executions.",
+        image: null,
+        imagePosition: "50% 40%",
+      },
+      {
+        id: "digital-experiences",
+        number: "05",
+        title: "Digital Experiences",
+        description: "Websites and interactive work, designed for the screen they will be seen on.",
+        image: null,
+        imagePosition: "50% 40%",
+      },
+      {
+        id: "content-production",
+        number: "06",
+        title: "Content & Production",
+        description: "Photo, film and social content, shot close enough to see the craft.",
+        image: null,
+        imagePosition: "50% 20%",
+      },
+      {
+        id: "growth-marketing",
+        number: "07",
+        title: "Growth & Marketing",
+        description: "Media performance and measurement, so the work reaches the people it was made for.",
+        image: null,
+        imagePosition: "50% 36%",
+      },
+      {
+        id: "packaging-print",
+        number: "08",
+        title: "Packaging & Print",
+        description:
+          "Packaging, print and physical touchpoints, finished with the same care as the screen.",
+        image: null,
+        imagePosition: "50% 40%",
+      },
+    ],
+  },
 };

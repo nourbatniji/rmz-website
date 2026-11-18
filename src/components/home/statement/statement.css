@@ -1,0 +1,68 @@
+/* StatementRotator — ported from the approved canvas ("HOME - TEXT SECTION"). Scoped with .stm-. */
+.stm-root { position: relative; width: 100%; height: 560px; background: #0f0f0e; overflow: hidden; }
+@media (min-width: 768px) { .stm-root { height: 720px; } }
+@media (min-width: 1024px) { .stm-root { height: 900px; } }
+
+.stm-stage { position: absolute; left: 50%; top: 0; width: min(1440px, 100%); height: 100%; transform: translateX(-50%); }
+
+.stm-txt {
+  position: absolute; left: var(--gutter); right: var(--gutter); top: 0; bottom: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  font-size: var(--stm-fs, clamp(32px, 6vw, 116px));
+  font-weight: 900; letter-spacing: -0.035em; text-transform: uppercase; line-height: 0.98; color: #f3e8cc;
+}
+.stm-ln { display: block; overflow: hidden; padding: 0.05em 0 0.2em; margin-bottom: -0.14em; }
+.stm-lni { display: inline-block; white-space: nowrap; }
+/* Narrow screens (mobile pass): the first line may wrap onto several lines */
+.stm-wrap .stm-ln:first-child .stm-lni { white-space: normal; }
+
+.stm-w { display: inline-block; transform: translateY(108%); opacity: 0; }
+/* Rotating word: all candidates share ONE grid cell, so the slot is as wide as the longest word
+   and nothing shifts when words of different lengths swap. */
+.stm-slot { display: inline-grid; }
+.stm-slot > .stm-lw { grid-area: 1 / 1; }
+.stm-w.stm-lw {
+  transform: none; opacity: 1;
+  font-family: var(--font-serif); font-style: italic; font-weight: 700; text-transform: none;
+  letter-spacing: -0.03em; color: #e8402f; font-size: 1.1em;
+}
+.stm-lt { display: inline-block; transform: translateY(125%) rotate(9deg) skewX(-12deg); opacity: 0; filter: blur(8px); transform-origin: 0 100%; }
+
+.stm-txt.in .stm-w:not(.stm-lw) {
+  transform: none; opacity: 1;
+  transition: transform 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d), opacity 0.5s ease var(--d);
+}
+.stm-txt.intro.in .stm-w:not(.stm-lw) { transition-duration: 1.2s, 0.8s; }
+.stm-lw.in .stm-lt {
+  transform: none; opacity: 1; filter: blur(0);
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d), opacity 0.4s ease var(--d), filter 0.55s ease var(--d);
+}
+.stm-lw.out .stm-lt {
+  transform: translateY(-125%) rotate(-7deg) skewX(10deg); opacity: 0; filter: blur(6px);
+  transition: transform 0.42s cubic-bezier(0.6, 0, 0.8, 0.4) var(--x), opacity 0.3s ease var(--x), filter 0.3s ease var(--x);
+}
+.stm-txt.static .stm-w:not(.stm-lw), .stm-txt.static .stm-lt { transition: none !important; }
+
+/* labels fade in when the section starts running; visible immediately in the static state */
+.stm-lab { opacity: 0; transform: translateY(8px); transition: opacity 0.8s ease 0.1s, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s; }
+.stm-on .stm-lab { opacity: 1; transform: none; }
+.stm-st .stm-lab { opacity: 1; transform: none; transition: none; }
+
+.stm-label { position: absolute; left: var(--gutter); top: 32px; color: #ffca26; }
+.stm-foot { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 32px; display: flex; align-items: center; gap: 20px; }
+@media (min-width: 768px) { .stm-label { top: 56px; } .stm-foot { bottom: 56px; } }
+.stm-count { font-size: 11px; color: #f3e8cc; opacity: 0.85; min-width: 64px; }
+.stm-track { flex: 1; height: 2px; background: rgba(243, 232, 204, 0.22); position: relative; overflow: hidden; }
+.stm-bar { position: absolute; inset: 0; background: #e8402f; transform-origin: 0 50%; transform: scaleX(0); animation: stm-bar linear forwards; }
+@keyframes stm-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Off-screen measuring copy (font-size 100px) used to fit the statement to the available width */
+.stm-measure { position: absolute; left: -9999px; top: 0; visibility: hidden; pointer-events: none; font-size: 100px;
+  font-weight: 900; letter-spacing: -0.035em; text-transform: uppercase; line-height: 0.98; white-space: nowrap; }
+.stm-measure .stm-slot { display: inline-grid; }
+.stm-measure .stm-lw { font-family: var(--font-serif); font-style: italic; font-weight: 700; text-transform: none; letter-spacing: -0.03em; font-size: 1.1em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stm-lab, .stm-w, .stm-lt { transition: none !important; }
+  .stm-bar { animation: none; }
+}

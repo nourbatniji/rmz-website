@@ -61,7 +61,42 @@ export type SiteContent = {
   nav: NavItem[];
 };
 
+/** Statement: a fixed sentence whose final word rotates. Timing/animation live in code. */
+export type StatementContent = {
+  /** Small label above the statement (e.g. "Statement"). */
+  label: string;
+  /** Fixed words of the first line, e.g. ["RMZ,", "when", "expectations"]. */
+  lead: string[];
+  /** Fixed words before the rotating word on the second line, e.g. ["are"]. */
+  connector: string[];
+  /** Rotating final words, in order. */
+  words: string[];
+};
+
+export type ServiceFinItem = {
+  id: string;
+  /** Two-digit label, e.g. "01". */
+  number: string;
+  title: string;
+  description: string;
+  /** `null` until delivered — a labelled development placeholder is shown. */
+  image: ImageRef | null;
+  /** CSS object-position for the cropped image, e.g. "50% 40%". */
+  imagePosition: string;
+};
+
+/** Service "fins": one open at a time. Order = array order. */
+export type ServiceFinsContent = {
+  label: string;
+  intro: string;
+  /** Id of the fin open on first render. */
+  initialOpenId: string;
+  items: ServiceFinItem[];
+};
+
 export type HomepageContent = {
   site: SiteContent;
   hero: HeroContent;
+  statement: StatementContent;
+  serviceFins: ServiceFinsContent;
 };

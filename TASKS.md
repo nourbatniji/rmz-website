@@ -27,12 +27,12 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [x] 1. HeroWall — per-banner image sequences driven by GLOBAL page-scroll progress; 5 s auto banner change (pause control); dev sequences in public/media/dev until real assets arrive
 - [ ] Content team: continuous source video or coherent frame sequence for each hero banner (six keyframes are test imagery only)
 - HeroWall is the APPROVED BASELINE (docs/hero-baseline.md): no further visual/behavioural changes unless explicitly requested
-- [ ] Remove `DevScrollSpacer` (src/components/home) as real sections land
+- [ ] Remove each `DevSectionPlaceholder` (src/components/home) as its real section lands
 - [ ] 2. Showreel corridor (3D walk + video)
-- [ ] 3. Statement rotator
+- [x] 3. Statement rotator (StatementRotator)
 - [ ] 4. Featured-work focus (pinned, discrete steps)
 - [ ] 5. Services dial (iris)
-- [ ] 6. Service fins
+- [x] 6. Service fins (ServiceFins) — images missing (placeholders); copy flags in docs/content-flags.md
 - [ ] 7. Collaborations (canvas board 8)
 - [ ] 8. Footer (canvas board 9)
 - [ ] Mobile design review + adjustments

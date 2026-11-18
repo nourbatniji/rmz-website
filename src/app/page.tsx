@@ -1,13 +1,26 @@
-import { DevScrollSpacer } from "@/components/home/DevScrollSpacer";
+import { DevSectionPlaceholder } from "@/components/home/DevSectionPlaceholder";
 import { HeroWall } from "@/components/home/hero/HeroWall";
+import { ServiceFins } from "@/components/home/services/ServiceFins";
+import { StatementRotator } from "@/components/home/statement/StatementRotator";
 import { getHomepageContent } from "@/lib/content/homepage";
 
+/**
+ * Homepage in the approved canvas order:
+ * hero → showreel corridor → statement → featured work → services dial → service fins → collaborations → footer.
+ * Sections not built yet are compact dev markers (DevSectionPlaceholder).
+ */
 export default async function Home() {
-  const { hero } = await getHomepageContent();
+  const { hero, statement, serviceFins } = await getHomepageContent();
   return (
     <main id="top">
       <HeroWall hero={hero} />
-      <DevScrollSpacer />
+      <DevSectionPlaceholder id="work" label="Showreel corridor" />
+      <StatementRotator statement={statement} />
+      <DevSectionPlaceholder label="Featured work (canvas “About”)" />
+      <DevSectionPlaceholder label="Services dial" />
+      <ServiceFins content={serviceFins} />
+      <DevSectionPlaceholder label="Collaborations" />
+      <DevSectionPlaceholder id="contact" label="Footer" />
     </main>
   );
 }
