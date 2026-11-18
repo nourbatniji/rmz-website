@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ── Design tokens (from the approved canvas) ─────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: #0f0f0e;
+  --color-cream: #f3e8cc;
+  --color-yellow: #ffca26;
+  --color-orange: #f86015;
+  --color-green: #9acc42;
+  --color-red: #d52518;
+  --color-coral: #e8402f;
+
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, serif;
+
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: dark;
+  --gutter: 1.25rem; /* mobile gutter — NOT yet design-approved */
+}
+@media (min-width: 768px) {
+  :root { --gutter: 4rem; } /* 64px, as on the approved desktop canvas */
 }
 
+html { background: var(--color-ink); }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ink);
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+}
+::selection { background: var(--color-yellow); color: var(--color-ink); }
+:focus-visible { outline: 2px solid var(--color-yellow); outline-offset: 3px; }
+
+/* ── Typography roles used across the canvas ──────────────────────────── */
+@utility t-meta { /* small tracked caps */
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+@utility t-display { /* heavy condensed-feeling headline caps */
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  line-height: 0.9;
+}
+@utility t-body {
+  font-weight: 300;
+  line-height: 1.55;
+}
+@utility t-italic { /* the Playfair accent word */
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-transform: none;
+  line-height: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

@@ -1,5 +1,16 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## RMZ setup notes
+
+```bash
+pnpm install
+DATABASE_URL="postgresql://u:p@localhost:5432/x" pnpm db:generate   # local codegen only; no DB connection, no migration
+pnpm lint && pnpm typecheck && pnpm build
+```
+`pnpm typecheck`/`build` fail until the Prisma client is generated (it lives in the gitignored `src/generated`).
+Homepage content is read only through `src/lib/content/homepage.ts` (development content in `src/content/dev/`).
+Missing media -> labelled dev placeholders; see `docs/asset-checklist.md`, `docs/homepage-sections.md`, `TASKS.md`.
+
 ## Getting Started
 
 First, run the development server:
