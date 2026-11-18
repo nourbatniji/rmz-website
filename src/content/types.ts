@@ -16,20 +16,21 @@ export type ImageRef = {
   height?: number;
 };
 
-/** A numbered image sequence, e.g. `/media/hero/identity/{n}.webp`. */
-export type SequenceRef = {
-  /** URL pattern; `{n}` is replaced with the zero-padded frame number. */
-  pattern: string;
-  frameCount: number;
-  /** First frame number in the file names (usually 0 or 1). */
-  startAt: number;
-  /** Zero-padding width of `{n}`. */
-  digits: number;
-};
-
-export type HeroBannerMedia =
-  | { kind: "sequence"; sequence: SequenceRef; poster: ImageRef | null }
-  | { kind: "still"; image: ImageRef };
+/**
+ * An ordered image sequence for ONE banner: consecutive frames of the same scene.
+ * Either an explicit frame manifest, or a numbered URL pattern. Banners may have different lengths.
+ */
+export type SequenceRef =
+  | { frames: string[] }
+  | {
+      /** URL pattern; `{n}` is replaced with the zero-padded frame number. */
+      pattern: string;
+      frameCount: number;
+      /** First frame number in the file names (usually 0 or 1). */
+      startAt: number;
+      /** Zero-padding width of `{n}`. */
+      digits: number;
+    };
 
 export type HeroBanner = {
   id: string;
@@ -40,10 +41,10 @@ export type HeroBanner = {
   accent: string;
   /** Short description for assistive tech. */
   description: string;
-  /** What the final media will be; decides how the placeholder behaves while `media` is null. */
-  expects: "sequence" | "still";
-  /** `null` until real media is delivered — a dev placeholder is rendered instead. */
-  media: HeroBannerMedia | null;
+  /** Shown immediately, and as the explicit fallback if the sequence is missing/unusable. */
+  poster: ImageRef | null;
+  /** `null` = no sequence yet (poster, then a labelled placeholder, is shown). */
+  sequence: SequenceRef | null;
 };
 
 export type HeroContent = {

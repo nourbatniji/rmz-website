@@ -24,7 +24,8 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 ### Homepage (internal names by behaviour; see docs/homepage-sections.md for label mismatches)
 - [x] Design tokens + typography (Figtree, Playfair Display)
 - [x] Site shell + header
-- [x] 1. HeroWall (prism + scroll-scrubbed sequence) — placeholders until assets arrive
+- [x] 1. HeroWall — per-banner image sequences driven by GLOBAL page-scroll progress; 5 s auto banner change (pause control); dev sequences in public/media/dev until real assets arrive
+- [ ] Remove `DevScrollSpacer` (src/components/home) as real sections land
 - [ ] 2. Showreel corridor (3D walk + video)
 - [ ] 3. Statement rotator
 - [ ] 4. Featured-work focus (pinned, discrete steps)

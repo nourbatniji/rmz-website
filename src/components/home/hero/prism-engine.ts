@@ -1,21 +1,35 @@
 import type { HeroBanner } from "@/content/types";
-import { FrameStore, frameUrl } from "./frame-store";
+import { FrameStore } from "./frame-store";
+
+const SETTLE_MS = 1800; // longer than the prism transition: the outgoing face stays rendered until then
 
 /**
- * Draws each banner once into an offscreen canvas, then slices it across the rib canvases.
- * Only banners with an image sequence are redrawn while scrolling; stills draw once.
+ * Renders the prism faces.
+ *
+ *  - ONE shared normalised progress (0–1, from the global page scroll) drives every banner;
+ *    each banner maps it to its own frame count: frame = round(progress × (count − 1)).
+ *  - Each banner is drawn once per update into an offscreen canvas (fixed cover crop), then sliced
+ *    across its rib canvases, so every rib of a face always shows the same frame, correctly aligned.
+ *  - Only the active face (plus the outgoing one during a prism transition) is redrawn;
+ *    nothing is drawn while the hero is offscreen. On return the current frame is drawn immediately.
  */
 export class PrismEngine {
   private off = document.createElement("canvas");
   private offCtx = this.off.getContext("2d")!;
   private grid: HTMLCanvasElement[][] = [];
   private stores: (FrameStore | null)[];
-  private stills: (HTMLImageElement | null)[];
+  private posters: (HTMLImageElement | null)[];
+  private frames: number[];
   private w = 0;
   private h = 0;
   private dpr = 1;
-  private frame = 0;
+  private progress = 0;
+  private active = 0;
+  private leaving = -1;
+  private leaveTimer = 0;
+  private visible = true;
   private raf = 0;
+  private dirty = new Set<number>();
   private disposed = false;
   private painted = false;
   private font = "sans-serif";
@@ -25,28 +39,32 @@ export class PrismEngine {
     private onFirstPaint: () => void,
   ) {
     this.font = getComputedStyle(document.body).fontFamily || "sans-serif";
-    this.stores = banners.map((b) =>
-      b.media?.kind === "sequence" ? new FrameStore(b.media.sequence, () => this.requestDraw(true)) : null,
-    );
-    this.stills = banners.map((b) => {
-      if (b.media?.kind !== "still") return null;
+    this.frames = banners.map(() => 0);
+    this.posters = banners.map((b, bi) => {
+      if (!b.poster) return null;
       const im = new Image();
       im.decoding = "async";
-      im.onload = () => this.requestDraw(true);
-      im.src = b.media.image.src;
+      im.onload = () => this.mark(bi);
+      im.src = b.poster.src;
       return im;
     });
-  }
-
-  /** Number of frames of the first sequence banner (for scroll → frame mapping). */
-  get frameCount(): number {
-    return this.stores.find((s) => s)?.count ?? 72;
+    this.stores = banners.map((b, bi) => (b.sequence ? new FrameStore(b.sequence, () => this.mark(bi)) : null));
+    // Test-only hook, compiled out unless the build sets NEXT_PUBLIC_HERO_DEBUG=1.
+    if (process.env.NEXT_PUBLIC_HERO_DEBUG === "1") {
+      (window as unknown as { __rmzHero?: unknown }).__rmzHero = () => ({
+        progress: this.progress,
+        active: this.active,
+        frames: [...this.frames],
+        visible: this.visible,
+        counts: this.stores.map((s) => s?.count ?? 0),
+      });
+    }
   }
 
   setCanvases(grid: HTMLCanvasElement[][]) {
     this.grid = grid;
     this.sizeCanvases();
-    this.requestDraw(true);
+    this.markStage();
   }
 
   resize(w: number, h: number, dpr: number) {
@@ -57,17 +75,76 @@ export class PrismEngine {
     this.off.width = Math.max(1, Math.round(w * this.dpr));
     this.off.height = Math.max(1, Math.round(h * this.dpr));
     this.sizeCanvases();
-    this.requestDraw(true);
+    this.markStage();
   }
 
-  setFrame(i: number) {
-    const n = this.frameCount;
-    const f = Math.max(0, Math.min(n - 1, i));
-    if (f === this.frame) return;
-    const dir = f - this.frame;
-    this.frame = f;
-    this.stores.forEach((s) => s?.focus(f, dir));
-    this.requestDraw(false);
+  /** Shared normalised page-scroll progress (0..1). Never changes on banner change. */
+  setProgress(p: number) {
+    this.progress = Math.min(1, Math.max(0, p));
+    this.syncFrames();
+  }
+
+  /** Which banner faces the viewer. Does not touch progress. */
+  setActive(i: number) {
+    if (i === this.active) return;
+    this.leaving = this.active;
+    this.active = i;
+    clearTimeout(this.leaveTimer);
+    this.leaveTimer = window.setTimeout(() => {
+      const gone = this.leaving;
+      this.leaving = -1;
+      if (gone >= 0 && gone !== this.active) this.stores[gone]?.trim();
+    }, SETTLE_MS);
+    this.syncFrames();
+    // the incoming banner shows the frame for the CURRENT progress (never restarts at frame 1)
+    this.stores[i]?.focus(this.frames[i], 0);
+    this.markStage();
+  }
+
+  /** Hero on/off screen. Offscreen = no loading, no drawing; onscreen = draw the correct frame now. */
+  setVisible(v: boolean) {
+    if (v === this.visible) return;
+    this.visible = v;
+    if (v) {
+      this.syncFrames();
+      this.markStage();
+    }
+  }
+
+  private stage(): number[] {
+    return this.leaving >= 0 && this.leaving !== this.active ? [this.active, this.leaving] : [this.active];
+  }
+
+  private markStage() {
+    this.stage().forEach((b) => this.mark(b));
+  }
+
+  private mark(b: number) {
+    if (this.disposed) return;
+    this.dirty.add(b);
+    if (!this.visible || this.raf) return;
+    this.raf = requestAnimationFrame(() => {
+      this.raf = 0;
+      this.draw();
+    });
+  }
+
+  private frameFor(b: number): number {
+    const n = this.stores[b]?.count ?? 0;
+    return n > 1 ? Math.round(this.progress * (n - 1)) : 0;
+  }
+
+  private syncFrames() {
+    if (!this.visible) return;
+    for (const b of this.stage()) {
+      const f = this.frameFor(b);
+      if (f !== this.frames[b]) {
+        const dir = f - this.frames[b];
+        this.frames[b] = f;
+        this.stores[b]?.focus(f, dir);
+        this.mark(b);
+      }
+    }
   }
 
   private sizeCanvases() {
@@ -85,27 +162,14 @@ export class PrismEngine {
     }
   }
 
-  private requestDraw(all: boolean) {
-    if (this.disposed) return;
-    if (all) this.dirtyAll = true;
-    if (this.raf) return;
-    this.raf = requestAnimationFrame(() => {
-      this.raf = 0;
-      this.draw();
-    });
-  }
-  private dirtyAll = true;
-
   private draw() {
-    if (this.disposed || !this.w || !this.grid.length) return;
-    const all = this.dirtyAll;
-    this.dirtyAll = false;
-    this.banners.forEach((b, bi) => {
-      const live = this.stores[bi] !== null || (b.media === null && b.expects === "sequence");
-      if (!all && !live) return;
-      this.compose(b, bi);
+    if (this.disposed || !this.visible || !this.w || !this.grid.length) return;
+    const todo = [...this.dirty].filter((b) => this.stage().includes(b));
+    this.dirty.clear();
+    for (const bi of todo) {
       const row = this.grid[bi];
-      if (!row) return;
+      if (!row) continue;
+      this.compose(bi);
       const n = row.length;
       const sw = this.off.width / n;
       row.forEach((c, i) => {
@@ -120,76 +184,56 @@ export class PrismEngine {
         ctx.fillStyle = sh;
         ctx.fillRect(0, 0, c.width, c.height);
       });
-    });
-    if (!this.painted) {
+    }
+    if (!this.painted && todo.length) {
       this.painted = true;
       this.onFirstPaint();
     }
   }
 
-  private compose(b: HeroBanner, bi: number) {
+  /** Fixed "cover" crop for every frame, so only the pixels change — never position or scale. */
+  private compose(bi: number) {
     const ctx = this.offCtx;
     const W = this.off.width;
     const H = this.off.height;
     const store = this.stores[bi];
-    const img = store ? store.best(this.frame) : this.stills[bi];
-    if (img && img.naturalWidth > 0) {
+    const frame = store && store.usable ? store.best(this.frames[bi]) : null;
+    const poster = this.posters[bi];
+    const img = frame ?? (poster && poster.naturalWidth > 0 ? poster : null);
+    if (img) {
       ctx.fillStyle = "#0F0F0E";
       ctx.fillRect(0, 0, W, H);
-      const k = Math.max(W / img.naturalWidth, H / img.naturalHeight); // cover
+      const k = Math.max(W / img.naturalWidth, H / img.naturalHeight);
       const dw = img.naturalWidth * k;
       const dh = img.naturalHeight * k;
       ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
       return;
     }
-    this.placeholder(ctx, b, bi, W, H);
+    this.placeholder(ctx, this.banners[bi], W, H);
   }
 
-  /** Clearly-labelled development placeholder with the right proportions; moves with scroll. */
-  private placeholder(ctx: CanvasRenderingContext2D, b: HeroBanner, bi: number, W: number, H: number) {
-    const n = this.frameCount;
-    const p = n > 1 ? this.frame / (n - 1) : 0;
-    const s = this.dpr;
+  /** Last-resort labelled placeholder (no sequence, no poster). */
+  private placeholder(ctx: CanvasRenderingContext2D, b: HeroBanner, W: number, H: number) {
     ctx.fillStyle = "#1a1a18";
     ctx.fillRect(0, 0, W, H);
-
-    // big diagonal colour field, drifts with progress (bi differs per banner)
     const g = ctx.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, b.accent);
     g.addColorStop(1, "#0F0F0E");
-    ctx.globalAlpha = 0.9;
     ctx.fillStyle = g;
-    ctx.beginPath();
-    const shift = (p * 0.35 + bi * 0.12) * W;
-    ctx.moveTo(shift, 0);
-    ctx.lineTo(shift + W * 0.7, 0);
-    ctx.lineTo(shift + W * 0.35, H);
-    ctx.lineTo(shift - W * 0.35, H);
-    ctx.closePath();
-    ctx.fill();
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(0, 0, W, H);
     ctx.globalAlpha = 1;
-
-    // frame-scrub bar
-    ctx.fillStyle = "rgba(243,232,204,.9)";
-    ctx.fillRect(p * (W - 6 * s), 0, 6 * s, H);
-
-    // labels
     ctx.fillStyle = "#F3E8CC";
-    ctx.textBaseline = "alphabetic";
     ctx.font = `900 ${Math.round(H * 0.22)}px ${this.font}`;
     ctx.fillText(b.number, W * 0.05, H * 0.5);
-    ctx.font = `600 ${Math.round(14 * s)}px ${this.font}`;
-    const tag = b.expects === "sequence"
-      ? `DEV PLACEHOLDER · ${b.label.toUpperCase()} · FRAME ${String(this.frame + 1).padStart(3, "0")} / ${String(n).padStart(3, "0")}`
-      : `DEV PLACEHOLDER · ${b.label.toUpperCase()} · STILL 16:10`;
-    ctx.fillText(tag, W * 0.05, H * 0.58);
+    ctx.font = `600 ${Math.round(14 * this.dpr)}px ${this.font}`;
+    ctx.fillText(`DEV PLACEHOLDER · ${b.label.toUpperCase()} · NO SEQUENCE OR POSTER`, W * 0.05, H * 0.58);
   }
 
   dispose() {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
+    clearTimeout(this.leaveTimer);
     this.stores.forEach((s) => s?.dispose());
   }
 }
-
-export { frameUrl };

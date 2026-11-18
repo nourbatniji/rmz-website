@@ -1,8 +1,12 @@
 import type { SequenceRef } from "@/content/types";
 
+export function sequenceLength(seq: SequenceRef): number {
+  return "frames" in seq ? seq.frames.length : seq.frameCount;
+}
+
 export function frameUrl(seq: SequenceRef, i: number): string {
-  const n = String(seq.startAt + i).padStart(seq.digits, "0");
-  return seq.pattern.replace("{n}", n);
+  if ("frames" in seq) return seq.frames[i];
+  return seq.pattern.replace("{n}", String(seq.startAt + i).padStart(seq.digits, "0"));
 }
 
 type Options = {
@@ -11,18 +15,16 @@ type Options = {
   concurrency: number;
   /** Every Nth frame is a "keyframe" loaded early so a fast scrub still shows something close. */
   keyEvery: number;
-  /** Frames loaded ahead/behind the current one. */
+  /** Frames loaded around the current one. */
   window: number;
 };
 
-const DEFAULTS: Options = { maxDecoded: 28, concurrency: 4, keyEvery: 12, window: 6 };
+const DEFAULTS: Options = { maxDecoded: 20, concurrency: 3, keyEvery: 10, window: 5 };
 
 /**
- * Staged, memory-bounded frame loader.
- *  1. frame 0 immediately (the poster),
- *  2. keyframes in the background,
- *  3. a window around the current frame while scrubbing.
- * A missing/failed frame never blanks the picture: `best()` returns the nearest valid earlier frame.
+ * Staged, memory-bounded frame loader for ONE banner.
+ *  1. frame 0 immediately, 2. keyframes in the background, 3. a window around the current frame.
+ * A missing/failed frame never blanks the picture: `best()` returns the nearest valid frame.
  */
 export class FrameStore {
   private imgs = new Map<number, HTMLImageElement>();
@@ -34,6 +36,7 @@ export class FrameStore {
   private dir = 1;
   private disposed = false;
   private opts: Options;
+  readonly count: number;
 
   constructor(
     private seq: SequenceRef,
@@ -41,31 +44,33 @@ export class FrameStore {
     opts: Partial<Options> = {},
   ) {
     this.opts = { ...DEFAULTS, ...opts };
+    this.count = sequenceLength(seq);
     this.focus(0, 1);
   }
 
-  get count() {
-    return this.seq.frameCount;
+  /** True while the sequence can still produce something (some frame loaded, or loading is in flight). */
+  get usable(): boolean {
+    return this.count > 0 && (this.imgs.size > 0 || this.pending.size > 0 || this.queue.length > 0);
   }
 
-  /** Nearest valid frame at or before `i`, else the nearest after it, else null. */
+  /** Nearest valid frame to `i` (ties prefer the earlier one), else null. */
   best(i: number): HTMLImageElement | null {
-    for (let k = i; k >= 0; k--) {
-      const im = this.imgs.get(k);
-      if (im) return im;
-    }
-    for (let k = i + 1; k < this.seq.frameCount; k++) {
-      const im = this.imgs.get(k);
-      if (im) return im;
+    const hit = this.imgs.get(i);
+    if (hit) return hit;
+    for (let d = 1; d < this.count; d++) {
+      const a = this.imgs.get(i - d);
+      if (a) return a;
+      const b = this.imgs.get(i + d);
+      if (b) return b;
     }
     return null;
   }
 
-  /** Tell the store which frame is on screen so it can prioritise what to load. */
+  /** Tell the store which frame is wanted so it can prioritise what to load. */
   focus(i: number, dir: number) {
     this.cur = i;
     if (dir) this.dir = dir > 0 ? 1 : -1;
-    const n = this.seq.frameCount;
+    const n = this.count;
     const wanted: number[] = [i];
     for (let d = 1; d <= this.opts.window; d++) {
       wanted.push(i + this.dir * d, i - this.dir * Math.ceil(d / 2));
@@ -74,6 +79,13 @@ export class FrameStore {
     wanted.push(n - 1);
     this.queue = wanted.filter((k) => k >= 0 && k < n && !this.imgs.has(k) && !this.pending.has(k));
     this.pump();
+  }
+
+  /** Drop everything except keyframes (called when a banner goes off-stage). */
+  trim() {
+    for (const k of [...this.imgs.keys()]) {
+      if (k !== 0 && k % this.opts.keyEvery !== 0) this.imgs.delete(k);
+    }
   }
 
   private pump() {
@@ -98,9 +110,10 @@ export class FrameStore {
         this.evict();
         this.onChange();
       } else {
-        this.failed.add(k); // keep showing the last valid frame
+        this.failed.add(k); // keep showing the nearest valid frame
       }
       this.pump();
+      if (!ok) this.onChange(); // lets the engine re-check `usable` and fall back to the poster
     };
     im.onload = () => (im.decode ? im.decode().then(() => done(true), () => done(true)) : done(true));
     im.onerror = () => done(false);

@@ -25,38 +25,35 @@ export const devHomepageContent: HomepageContent = {
     intro:
       "Rebel Mind Zone builds brand identities, campaigns and digital experiences. Scroll to move the picture. Turn the wall to see each face.",
     scrollHint: "Scroll to move the picture",
+    // DEV SEQUENCES (public/media/dev/hero) — labelled, not final art. Each banner has its own
+    // frame count on purpose (50 / 36 / 64) to prove per-banner mapping. Replace with delivered frames.
     banners: [
       {
         id: "identity",
         number: "01",
         label: "Identity",
         accent: "#FFCA26",
-        description: "Banner 1, Identity. A ribbed wall whose picture moves as you scroll.",
-        // MISSING: 72-frame image sequence (see docs/asset-checklist.md).
-        // Example once delivered:
-        // media: { kind: "sequence", poster: null, sequence: { pattern: "/media/hero/identity/{n}.webp", frameCount: 72, startAt: 0, digits: 3 } },
-        expects: "sequence",
-        media: null,
+        description: "Banner 1, Identity: a scene that plays forward and backward as you scroll the page.",
+        poster: { src: "/media/dev/hero/banner-1/poster.webp", alt: "", width: 1600, height: 1000 },
+        sequence: { pattern: "/media/dev/hero/banner-1/{n}.webp", frameCount: 50, startAt: 1, digits: 3 },
       },
       {
         id: "campaign",
         number: "02",
         label: "Campaign",
         accent: "#F86015",
-        description: "Banner 2, Campaign.",
-        // MISSING: still image 2880×1800.
-        expects: "still",
-        media: null,
+        description: "Banner 2, Campaign: a scene that plays forward and backward as you scroll the page.",
+        poster: { src: "/media/dev/hero/banner-2/poster.webp", alt: "", width: 1600, height: 1000 },
+        sequence: { pattern: "/media/dev/hero/banner-2/{n}.webp", frameCount: 36, startAt: 1, digits: 3 },
       },
       {
         id: "digital",
         number: "03",
         label: "Digital",
         accent: "#9ACC42",
-        description: "Banner 3, Digital.",
-        // MISSING: still image 2880×1800.
-        expects: "still",
-        media: null,
+        description: "Banner 3, Digital: a scene that plays forward and backward as you scroll the page.",
+        poster: { src: "/media/dev/hero/banner-3/poster.webp", alt: "", width: 1600, height: 1000 },
+        sequence: { pattern: "/media/dev/hero/banner-3/{n}.webp", frameCount: 64, startAt: 1, digits: 3 },
       },
     ],
   },
