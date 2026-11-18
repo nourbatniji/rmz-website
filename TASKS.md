@@ -25,7 +25,8 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [x] Design tokens + typography (Figtree, Playfair Display)
 - [x] Site shell + header
 - [x] 1. HeroWall — per-banner image sequences driven by GLOBAL page-scroll progress; 5 s auto banner change (pause control); dev sequences in public/media/dev until real assets arrive
-- [ ] Hero photo sequence: replace the six keyframes with a continuous source video / more coherent frames; decide hero pinning vs. scroll distance (lid exits the viewport while opening at 900px-tall screens)
+- [ ] Content team: continuous source video or coherent frame sequence for each hero banner (six keyframes are test imagery only)
+- HeroWall is the APPROVED BASELINE (docs/hero-baseline.md): no further visual/behavioural changes unless explicitly requested
 - [ ] Remove `DevScrollSpacer` (src/components/home) as real sections land
 - [ ] 2. Showreel corridor (3D walk + video)
 - [ ] 3. Statement rotator

@@ -20,6 +20,15 @@ Keep important content away from the outer ~8 % (the wall is cropped to cover on
 
 Web derivatives we will produce: WebP frames at ~1600 px wide (mobile ~960 px). Target ≈ 60–120 KB/frame. Sizes to be measured and reported once originals arrive.
 
+### Hero imagery — important note for the content team
+The current hero banner 1 uses **six independently generated keyframes** as a *test* sequence. Six separate stills cannot
+produce smooth scroll-driven motion, and synthetic interpolation between them distorts the face, hands and objects.
+For final imagery please provide **either**:
+- a **continuous source video** of the action (one take, locked-off camera, 4K or ≥ 2880 px wide, 16:10 or 16:9, 24–60 fps,
+  subject in the central 60 %), from which we extract the frames; **or**
+- a **coherent frame sequence** (consecutive frames of the same take, same framing/lighting/pose continuity, ≥ 48 frames).
+Every banner (3 on the wall) needs its own sequence of this kind. Frame counts may differ per banner.
+
 ## Needed for later milestones
 
 | Section | Asset | Qty | Aspect / size | Format |

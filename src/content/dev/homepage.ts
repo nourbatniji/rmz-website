@@ -1,19 +1,14 @@
 import type { HeroBanner, HomepageContent } from "../types";
 
 /**
- * Banner 1 uses a real photographic sequence of a woman lifting a silver cloche lid.
- *  - default: SIX independently generated keyframes (explicit frame manifest, ordered closed → highest).
- *  - HERO_CLOCHE_VARIANT=interpolated: EXPERIMENTAL 41-frame motion-interpolated set made from those six
- *    keyframes (visible ghosting around hand/sleeve/tray — for comparison only).
+ * Banner 1 test sequence: SIX independently generated photographic keyframes (woman lifting a silver
+ * cloche lid), ordered closed → highest. They are keyframes, not a continuous animation; final smooth
+ * imagery needs a continuous source video or a coherent frame sequence (see docs/hero-baseline.md).
  */
-const interpolated = process.env.HERO_CLOCHE_VARIANT === "interpolated";
-const clocheSequence: HeroBanner["sequence"] = interpolated
-  ? { pattern: "/media/hero/cloche-interpolated/{n}.webp", frameCount: 41, startAt: 1, digits: 3 }
-  : {
-      frames: [1, 2, 3, 4, 5, 6].map((n) => `/media/hero/cloche/${String(n).padStart(3, "0")}.webp`),
-    };
-const clochePoster = interpolated ? "/media/hero/cloche-interpolated/poster.webp" : "/media/hero/cloche/poster.webp";
-
+const clocheSequence: HeroBanner["sequence"] = {
+  frames: [1, 2, 3, 4, 5, 6].map((n) => `/media/hero/cloche/${String(n).padStart(3, "0")}.webp`),
+};
+const clochePoster = "/media/hero/cloche/poster.webp";
 
 /**
  * DEVELOPMENT CONTENT — the single place media references live until the CMS exists.
