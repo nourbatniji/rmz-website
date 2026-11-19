@@ -1,7 +1,7 @@
-# Content flags — StatementRotator and ServiceFins
+# Content flags — StatementRotator, Services lens, Minds
 
 All copy below comes verbatim from the approved canvas and lives in `src/content/dev/homepage.ts`
-(`statement`, `serviceFins`), behind the typed contract in `src/content/types.ts`.
+(`statement`, `lens`, `minds`), behind the typed contract in `src/content/types.ts`.
 
 ## Statement
 | Item | Status |
@@ -9,7 +9,7 @@ All copy below comes verbatim from the approved canvas and lives in `src/content
 | "RMZ, when expectations are …" + words *broken / rewritten / exceeded / challenged* | Approved canvas copy. Confirm final wording with the client. |
 | Label "Statement" | **Removed** from the public page (it was a design label). `StatementContent.label` no longer exists. |
 
-## Service fins
+## Service fins — SUPERSEDED (this component is now the Minds section; the lens is the Services section)
 | Item | Status |
 |---|---|
 | Canvas label "Capabilities — fins of one wall" and intro "Eight services hang from the top like architectural fins…" | **Replaced** (they described the design mechanic). Now: label "Capabilities", intro "Brand identities, campaigns and digital experiences, from strategy to production. Select a service to see what it covers." — **PROVISIONAL, pending approval.** Grounded in the hero intro ("brand identities, campaigns and digital experiences") and the service titles; "from strategy to production" is drawn from services 01 and 06. Needs client sign-off. |
@@ -35,7 +35,7 @@ Single source: `services` in `src/content/dev/homepage.ts` (`ServiceTaxonomyItem
 - Per-section copy/media stay separate: do not auto-repeat identical descriptions across sections.
 - **Required content for the unbuilt Lens (services) section:** use this taxonomy (names, order, ids). Its descriptions/media are its own and still to be supplied. The earlier "dial vs fins" repeated-copy question is closed for names; descriptions are per section.
 - **Footer** (unbuilt): list services from the same taxonomy; the old five-item "What we do" list is superseded.
-- Nav: "Capabilities" → `#capabilities` unchanged (no per-service nav items are implemented).
+- Nav: "Capabilities" → `#services` (the lens). "Studio" → `#minds`.
 - CMS: edit `services` (name/order) once; each section edits only its own description/media keyed by `serviceId`.
 
 
@@ -50,3 +50,8 @@ Single source: `services` in `src/content/dev/homepage.ts` (`ServiceTaxonomyItem
 - **Provisional, pending approval**: all seven descriptions, bullet lists, focal chips (24mm … Tele), ring marks, scene assignment, kicker/heading/intro/hints, initially selected service (Content Production).
 - **Missing**: nine scene images (canvas blobs not exportable) → labelled placeholders; "Explore service →" hidden until service pages (`href`) exist.
 - **Decisions needed**: colour of the italic "looking." (canvas desktop: #D52518 on #D52518 = invisible; yellow used, as on canvas mobile); cream-on-red small text is 4.3:1 (< 4.5:1); which of the three mobile options to approve (option 1 built).
+
+## Minds (formerly ServiceFins) — see `docs/minds-section.md`
+- The eight columns are **minds / team members, not services**. All service labels, descriptions and the service images were removed.
+- **ALL CONTENT IS TEMPORARY PLACEHOLDER**: "Mind 01 … Mind 08", role "Role to be confirmed", biography "Placeholder: …", portraits missing (labelled placeholders). `copyStatus: "placeholder"`. No names, roles or biographies were invented.
+- **Pending**: approved minds (names, roles, short biographies, portraits 520×380 ≥ 1040×760, order), the caption intro ("The people behind the work. Select a column to open it." — provisional), initially open column (third), Studio nav mapping, mobile review.

@@ -28,6 +28,9 @@ const CY = 470; // lens centre y (stage)
 const IR = { Rp: 356, ap: 361, dl: 21.66, closed: 0.04, dClose: 380, dOpen: 520, swapHold: 100 };
 const REST = [0.94, 0.66, 0.84, 0.74, 0.96, 0.6, 0.8]; // resting aperture per focal length
 const DESKTOP_QUERY = "(min-width: 1100px)";
+// The canvas stage is 900 tall; the last caption ends at y ≈ 884. The section is trimmed to 892 so the Minds columns start closer
+// (no empty band) while the controls and captions stay clear.
+const SECTION_H = 892;
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const th = (o: number) => (Math.acos(clamp((o * IR.ap - IR.dl) / IR.Rp, -1, 1)) * 180) / Math.PI;
@@ -291,7 +294,7 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
   // ── the lens (800-unit coordinate system; scaled on mobile) ──
   const dial = (mobile: boolean) => (
     <div style={{ position: "absolute", left: 0, top: 0, width: 800, height: 800 }}>
-      <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#0F0F0E", boxShadow: "0 0 0 1px rgba(15,15,14,.9),0 28px 50px -22px rgba(15,15,14,.5),inset 0 0 0 1px rgba(243,232,204,.16)" }} />
+      <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "#0F0F0E", boxShadow: "0 0 0 1px rgba(15,15,14,.9),0 16px 30px -22px rgba(15,15,14,.45),inset 0 0 0 1px rgba(243,232,204,.16)" }} />
       <div
         data-ring=""
         onPointerDown={ringDown}
@@ -462,7 +465,7 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
   });
 
   return (
-    <section ref={rootRef} id="services" aria-label="Services" className="lens-root" style={desktop ? { height: 900 * geom.s } : undefined}>
+    <section ref={rootRef} id="services" aria-label="Services" className="lens-root" style={desktop ? { height: SECTION_H * geom.s } : undefined}>
       <p ref={live} className="lens-sr" aria-live="polite" />
       {desktop ? (
         <div className="lens-stage" style={{ left: geom.left, transform: `scale(${geom.s})` }}>

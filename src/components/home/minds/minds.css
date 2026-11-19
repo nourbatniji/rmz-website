@@ -1,0 +1,75 @@
+/* Minds — eight columns of minds/team members (formerly the service fins; canvas "HOME - MINDS SECTION"). Scoped with .minds- / .mind-. */
+/* Continuous red with the Services lens above (no shadow or gradient at the junction). The gaps BETWEEN columns stay dark: the list itself is dark. */
+.minds-root { position: relative; background: #d52518; color: #f3e8cc; overflow: hidden; }
+
+/* ── Mobile / tablet (<1024px): vertical accordion — PENDING DESIGN REVIEW ───────────────── */
+.minds-stage { position: relative; padding: 0 var(--gutter); } /* no top/bottom padding: the section ends at the list */
+.minds-list { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; background: #0f0f0e; }
+.mind { position: relative; overflow: hidden; background: #f3e8cc; } /* no drop shadow: nothing dark bleeds onto the red */
+.mind:has(.mind-cover:focus-visible) { outline: 2px solid #ffca26; outline-offset: -2px; }
+.mind-cover {
+  position: relative; display: flex; width: 100%; min-height: 60px; align-items: center; gap: 14px;
+  padding: 0 20px; border: 0; background: #d52518; color: #f3e8cc; text-align: left; cursor: pointer;
+}
+.mind-title { font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; font-size: 18px; flex: 1; }
+.mind-num { font-size: 11px; opacity: 0.85; min-width: 22px; }
+.mind-icon { position: relative; width: 14px; height: 14px; flex: none; }
+.mind-icon::before, .mind-icon::after { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: currentColor; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.mind-icon::after { transform: rotate(90deg); }
+.mind-open .mind-icon::after { transform: rotate(0deg); }
+.mind-open .mind-icon, .mind-open .mind-num { color: #ffca26; opacity: 1; }
+
+.mind-plate { display: grid; grid-template-rows: 0fr; visibility: hidden; color: #0f0f0e; background: #f3e8cc;
+  transition: grid-template-rows 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.5s; }
+.mind-open .mind-plate { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s; }
+.mind-plate-in { min-height: 0; overflow: hidden; }
+.mind-img { aspect-ratio: 520 / 380; overflow: hidden; background: #d9cba5; }
+.mind-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mind-ph { width: 100%; height: 100%; display: flex; align-items: flex-end; padding: 14px 16px; background: #d9cba5; color: #0f0f0e; }
+.mind-body { padding: 20px 20px 24px; }
+.mind-kicker { color: #0f0f0e; font-size: 12px; display: flex; align-items: center; gap: 8px; } /* ink for 4.5:1+; orange kept as a decorative accent */
+.mind-kicker::before { content: ""; width: 18px; height: 3px; background: #f86015; flex: none; }
+.mind-h { font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; font-size: 28px; margin-top: 8px; }
+.mind-d { font-weight: 300; line-height: 1.55; font-size: 15px; margin-top: 10px; }
+
+@media (hover: hover) {
+  .mind:not(.mind-open) .mind-cover:hover .mind-title { color: #ffca26; }
+  
+}
+
+/* ── Desktop (≥1024px): the approved composition — 1440 × 1000 stage, fins 760 tall ───────── */
+@media (min-width: 1024px) {
+  .minds-stage { width: 100%; height: 760px; margin: 0; padding: 0; } /* full viewport width, exactly as tall as the columns */
+  .minds-list {
+    /* Eight columns share the FULL width (container units, so every child resolves against the list): the open column is 520 px
+       (42 % of the width on narrower screens); the other seven share what is left after the gaps. The last column's right edge
+       is always exactly the list's right edge — flush, no overflow, open or closed. */
+    container-type: inline-size;
+    --gap: 10px; --open: min(520px, 42cqw);
+    --shut: calc((100cqw - var(--gap) * (var(--n) - 1) - var(--open)) / (var(--n) - 1));
+    position: absolute; left: 0; right: 0; top: 0; height: 760px; display: block;
+  }
+  .mind {
+    position: absolute; top: 0; height: 100%; left: var(--l); width: var(--w); z-index: 4; cursor: pointer;
+    transition: left 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .mind-open { z-index: 5; }
+  .mind-cover { box-shadow: inset -10px 0 12px -10px rgba(15, 15, 14, 0.35); position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; display: block; padding: 0;
+    transition: opacity 0.35s ease; }
+  .mind-open .mind-cover { opacity: 0; }
+  .mind-num, .mind-icon { display: none; }
+  .mind-title { position: absolute; left: calc(50% + 1px); top: 24px; transform-origin: 0 0; transform: rotate(90deg);
+    white-space: nowrap; font-size: 20px; flex: none; transition: color 0.25s ease; }
+  .mind-plate { display: block; position: absolute; left: 0; top: 0; width: var(--open); height: 100%;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.4s ease 0s, visibility 0s linear 0.45s; }
+  .mind-open .mind-plate { opacity: 1; visibility: visible; transition: opacity 0.4s ease 0.25s, visibility 0s; }
+  .mind-plate-in { overflow: visible; }
+  .mind-img { aspect-ratio: auto; height: 380px; }
+  .mind-body { padding: 22px 26px; }
+  .mind-h { font-size: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mind, .mind-cover, .mind-plate, .mind-icon::before, .mind-icon::after, .mind-title { transition: none !important; }
+}

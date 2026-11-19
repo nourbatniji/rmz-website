@@ -81,27 +81,32 @@ export type ServiceTaxonomyItem = {
   name: string;
 };
 
-export type ServiceFinItem = {
-  /** References `ServiceTaxonomyItem.id`. Title and number come from the taxonomy (name + position). */
-  serviceId: string;
-  /** Section-specific copy. Not shared with other sections. */
-  description: string;
-  /** "provisional" = written by the build team, not approved by the client. */
-  copyStatus: "approved" | "provisional";
+/** One mind (team member) hanging as a column in the Minds section. Not a service. */
+export type MindItem = {
+  id: string;
+  /** Two-digit label, e.g. "01". */
+  number: string;
+  /** Full name. Placeholder until approved. */
+  name: string;
+  /** Role / title line. Placeholder until approved. */
+  role: string;
+  /** Short biography shown in the open column. Placeholder until approved. */
+  bio: string;
+  /** "placeholder" = temporary content, never final. */
+  copyStatus: "approved" | "placeholder";
   /** `null` until delivered — a labelled development placeholder is shown. */
   image: ImageRef | null;
-  /** CSS object-position for the cropped image, e.g. "50% 40%". */
+  /** CSS object-position for the cropped portrait, e.g. "50% 25%". */
   imagePosition: string;
 };
 
-/** Service "fins": one open at a time. Order = array order. */
-export type ServiceFinsContent = {
+/** Minds: exactly eight columns, one open at a time. Order = array order. */
+export type MindsContent = {
+  /** Accessible (visually hidden) section heading. */
   label: string;
-  intro: string;
-  /** Service id of the fin open on first render. */
+  /** Id of the column open on first render. */
   initialOpenId: string;
-  /** One entry per service, in taxonomy order. */
-  items: ServiceFinItem[];
+  items: MindItem[];
 };
 
 /**
@@ -171,5 +176,5 @@ export type HomepageContent = {
   statement: StatementContent;
   services: ServiceTaxonomyItem[];
   lens: LensContent;
-  serviceFins: ServiceFinsContent;
+  minds: MindsContent;
 };

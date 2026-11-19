@@ -34,7 +34,7 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [x] 3. Statement rotator (StatementRotator)
 - [ ] 4. Featured-work focus (pinned, discrete steps)
 - [ ] 5. Services dial (iris)
-- [x] 6. Service fins (ServiceFins) — images missing (placeholders); copy flags in docs/content-flags.md
+- [x] 6. Minds (renamed from ServiceFins) — eight columns of minds/team members; all content is temporary placeholders (docs/minds-section.md)
 - [ ] 7. Collaborations (canvas board 8)
 - [ ] 8. Footer (canvas board 9)
 - [ ] Mobile design review + adjustments
@@ -63,9 +63,10 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [ ] Email provider for the contact form
 - [x] Lenis smooth scroll — decided: **no** for now
 
-- [x] Shared 7-service taxonomy (Branding, Creative Strategy, Content Production, Social Media, Design, Paid Media, Web Experiences) applied to ServiceFins; Lens + footer must use it (docs/content-flags.md). Fin copy provisional.
+- [x] Shared 7-service taxonomy (Branding, Creative Strategy, Content Production, Social Media, Design, Paid Media, Web Experiences) applied to the Services lens (the Minds columns no longer list services); Lens + footer must use it (docs/content-flags.md). Fin copy provisional.
 
 - [x] Home — Video section (ShowreelCorridor) built from "HOME - VIDEO SECTION" + "MOBILE · 01 — VIDEO CORRIDOR" (docs/video-section.md). **Pending content:** showreel video + poster, real project cards, project/archive links. Mobile follows the approved Mobile01 artboard.
 - [x] Video section arrival composition (16:9 video framed between headline and paragraph; reveal + hold + release; reversible). **Pending:** approve arrival copy.
 - [x] Video section redesigned as a three-wall video corridor — **design approved (baseline)**. Pending: final 2.4:1 showreel + poster, copy approval, mobile review (docs/video-section.md).
 - [x] Home — Services lens (ServicesLens) built from "HOME - SERVICES SECTION" (docs/lens-section.md). **Pending:** the nine scene images (not exportable from the canvas), approval of provisional copy (descriptions, bullets, focal labels, scene assignment), service page links, mobile choice (canvas offers three options; option 1 implemented — pending visual review), "looking." colour and small-text contrast decisions.
+- [x] Minds section (rename of ServiceFins): exactly eight full-bleed columns, flat continuous-red junction with the lens. **Pending:** approved minds content (names, roles, biographies, portraits, order), Studio nav mapping, mobile review.

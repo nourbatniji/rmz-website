@@ -13,30 +13,28 @@ for (const [name, vp] of [['desktop 1440', { width: 1440, height: 900 }], ['tabl
   ok(`${name}: --header-h matches measured header (${H})`, Math.abs(H - cssH) <= 1, `css ${cssH}`);
   const top = (s) => p.evaluate((s) => document.querySelector(s).getBoundingClientRect().top, s);
   // anchor jumps
-  for (const id of ['#capabilities', '#work', '#contact', '#statement']) {
+  for (const id of ['#services', '#minds', '#work', '#contact', '#statement']) {
     await p.evaluate(() => scrollTo(0, 0)); await sleep(200);
     if (id === '#statement') await p.evaluate(() => { location.hash = '#statement'; }); else if (vp.isMobile) { await p.evaluate(() => [...document.querySelectorAll('header button')].find((x) => /Menu/.test(x.textContent)).click()); await sleep(150); await p.evaluate((id) => document.querySelector(`#mobile-nav a[href="${id}"]`).click(), id); } else await p.evaluate((id) => document.querySelector(`nav a[href="${id}"]`).click(), id);
     await sleep(700);
     const t = await top(id); const maxS = await p.evaluate(() => document.documentElement.scrollHeight - innerHeight - scrollY);
     ok(`${name}: anchor ${id} lands at/below the header (top ${Math.round(t)} ≥ ${H})`, t >= H - 1 || maxS < 2, `at page end: ${maxS < 2}`);
   }
-  // first content inside #capabilities (fin 1 button / caption / title) is not under the header after anchor jump
-  await p.evaluate(() => document.querySelector('nav a[href="#capabilities"], #mobile-nav a[href="#capabilities"]'));
   // keyboard focus: tab into each fin cover from the top and verify it is not hidden under the header
   await p.evaluate(() => scrollTo(0, 0)); await sleep(300);
-  const n = await p.$$eval('.fin-cover', (e) => e.length); let bad = [];
-  await p.evaluate(() => document.querySelector('.fin-cover').focus({ preventScroll: true }));
+  const n = await p.$$eval('.mind-cover', (e) => e.length); let bad = [];
+  await p.evaluate(() => document.querySelector('.mind-cover').focus({ preventScroll: true }));
   for (let i = 0; i < n; i++) {
-    await p.evaluate((i) => { document.querySelectorAll('.fin-cover')[i].focus(); }, i); await sleep(120);
-    const r = await p.evaluate((i) => { const e = document.querySelectorAll('.fin-cover')[i].getBoundingClientRect(); return [e.top, e.bottom]; }, i);
+    await p.evaluate((i) => { document.querySelectorAll('.mind-cover')[i].focus(); }, i); await sleep(120);
+    const r = await p.evaluate((i) => { const e = document.querySelectorAll('.mind-cover')[i].getBoundingClientRect(); return [e.top, e.bottom]; }, i);
     if (r[0] < H - 1 && r[1] > H) bad.push(i); // partially under header
   }
-  ok(`${name}: keyboard-focused fins never sit under the header`, bad.length === 0, bad.join(','));
+  ok(`${name}: keyboard-focused Minds columns never sit under the header`, bad.length === 0, bad.join(','));
   // focus last fin after scrolling past it, then shift-tab upward (focus scrolls up)
   await p.evaluate(() => scrollTo(0, document.body.scrollHeight)); await sleep(300);
-  await p.evaluate(() => document.querySelectorAll('.fin-cover')[0].focus()); await sleep(300);
-  const t0 = await p.evaluate(() => document.querySelectorAll('.fin-cover')[0].getBoundingClientRect().top);
-  ok(`${name}: focusing the first fin from below scrolls it clear of the header (top ${Math.round(t0)})`, t0 >= H - 1);
+  await p.evaluate(() => document.querySelectorAll('.mind-cover')[0].focus()); await sleep(300);
+  const t0 = await p.evaluate(() => document.querySelectorAll('.mind-cover')[0].getBoundingClientRect().top);
+  ok(`${name}: focusing the first Minds column from below scrolls it clear of the header (top ${Math.round(t0)})`, t0 >= H - 1);
   // header treatment: transparent over hero, solid below
   await p.evaluate(() => scrollTo(0, 0)); await sleep(300);
   const bg = () => p.evaluate(() => { const e = document.querySelector('header [aria-hidden]'); const s = getComputedStyle(e); return s.backgroundColor + '|' + s.backgroundImage.slice(0, 16); });
@@ -47,9 +45,9 @@ for (const [name, vp] of [['desktop 1440', { width: 1440, height: 900 }], ['tabl
   // no header overlap with statement text and fin titles at a rest position
   await p.evaluate(() => scrollTo(0, 0));
   // contrast of kicker
-  await p.evaluate(() => scrollTo(0, document.querySelector('#capabilities').getBoundingClientRect().top + scrollY - 100)); await sleep(500);
-  const col = await p.evaluate(() => { const k = document.querySelector('.fin-open .fin-kicker'); const c = getComputedStyle(k).color.match(/\d+/g).map(Number); const bgc = getComputedStyle(k.closest('.fin-plate')).backgroundColor.match(/\d+/g).map(Number); return [c, bgc]; });
-  ok(`${name}: service kicker contrast ≥ 4.5 (${ratio(col[0], col[1]).toFixed(1)}:1)`, ratio(col[0], col[1]) >= 4.5);
+  await p.evaluate(() => scrollTo(0, document.querySelector('#minds').getBoundingClientRect().top + scrollY - 100)); await sleep(500);
+  const col = await p.evaluate(() => { const k = document.querySelector('.mind-open .mind-kicker'); const c = getComputedStyle(k).color.match(/\d+/g).map(Number); const bgc = getComputedStyle(k.closest('.mind-plate')).backgroundColor.match(/\d+/g).map(Number); return [c, bgc]; });
+  ok(`${name}: Minds kicker contrast ≥ 4.5 (${ratio(col[0], col[1]).toFixed(1)}:1)`, ratio(col[0], col[1]) >= 4.5);
   const vis = await p.evaluate(() => ({ stmLabel: !!document.querySelector('.stm-label'), txt: document.body.innerText.includes('Statement\n') || /^Statement$/m.test(document.querySelector('#statement')?.innerText || '') }));
   ok(`${name}: no visible "Statement" label`, !vis.stmLabel && !vis.txt);
   ok(`${name}: no design-note intro copy`, !(await p.evaluate(() => /hang from the top|architectural fins|fins of one wall/i.test(document.body.innerText))));

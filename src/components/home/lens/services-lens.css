@@ -36,7 +36,7 @@
 .lens-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Mobile / tablet layout */
-.lens-m { padding: 40px 24px 56px; max-width: 540px; margin: 0 auto; }
+.lens-m { padding: 40px 24px 36px; max-width: 540px; margin: 0 auto; }
 .lens-m .lens-srow { gap: 12px; min-height: 56px; padding: 8px 0; }
 .lens-m .lens-srow:active { background: rgba(243, 232, 204, 0.08); }
 .lens-m .lens-ctl:active { background: #f3e8cc; }

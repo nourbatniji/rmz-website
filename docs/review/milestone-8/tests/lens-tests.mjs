@@ -26,12 +26,12 @@ const settle = (ms = 1500) => sleep(ms);
 {
   const p = await open({ width: 1440, height: 900 });
   const order = await p.evaluate(() => [...document.querySelectorAll('main > *')].map((e) => e.id || e.getAttribute('aria-label') || e.textContent.slice(0, 22)));
-  ok('section order: … featured-work marker → SERVICES (lens) → capabilities (fins) → …', order.indexOf('services') > order.indexOf('statement') && order[order.indexOf('services') + 1] === 'capabilities' && /Upcoming section · Fea/.test(order[order.indexOf('services') - 1]), order.join(' | '));
+  ok('section order: … featured-work marker → SERVICES (lens) → capabilities (Minds) → …', order.indexOf('services') > order.indexOf('statement') && order[order.indexOf('services') + 1] === 'minds' && /Upcoming section · Fea/.test(order[order.indexOf('services') - 1]), order.join(' | '));
   await toLens(p);
   const info = await p.evaluate(() => ({ names: [...document.querySelectorAll('[data-row] .lens-snm')].map((e) => e.textContent), chips: [...document.querySelectorAll('[data-row] .lens-sch')].map((e) => e.textContent), h: document.querySelector('#services').getBoundingClientRect().height, bg: getComputedStyle(document.querySelector('#services')).backgroundColor, txt: document.querySelector('#services').innerText, marks: document.querySelectorAll('.lens-mk').length, scenes: document.querySelectorAll('[data-sc]').length, ph: document.querySelectorAll('[data-ph]').length, imgs: document.querySelectorAll('#services img').length, pos: getComputedStyle(document.querySelector('#services')).position }));
   ok('seven services in the approved taxonomy order, with focal chips', JSON.stringify(info.names) === JSON.stringify(NAMES) && JSON.stringify(info.chips.map((c) => c.toLowerCase())) === JSON.stringify(FOCAL.map((c) => c.toLowerCase())), info.names.join(','));
   ok('no old services, no "Packaging", no prototype controls or notes (Motion toggle, provisional-imagery note)', !/packaging|brand strategy|growth & marketing|motion: |provisional imagery|explore service/i.test(info.txt));
-  ok('canvas geometry: 900 px tall at 1440, red #D52518 background, normal flow (not pinned)', Math.abs(info.h - 900) < 1 && info.bg === 'rgb(213, 37, 24)' && info.pos === 'relative', `${info.h} ${info.bg}`);
+  ok('canvas geometry: 892 px tall at 1440 (stage 900 trimmed so the Minds columns sit closer), red #D52518 background, normal flow (not pinned)', Math.abs(info.h - 892) < 1 && info.bg === 'rgb(213, 37, 24)' && info.pos === 'relative', `${info.h} ${info.bg}`);
   ok('seven ring marks, seven studies; missing imagery = labelled placeholders (no broken <img>)', info.marks === 7 && info.scenes === 7 && info.ph > 10 && info.imgs === 0, `ph ${info.ph}`);
   let s = await state(p);
   ok('initial state: Content Production selected, one pressed row, matching study, resting aperture', s.sel === 2 && s.pressed === 1 && s.shown === 2 && s.visScenes === 1 && Math.abs(s.bladeDeg - thDeg(REST[2])) < 0.5, JSON.stringify({ sel: s.sel, shown: s.shown, deg: s.bladeDeg.toFixed(1), want: thDeg(REST[2]).toFixed(1) }));
@@ -111,7 +111,7 @@ const settle = (ms = 1500) => sleep(ms);
   ok('desktop: no horizontal overflow, no page errors', (await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)) && p.errs.length === 0, p.errs.join('|'));
   // entry / exit
   const ee = []; for (const f of [-1.0, -0.5, 0, 0.5, 1.0]) { await p.evaluate((f) => scrollTo(0, document.querySelector('#services').getBoundingClientRect().top + scrollY + 900 * f), f); await sleep(250); ee.push(await p.evaluate(() => { const r = document.querySelector('#services').getBoundingClientRect(); return [Math.round(r.top), Math.round(r.bottom)]; })); }
-  const gap = await p.evaluate(() => { const a = document.querySelector('#services').getBoundingClientRect(); const n = document.querySelector('#capabilities').getBoundingClientRect(); const pr = document.querySelector('#services').previousElementSibling.getBoundingClientRect(); return [Math.abs(a.bottom - n.top), Math.abs(a.top - pr.bottom)]; });
+  const gap = await p.evaluate(() => { const a = document.querySelector('#services').getBoundingClientRect(); const n = document.querySelector('#minds').getBoundingClientRect(); const pr = document.querySelector('#services').previousElementSibling.getBoundingClientRect(); return [Math.abs(a.bottom - n.top), Math.abs(a.top - pr.bottom)]; });
   ok('entry and exit: section butts directly against its neighbours (no blank gaps)', gap[0] < 1.5 && gap[1] < 1.5, JSON.stringify(gap));
   await p.close();
 }
@@ -124,7 +124,7 @@ const settle = (ms = 1500) => sleep(ms);
     await p.setViewport({ width: w, height: h }); await sleep(900); await toLens(p);
     rows.push(await p.evaluate(() => { const r = document.querySelector('#services'); const st = r.querySelector('.lens-stage'); const m = r.querySelector('.lens-m'); return { w: innerWidth, h: Math.round(r.getBoundingClientRect().height), stage: !!st, mobile: !!m, scale: st ? +new DOMMatrix(getComputedStyle(st).transform).a.toFixed(3) : null, ov: document.documentElement.scrollWidth > innerWidth, left: st ? Math.round(st.getBoundingClientRect().left) : null }; }));
   }
-  ok(`resize: desktop stage scales below 1440 (1280 → ${rows[0].scale}, 1100 → ${rows[1].scale}) and the section height follows (${rows[0].h}, ${rows[1].h})`, Math.abs(rows[0].scale - 1280 / 1440) < 0.01 && Math.abs(rows[1].scale - 1100 / 1440) < 0.01 && Math.abs(rows[0].h - 900 * rows[0].scale) < 2);
+  ok(`resize: desktop stage scales below 1440 (1280 → ${rows[0].scale}, 1100 → ${rows[1].scale}) and the section height follows (${rows[0].h}, ${rows[1].h})`, Math.abs(rows[0].scale - 1280 / 1440) < 0.01 && Math.abs(rows[1].scale - 1100 / 1440) < 0.01 && Math.abs(rows[0].h - 892 * rows[0].scale) < 2);
   ok(`resize: wider than 1440 the 1440 stage is centred at full size (1920 → left ${rows[2].left}px)`, rows[2].scale === 1 && Math.abs(rows[2].left - 240) < 2);
   ok('resize: below 1100 px the mobile layout takes over; back to 1440 restores the desktop stage', rows[3].mobile && !rows[3].stage && rows[4].stage && !rows[4].mobile);
   ok('resize: no horizontal overflow at any width', rows.every((r) => !r.ov), JSON.stringify(rows.map((r) => r.ov)));

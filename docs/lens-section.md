@@ -32,7 +32,7 @@ Deviation: the canvas mobile heading shows only "Seven ways of"; "looking." is a
 4. The "Explore service →" link is hidden until services have pages.
 
 ## Copy — provisional, pending approval
-Kicker, heading, intro, both hints, and **all seven descriptions, bullets, focal chips and ring marks** are build-team wording for the approved taxonomy (`copyStatus: "provisional"`). The canvas copy (old services) is not reused. The fins keep their own, different descriptions (not auto-repeated).
+Kicker, heading, intro, both hints, and **all seven descriptions, bullets, focal chips and ring marks** are build-team wording for the approved taxonomy (`copyStatus: "provisional"`). The canvas copy (old services) is not reused. The Minds section (the eight columns) no longer lists services at all.
 
 ## Accessibility
 List rows are real `<button aria-pressed>` inside a labelled group; arrow keys / Home / End move selection and focus; a polite live region announces "Selected: name, focal" once per change; visible yellow focus ring; reduced motion = no transitions and an instant swap; touch targets ≥ 48 px (rows ≥ 54 px).

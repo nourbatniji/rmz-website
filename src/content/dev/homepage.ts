@@ -25,8 +25,8 @@ export const devHomepageContent: HomepageContent = {
     },
     nav: [
       { label: "Work", href: "#work" },
-      { label: "Capabilities", href: "#capabilities" },
-      { label: "Studio", href: "#studio" },
+      { label: "Capabilities", href: "#services" },
+      { label: "Studio", href: "#minds" },
       { label: "Contact", href: "#contact" },
     ],
   },
@@ -138,22 +138,24 @@ export const devHomepageContent: HomepageContent = {
     // MISSING: nine scene images (canvas assets are not exportable). Set any slot to { src, alt: "", width, height }.
     images: { a: null, b: null, c: null, d: null, e: null, f: null, g: null, h: null, i: null },
   },
-  // Service fins. Names/order come from `services`; descriptions here are PROVISIONAL build-team copy written for
-  // the new taxonomy (the old eight-service descriptions were not carried over) — pending client approval.
-  // Images are not delivered (labelled placeholders are shown). See docs/content-flags.md.
-  serviceFins: {
-    label: "Capabilities",
-    intro:
-      "Brand identities, campaigns and digital experiences, from strategy to production. Select a service to see what it covers.",
-    initialOpenId: "content-production",
-    items: [
-      { serviceId: "branding", description: "Identity, naming and the visual system a brand is built on, designed to hold up everywhere it appears.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
-      { serviceId: "creative-strategy", description: "The idea and the direction behind the work: where a brand stands, who it speaks to and how it should sound.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
-      { serviceId: "content-production", description: "Photo, film and written content, produced close enough to see the craft and made to run across channels.", copyStatus: "provisional", image: null, imagePosition: "50% 25%" },
-      { serviceId: "social-media", description: "Social presence planned, created and managed, so a brand shows up consistently where its audience already is.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
-      { serviceId: "design", description: "Layouts, campaign visuals and design assets for screen and print, finished with care.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
-      { serviceId: "paid-media", description: "Paid campaigns planned and measured, so the work reaches the people it was made for.", copyStatus: "provisional", image: null, imagePosition: "50% 36%" },
-      { serviceId: "web-experiences", description: "Websites and interactive work, designed and built for the screen they will be seen on.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
-    ],
+  // Minds: the people behind the work (NOT services). No approved names, roles, biographies or portraits exist yet, so all
+  // eight entries are clearly marked TEMPORARY PLACEHOLDERS (copyStatus "placeholder"). Do not ship as final.
+  // See docs/minds-section.md.
+  minds: {
+    label: "Minds", // visually hidden section heading
+    initialOpenId: "mind-03",
+    items: Array.from({ length: 8 }, (_, i) => {
+      const n = String(i + 1).padStart(2, "0");
+      return {
+        id: `mind-${n}`,
+        number: n,
+        name: `Mind ${n}`,
+        role: "Role to be confirmed",
+        bio: "Placeholder: name, role and short biography to be supplied.",
+        copyStatus: "placeholder" as const,
+        image: null,
+        imagePosition: "50% 30%",
+      };
+    }),
   },
 };

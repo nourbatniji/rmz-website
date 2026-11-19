@@ -38,8 +38,8 @@ Every banner (3 on the wall) needs its own sequence of this kind. Frame counts m
 | Selected work (pinned) | Project cover images | 6 | per design (portrait-leaning) — confirm | JPG/WebP ≥ 1600 px long side |
 | Selected work | Titles, category, short description per project | 6 | — | text |
 | Services dial | Image per service | 7 | confirm (square-ish) | JPG/WebP ≥ 1200 px |
-| Service fins | Image per service | 7 | **520×380 (≈ 1.37:1, landscape)** shown in the open plate; keep subject centred (cropped with a per-image focal point) | JPG/WebP ≥ 1040×760 |
-| Service fins | Approved service descriptions (replace provisional) | 7 | — | text |
+| Minds | Portrait per mind | 8 | **520×380 (≈ 1.37:1, landscape)** shown in the open plate; subject centred (per-image focal point) | JPG/WebP ≥ 1040×760; none delivered |
+| Minds | Approved names, roles, short biographies (order) | 8 | — | text; all placeholders today |
 | Collaborations | Partner logos | confirm count (canvas shows placeholders) | transparent, one-colour/cream-on-dark | **SVG** |
 | Statement | Final rotating words | — | — | text |
 | Footer | Contact email, address/city, final social URLs | — | — | text (canvas uses management@rmz.solutions, Cairo, generic social links) |
