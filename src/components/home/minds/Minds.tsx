@@ -50,11 +50,12 @@ export function Minds({ content }: { content: MindsContent }) {
   const n = items.length;
   const rootRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  // Desktop scroll-linked reveal. The columns are laid out at their FINAL size from the start (nothing reflows); each is clipped from the bottom
-  // (clip-path, never scaled/translated/faded) with its top edge fixed at the junction. `--rp` (0…1) is a pure function of the scroll position:
-  // stopping holds the exact state, scrolling back retracts along the same path, jumping anywhere shows the right state. No timers, no animation.
-  // The window starts when the list top reaches `L0` and lasts `D` px of ordinary scrolling, positioned so the growing front stays inside the
-  // viewport (otherwise the effect would happen below the fold). Nothing is applied for reduced motion, mobile, or without JS (server markup = complete).
+  // Desktop scroll-linked reveal. The columns are laid out at their FINAL size from the start (nothing reflows); each `.mind` (the single outer wrapper
+  // holding the red panel, the cream card, portrait, name, role, biography — everything) is masked from the bottom with clip-path, its top edge fixed at
+  // the junction; nothing is scaled, translated or faded. Everything starts completely hidden (0 %). `--rp` (0…1) is a pure function of the scroll
+  // position: stopping holds the exact state, scrolling back retracts to fully hidden along the same path, jumps show the right state. No timers.
+  // It begins when the section's top boundary reaches 80 % of the usable viewport (below the fixed header) and completes once the whole list fits
+  // on screen (so the growing front stays visible). Nothing is applied for reduced motion, mobile or without JS (server markup = complete).
   useIsoLayoutEffect(() => {
     const root = rootRef.current;
     const list = listRef.current;
@@ -73,10 +74,12 @@ export function Minds({ content }: { content: MindsContent }) {
       }
       root.dataset.reveal = "on";
       const vh = window.innerHeight;
-      const H = list.offsetHeight; // the final column height (reserved from the start)
-      const D = clamp(Math.round(vh * 0.5), 380, 500); // scroll distance of the whole reveal
-      const L0 = vh + D - H - 20; // list-top position (px from the viewport top) at which growth begins
-      const rp = clamp((L0 - list.getBoundingClientRect().top) / D, 0, 1);
+      const hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;
+      const start = hh + 0.8 * (vh - hh); // section top at 80 % of the usable viewport (below the header) → reveal begins
+      const above = parseFloat(getComputedStyle(root).paddingTop) || 0; // the flat red space above the columns
+      const end = vh - list.offsetHeight - 20 - above; // section top at which the complete list (final height) is on screen
+      const D = clamp(start - end, 380, 760);
+      const rp = clamp((start - root.getBoundingClientRect().top) / D, 0, 1);
       list.style.setProperty("--rp", rp.toFixed(4));
     };
     const schedule = () => {

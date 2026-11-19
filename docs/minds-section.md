@@ -21,5 +21,5 @@ Approved minds: names, roles, short biographies, order and portraits (520×380, 
 
 ## Update — flat red space above the columns + entrance
 - **Space**: a flat red space (same `#D52518` as the lens) sits **above** the columns, in normal flow: `.minds-root { padding-top: 80px }` on desktop (40px below 1024px). No shadow, gradient or divider. **Nothing was added under the columns** — the section still ends exactly at their bottom edge and the next section starts immediately. Column height (760px) and the edge-to-edge width are unchanged.
-- **Entrance**: on desktop the columns grow downward from their fixed top edge as you scroll (scroll-linked clip, shuffled per-column offsets, ≈ 450px range); the mobile accordion keeps its one-shot staggered lift. See `docs/entrances.md`.
+- **Entrance**: on desktop the columns grow downward from their fixed top edge as you scroll (scroll-linked clip of each whole column incl. the expanded card, fully hidden until the section top reaches 80 % of the usable viewport, shuffled per-column offsets); the mobile accordion keeps its one-shot staggered lift. See `docs/entrances.md`.
 - Mechanism and safety rules: see `docs/entrances.md`.

@@ -72,16 +72,17 @@
 }
 
 /* ── Desktop: scroll-linked downward reveal (data-reveal="on" is set by JS only when motion is allowed on ≥ 1024 px; absent = complete layout).
-   Every column keeps its final size and top edge; only its bottom is clipped. --rp (0…1, from the scroll position, set on the list) drives it;
-   each column's slot --o (a shuffled permutation, once per page load) offsets its start/end: it grows during rp ∈ [0.04·slot, 0.04·slot + 0.72],
-   from 8 % of its height to 100 %. Whole column (surface + content) is clipped together; nothing scales, translates or fades. ── */
+   Every column keeps its final size and top edge; its ONE outer wrapper (.mind: red panel, cream card, portrait, text — everything) is masked
+   from the bottom. --rp (0…1, from the scroll position, set on the list) drives it; each column's slot --o (a shuffled permutation, once per page
+   load) offsets its start/end: it is fully hidden (0 %) until rp passes 0.04·slot and fully shown at 0.04·slot + 0.72. Nothing scales, translates or fades. ── */
 .minds-root[data-reveal="on"] .mind {
   --s: calc(var(--o, 0) * 0.04);
   --q: clamp(0, (var(--rp, 1) - var(--s)) / 0.72, 1);
-  --p: calc(0.08 + 0.92 * var(--q));
-  clip-path: inset(0 0 calc((1 - var(--p)) * 100%) 0);
+  clip-path: inset(0 0 calc((1 - var(--q)) * 100%) 0);
 }
-.minds-root[data-reveal="on"] .mind:focus-within { clip-path: none; } /* a focused column is always fully visible */
+/* Only KEYBOARD focus lifts the mask (a focused column must never be hidden). A mouse/touch click also focuses its button, so :focus-within would
+   wrongly leave the clicked column fully visible while the others are still hidden — :focus-visible does not match for pointer clicks. */
+.minds-root[data-reveal="on"] .mind:has(.mind-cover:focus-visible) { clip-path: none; }
 
 /* ── Mobile accordion entrance (data-entrance set by useEntrance, < 1024 px only; absent = final state): opacity + a 16 px lift, top → bottom 35 ms apart. ── */
 @media (max-width: 1023.98px) { .minds-root[data-entrance="pre"] .mind { opacity: 0; translate: 0 16px; } }
