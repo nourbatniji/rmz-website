@@ -1,8 +1,7 @@
-# Hero photographic test sequence (cloche)
+# Hero banner media
 
-`cloche/` — **six independently generated keyframes** (face-anchored translation alignment only; no warping/scaling).
-Order (closed → highest): 001 = source file 3, 002 = file 6, 003 = file 5, 004 = file 4, 005 = file 2, 006 = file 1.
-Originals live (gitignored) in `assets-src/cloche-originals/`.
+`identity/` — Banner 1: **25 delivered frames** (woman among golden fish and red grass), `frame-01.webp` … `frame-25.webp`,
+converted from the supplied `frame-01.png` … `frame-25.png` (1478 × 622) with `cwebp -q 84 -m 6 -sharp_yuv` (≈ 145 KB each, same dimensions).
+Frame 01 doubles as the poster. Order is by file name, not by upload order.
 
-These are test imagery, not final. A motion-interpolation experiment was rejected (visible ghosting/smearing of
-hand, sleeve and tray) and removed. Final smooth imagery needs a continuous source video or a coherent frame sequence.
+(The earlier six-keyframe cloche test imagery was removed when this sequence replaced it.)

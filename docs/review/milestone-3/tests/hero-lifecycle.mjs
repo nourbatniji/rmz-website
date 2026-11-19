@@ -17,16 +17,16 @@ async function page(opts={}){const p=await b.newPage();await p.setViewport({widt
  ok('hidden tab: no automatic change in 8s', (await st(p)).active===a0);
  await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'));}); const t0=Date.now(); let t=null; while(Date.now()-t0<8000){await sleep(100); if((await st(p)).active!==a0){t=Date.now()-t0;break;}}
  ok('tab visible again: timer restarts (≈5s)', t>4500&&t<5800, t+'ms'); await p.close();}
-// failed frames keep last valid frame (photographic banner 1: cloche 004-006 blocked); unusable sequence -> poster
-{const p=await page({pre:async p=>{await p.setRequestInterception(true);p.on('request',r=>{const u=r.url(); const m=u.match(/cloche\/00([456])\.webp/); if(m) return r.abort(); if(/banner-2\/\d+\.webp/.test(u)) return r.abort(); r.continue();});}});
+// failed frames keep last valid frame (photographic banner 1: identity frames 14-25 blocked); unusable sequence -> poster
+{const p=await page({pre:async p=>{await p.setRequestInterception(true);p.on('request',r=>{const u=r.url(); const m=u.match(/identity\/frame-(1[4-9]|2[0-5])\.webp/); if(m) return r.abort(); if(/banner-2\/\d+\.webp/.test(u)) return r.abort(); r.continue();});}});
  await p.click('button[aria-label$="automatic banner changes"]');
- await p.evaluate(async()=>{ window.__refs=await Promise.all([1,2,3].map(async n=>{const im=new Image();im.src=`/media/hero/cloche/00${n}.webp`;await im.decode();return im;}));
+ await p.evaluate(async()=>{ window.__refs=await Promise.all(Array.from({length:13},(_,i)=>i+1).map(async n=>{const im=new Image();im.src=`/media/hero/identity/frame-${String(n).padStart(2,'0')}.webp`;await im.decode();return im;}));
   window.__match=(bi)=>{const cs=[...document.querySelectorAll('section[aria-label="Introduction"] canvas')];const ribs=cs.length/3;const c0=cs[bi],rw=c0.width,ch=c0.height,cw=rw*ribs;
    const refc=window.__refs.map(im=>{const k=Math.max(cw/im.naturalWidth,ch/im.naturalHeight);const cc=document.createElement('canvas');cc.width=cw;cc.height=ch;const g=cc.getContext('2d');g.fillStyle='#0F0F0E';g.fillRect(0,0,cw,ch);const dw=im.naturalWidth*k,dh=im.naturalHeight*k;g.drawImage(im,(cw-dw)/2,(ch-dh)/2,dw,dh);return g.getImageData(0,0,cw,ch).data;});
    const per=[];for(let i=0;i<ribs;i++){const c=cs[i*3+bi];const d=c.getContext('2d').getImageData(0,0,rw,ch).data;const sc=refc.map(()=>0);let n=0;for(let y=0;y<ch;y+=6)for(let x=0;x<rw;x+=3){const o=(y*rw+x)*4;const ro=(y*cw+i*rw+x)*4;n++;const lum=(d[o]+d[o+1]+d[o+2])/3;refc.forEach((r,k)=>{sc[k]+=Math.abs(lum-(r[ro]+r[ro+1]+r[ro+2])/3);});}const avg=sc.map(v=>v/n);const so=[...avg].sort((a,b)=>a-b);if(so[1]-so[0]>1.2)per.push(avg.indexOf(so[0])+1);}return [...new Set(per)];};});
- await p.evaluate(()=>scrollTo(0,450)); await sleep(1500); // B1 wants frame 4 of 6; frames 4..6 are blocked
+ await p.evaluate(()=>scrollTo(0,450)); await sleep(1500); // B1 wants frame 16 of 25; frames 14..25 are blocked → the LAST RENDERED frame stays
  const s=await st(p); const d=await p.evaluate(()=>window.__match(0));
- ok('failed frames: banner keeps the nearest valid frame (no blank)', d.length===1 && d[0]>=1 && d[0]<=3, `wanted ${s.frames[0]+1}, showing ${d}`);
+ ok('failed frames: banner keeps the last rendered frame (no blank)', d.length===1 && d[0]>=1 && d[0]<=13, `wanted ${s.frames[0]+1}, showing ${d}`);
  await p.click('[role=group] button:nth-child(2)'); await sleep(2300); const d2=await decode(p,1);
  ok('banner with unusable sequence falls back to its poster (frame-1 art), not blank', d2.length===1 && d2[0]===1, 'showing id '+d2); await p.close();}
 console.log(R.every(Boolean)?'ALL PASS':'SOME FAIL'); await b.close();

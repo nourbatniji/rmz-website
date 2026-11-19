@@ -19,6 +19,9 @@ type Options = {
   window: number;
 };
 
+/** Sequences up to this many frames are loaded completely in the background (nearest frames first). */
+const SMALL_SEQUENCE = 30;
+
 const DEFAULTS: Options = { maxDecoded: 20, concurrency: 3, keyEvery: 10, window: 5 };
 
 /**
@@ -35,6 +38,7 @@ export class FrameStore {
   private cur = 0;
   private dir = 1;
   private disposed = false;
+  private all = false;
   private opts: Options;
   readonly count: number;
 
@@ -45,12 +49,20 @@ export class FrameStore {
   ) {
     this.opts = { ...DEFAULTS, ...opts };
     this.count = sequenceLength(seq);
+    // A short sequence is small enough to keep entirely: load every frame in the background and never evict.
+    this.all = this.count <= SMALL_SEQUENCE;
+    if (this.all) this.opts.maxDecoded = Math.max(this.opts.maxDecoded, this.count);
     this.focus(0, 1);
   }
 
   /** True while the sequence can still produce something (some frame loaded, or loading is in flight). */
   get usable(): boolean {
     return this.count > 0 && (this.imgs.size > 0 || this.pending.size > 0 || this.queue.length > 0);
+  }
+
+  /** The decoded frame `i` itself, or null while it is still loading. */
+  get(i: number): HTMLImageElement | null {
+    return this.imgs.get(i) ?? null;
   }
 
   /** Nearest valid frame to `i` (ties prefer the earlier one), else null. */
@@ -77,6 +89,7 @@ export class FrameStore {
     }
     for (let k = 0; k < n; k += this.opts.keyEvery) wanted.push(k);
     wanted.push(n - 1);
+    if (this.all) for (let d = 1; d < n; d++) wanted.push(i + d, i - d); // then everything else, nearest first
     this.queue = wanted.filter((k) => k >= 0 && k < n && !this.imgs.has(k) && !this.pending.has(k));
     this.pump();
   }

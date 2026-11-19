@@ -1,14 +1,13 @@
 import type { HeroBanner, HomepageContent } from "../types";
 
 /**
- * Banner 1 test sequence: SIX independently generated photographic keyframes (woman lifting a silver
- * cloche lid), ordered closed → highest. They are keyframes, not a continuous animation; final smooth
- * imagery needs a continuous source video or a coherent frame sequence (see docs/hero-baseline.md).
+ * Banner 1: 25 delivered PNG frames (1478 × 622) of a woman surrounded by golden fish and red grass, converted to WebP
+ * (public/media/hero/identity/frame-01.webp … frame-25.webp). Frame 01 is also the poster, so it is shown as soon as the banner appears.
  */
-const clocheSequence: HeroBanner["sequence"] = {
-  frames: [1, 2, 3, 4, 5, 6].map((n) => `/media/hero/cloche/${String(n).padStart(3, "0")}.webp`),
+const identitySequence: HeroBanner["sequence"] = {
+  frames: Array.from({ length: 25 }, (_, i) => `/media/hero/identity/frame-${String(i + 1).padStart(2, "0")}.webp`),
 };
-const clochePoster = "/media/hero/cloche/poster.webp";
+const identityPoster = "/media/hero/identity/frame-01.webp";
 
 /**
  * DEVELOPMENT CONTENT — the single place media references live until the CMS exists.
@@ -44,9 +43,9 @@ export const devHomepageContent: HomepageContent = {
         label: "Identity",
         accent: "#FFCA26",
         description:
-          "Banner 1, Identity: a woman in a yellow coat and straw hat lifts the lid of a silver cloche on a green background as you scroll.",
-        poster: { src: clochePoster, alt: "", width: 1672, height: 941 },
-        sequence: clocheSequence,
+          "Banner 1, Identity: a woman in a cream dress stands among golden fish and red grass; the scene moves as you scroll.",
+        poster: { src: identityPoster, alt: "", width: 1478, height: 622 },
+        sequence: identitySequence,
       },
       {
         id: "campaign",

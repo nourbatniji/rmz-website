@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer-core';
 const URL='http://localhost:3113/';
-const N=[6,36,64];
+const N=[25,36,64];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const b=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:'new'});
 const p=await b.newPage(); await p.setViewport({width:1440,height:900});
@@ -10,7 +10,7 @@ const st=()=>p.evaluate(()=>window.__rmzHero());
 // decode the frame painted on each rib of banner bi -> array of frame numbers (1-based) + marker bbox of composite
 // Banner 1 is PHOTOGRAPHIC (six keyframes): identify the painted keyframe per rib by matching against the reference
 // cover-crop of each source image. Banners 2/3 keep the barcode decode (dev frames).
-await p.evaluate(async()=>{ window.__refs=await Promise.all([1,2,3,4,5,6].map(async n=>{const im=new Image();im.src=`/media/hero/cloche/00${n}.webp`;await im.decode();return im;}));
+await p.evaluate(async()=>{ window.__refs=await Promise.all(Array.from({length:25},(_,i)=>i+1).map(async n=>{const im=new Image();im.src=`/media/hero/identity/frame-${String(n).padStart(2,'0')}.webp`;await im.decode();return im;}));
  window.__match=(bi)=>{const cs=[...document.querySelectorAll('section[aria-label="Introduction"] canvas')];const ribs=cs.length/3;const c0=cs[bi],rw=c0.width,ch=c0.height,cw=rw*ribs;
   const refc=window.__refs.map(im=>{const k=Math.max(cw/im.naturalWidth,ch/im.naturalHeight);const cc=document.createElement('canvas');cc.width=cw;cc.height=ch;const g=cc.getContext('2d');g.fillStyle='#0F0F0E';g.fillRect(0,0,cw,ch);const dw=im.naturalWidth*k,dh=im.naturalHeight*k;g.drawImage(im,(cw-dw)/2,(ch-dh)/2,dw,dh);return g.getImageData(0,0,cw,ch).data;});
   const perRib=[];

@@ -32,6 +32,7 @@ export class PrismEngine {
   private dirty = new Set<number>();
   private disposed = false;
   private painted = false;
+  private shown: (HTMLImageElement | null)[];
   private font = "sans-serif";
 
   constructor(
@@ -40,6 +41,7 @@ export class PrismEngine {
   ) {
     this.font = getComputedStyle(document.body).fontFamily || "sans-serif";
     this.frames = banners.map(() => 0);
+    this.shown = banners.map(() => null);
     this.posters = banners.map((b, bi) => {
       if (!b.poster) return null;
       const im = new Image();
@@ -197,9 +199,13 @@ export class PrismEngine {
     const W = this.off.width;
     const H = this.off.height;
     const store = this.stores[bi];
-    const frame = store && store.usable ? store.best(this.frames[bi]) : null;
+    // The requested frame if it is decoded; while it is still loading keep showing the LAST RENDERED frame (never a blank or a jump
+    // to some other frame); only before anything was rendered fall back to the nearest valid frame, then the poster.
+    const exact = store && store.usable ? store.get(this.frames[bi]) : null;
+    const frame = exact ?? this.shown[bi] ?? (store && store.usable ? store.best(this.frames[bi]) : null);
     const poster = this.posters[bi];
     const img = frame ?? (poster && poster.naturalWidth > 0 ? poster : null);
+    if (img && (exact || !this.shown[bi])) this.shown[bi] = img;
     if (img) {
       ctx.fillStyle = "#0F0F0E";
       ctx.fillRect(0, 0, W, H);

@@ -154,6 +154,9 @@ export function HeroWall({ hero }: { hero: HeroContent }) {
       onKeyDown={onKeyDown}
       className="relative flex h-svh min-h-[560px] flex-col overflow-hidden bg-ink"
     >
+      {/* Frame 01 (the poster) downloads with the document, at high priority — before hydration. The other frames load in the background. */}
+      {poster && <link rel="preload" as="image" href={poster.src} fetchPriority="high" />}
+
       {/* ── Wall ─────────────────────────────────────────────── */}
       <div ref={wallRef} className="relative min-h-0 flex-1 [container-type:inline-size]">
         {/* Immediate poster: server-rendered, shown until the first canvas paint */}
