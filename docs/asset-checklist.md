@@ -52,3 +52,4 @@ No substitutes in use. If RMZ has licensed brand fonts, send the files (WOFF2 pr
 
 | Video section | Showreel video (shared by front + both side walls) | 1 | **2.4:1** — master 3840×1600, delivery 2400×1000; H.264 High 8-bit yuv420p, no audio, faststart, seamless loop | supplied clip is a placeholder (2206×946, 5 s, not looping) — see docs/video-section.md |
 | Video section | Poster still | 1 | 2.4:1, ≥ 2400×1000, WebP/JPEG | fallback + first frame on all three walls |
+| Services lens | Scene images (slots a–i) | 9 | any ratio; cropped per scene (see lens-scenes.tsx); ≥ 1600 px wide recommended | canvas imagery not exportable; placeholders shown |

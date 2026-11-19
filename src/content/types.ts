@@ -129,11 +129,47 @@ export type CorridorContent = {
   accessibleDescription: string;
 };
 
+/** Which illustrated "study" is drawn inside the lens glass for a service (layout lives in code; imagery in `LensContent.images`). */
+export type LensSceneKey = "triptych" | "detail" | "fullframe" | "collage" | "devices" | "contactsheet" | "reach";
+/** Image slots used by the lens scenes. `null`/missing → labelled development placeholder. */
+export type LensImageKey = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i";
+
+export type LensServiceItem = {
+  /** References `ServiceTaxonomyItem.id`: the name and order come from the shared taxonomy. */
+  serviceId: string;
+  /** Focal-length chip shown beside the name, e.g. "24mm", "Macro". */
+  focal: string;
+  /** Short label printed on the lens ring, e.g. "24", "MACRO". */
+  ringMark: string;
+  /** Section-specific copy (not shared with the fins). */
+  description: string;
+  details: [string, string, string];
+  scene: LensSceneKey;
+  /** Service page URL. `null` until service pages exist: the "Explore service" link is then not rendered. */
+  href: string | null;
+  copyStatus: "approved" | "provisional";
+};
+
+/** Home services section ("HOME - SERVICES SECTION"): a lens whose aperture reframes the work. Layout/animation live in code. */
+export type LensContent = {
+  kicker: string;
+  heading: { lead: string; emphasis: string };
+  intro: string;
+  hintDesktop: string;
+  hintMobile: string;
+  /** Id of the service selected on first render. */
+  initialSelectedId: string;
+  /** One entry per service, in taxonomy order. */
+  items: LensServiceItem[];
+  images: Partial<Record<LensImageKey, ImageRef | null>>;
+};
+
 export type HomepageContent = {
   site: SiteContent;
   hero: HeroContent;
   corridor: CorridorContent;
   statement: StatementContent;
   services: ServiceTaxonomyItem[];
+  lens: LensContent;
   serviceFins: ServiceFinsContent;
 };

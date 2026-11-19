@@ -22,3 +22,5 @@ Mismatches to confirm:
 5. The canvas "Simulated scroll" slider on the hero is a prototype aid; the build uses real page scroll.
 
 > Board 2 (HOME - VIDEO SECTION / MOBILE · 01) is built as `ShowreelCorridor` — see docs/video-section.md.
+
+> Board 5 (HOME - SERVICES SECTION) is built as `ServicesLens` (section id `services`) — see docs/lens-section.md. It replaces the "Services dial" dev marker.

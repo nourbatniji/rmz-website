@@ -1,6 +1,7 @@
 import { DevSectionPlaceholder } from "@/components/home/DevSectionPlaceholder";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
 import { HeroWall } from "@/components/home/hero/HeroWall";
+import { ServicesLens } from "@/components/home/lens/ServicesLens";
 import { ServiceFins } from "@/components/home/services/ServiceFins";
 import { StatementRotator } from "@/components/home/statement/StatementRotator";
 import { getHomepageContent } from "@/lib/content/homepage";
@@ -11,14 +12,14 @@ import { getHomepageContent } from "@/lib/content/homepage";
  * Sections not built yet are compact dev markers (DevSectionPlaceholder).
  */
 export default async function Home() {
-  const { hero, corridor, statement, services, serviceFins } = await getHomepageContent();
+  const { hero, corridor, statement, services, lens, serviceFins } = await getHomepageContent();
   return (
     <main id="top">
       <HeroWall hero={hero} />
       <ShowreelCorridor content={corridor} />
       <StatementRotator statement={statement} />
       <DevSectionPlaceholder label="Featured work (canvas “About”)" />
-      <DevSectionPlaceholder label="Services dial" />
+      <ServicesLens content={lens} services={services} />
       <ServiceFins content={serviceFins} services={services} />
       <DevSectionPlaceholder label="Collaborations" />
       <DevSectionPlaceholder id="contact" label="Footer" />

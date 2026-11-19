@@ -44,3 +44,9 @@ Single source: `services` in `src/content/dev/homepage.ts` (`ServiceTaxonomyItem
 - **Poster — PENDING** (frame extracted from the supplied clip).
 - **Copy — PROVISIONAL, pending approval**: kicker "Work — walk the corridor", headline "One reel. / Three walls.", intro, arrivalHeadline "The work, in motion.", arrivalDescription, accessibleDescription. The old "Six rooms…" / "Each project hangs on the wall…" copy was replaced because the project cards no longer exist.
 - Mobile corridor — first-pass adaptation of the same scene, **pending mobile design review**.
+
+## Services lens (ServicesLens) — see `docs/lens-section.md`
+- Names/order: the approved 7-service taxonomy (not the canvas' old services).
+- **Provisional, pending approval**: all seven descriptions, bullet lists, focal chips (24mm … Tele), ring marks, scene assignment, kicker/heading/intro/hints, initially selected service (Content Production).
+- **Missing**: nine scene images (canvas blobs not exportable) → labelled placeholders; "Explore service →" hidden until service pages (`href`) exist.
+- **Decisions needed**: colour of the italic "looking." (canvas desktop: #D52518 on #D52518 = invisible; yellow used, as on canvas mobile); cream-on-red small text is 4.3:1 (< 4.5:1); which of the three mobile options to approve (option 1 built).

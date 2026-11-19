@@ -101,6 +101,43 @@ export const devHomepageContent: HomepageContent = {
     { id: "paid-media", name: "Paid Media" },
     { id: "web-experiences", name: "Web Experiences" },
   ],
+  // Lens services section ("HOME - SERVICES SECTION"). Names/order come from `services` (the approved taxonomy).
+  // PROVISIONAL: descriptions, bullet lists, focal labels and scene assignment are build-team wording written for the new
+  // taxonomy (the canvas copy described the old eight services and was not carried over). Scene imagery is not exportable
+  // from the canvas, so the nine image slots show labelled placeholders. See docs/lens-section.md.
+  lens: {
+    kicker: "What we do, as focal lengths",
+    heading: { lead: "Seven ways of", emphasis: "looking." },
+    intro: "Choose one and the lens reframes the work.",
+    hintDesktop: "click or drag the ring · use ↑ ↓ on the list",
+    hintMobile: "drag the ring or swipe the lens",
+    initialSelectedId: "content-production",
+    items: [
+      { serviceId: "branding", focal: "24mm", ringMark: "24", scene: "detail", href: null, copyStatus: "provisional",
+        description: "Identity, naming and the visual system a brand lives in, built to work wherever it appears.",
+        details: ["Naming and verbal identity", "Logo and visual system", "Guidelines and toolkit"] },
+      { serviceId: "creative-strategy", focal: "35mm", ringMark: "35", scene: "triptych", href: null, copyStatus: "provisional",
+        description: "The thinking behind the work: positioning, audience and the idea a brand can own.",
+        details: ["Positioning and narrative", "Audience and market map", "Creative platform and direction"] },
+      { serviceId: "content-production", focal: "50mm", ringMark: "50", scene: "contactsheet", href: null, copyStatus: "provisional",
+        description: "Photo, film and written content, produced with care and made to travel across channels.",
+        details: ["Photography", "Film and motion", "Copy and editorial"] },
+      { serviceId: "social-media", focal: "85mm", ringMark: "85", scene: "collage", href: null, copyStatus: "provisional",
+        description: "Social presence planned, created and managed, so a brand shows up consistently.",
+        details: ["Channel strategy", "Content planning and creation", "Community management"] },
+      { serviceId: "design", focal: "135mm", ringMark: "135", scene: "fullframe", href: null, copyStatus: "provisional",
+        description: "Layouts, campaign visuals and design assets, finished with care.",
+        details: ["Key visuals", "Layout and editorial design", "Digital and social assets"] },
+      { serviceId: "paid-media", focal: "Macro", ringMark: "MACRO", scene: "reach", href: null, copyStatus: "provisional",
+        description: "Paid campaigns planned, bought and measured, so the work reaches the people it was made for.",
+        details: ["Media planning", "Performance campaigns", "Measurement and reporting"] },
+      { serviceId: "web-experiences", focal: "Tele", ringMark: "TELE", scene: "devices", href: null, copyStatus: "provisional",
+        description: "Websites and interactive work, designed and built for the screen they will be seen on.",
+        details: ["Websites", "Interactive features", "UX and UI design"] },
+    ],
+    // MISSING: nine scene images (canvas assets are not exportable). Set any slot to { src, alt: "", width, height }.
+    images: { a: null, b: null, c: null, d: null, e: null, f: null, g: null, h: null, i: null },
+  },
   // Service fins. Names/order come from `services`; descriptions here are PROVISIONAL build-team copy written for
   // the new taxonomy (the old eight-service descriptions were not carried over) — pending client approval.
   // Images are not delivered (labelled placeholders are shown). See docs/content-flags.md.
