@@ -49,7 +49,7 @@ export function deskPose(j: number, s: number, n: number): Pose {
   const top = 90 + Math.min(1, ad) * 60;
   const tz = -ad * 130;
   const rot = -d * 44;
-  const op = ad <= 2 ? 1 : Math.max(0, 1 - (ad - 2) * 2);
+  const op = ad <= 1 ? 1 : Math.max(0, 2 - ad); // desktop shows 3 cards: the centred one and one neighbour each side; the rest fade out on arrival
   const h = ih + 46;
   const k = w / 430;
   const ang = angOf(j) * clamp(1 - ad);

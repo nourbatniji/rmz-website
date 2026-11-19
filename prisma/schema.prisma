@@ -8,45 +8,56 @@ datasource db {
 }
 
 model AdminUser {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
-  createdAt    DateTime @default(now())
+  name         String?
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  createdAt    DateTime  @default(now())
 }
 
-model Category {
-  id       String    @id @default(cuid())
-  name     String
-  slug     String    @unique
-  order    Int       @default(0)
-  projects Project[]
+/// One editable homepage/site section. `draft` is what the editor works on; `published` is what visitors see.
+/// Both hold JSON that is validated against the section's Zod schema (src/content/schemas.ts).
+model SiteSection {
+  key         String    @id
+  draft       Json
+  published   Json?
+  publishedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String?
 }
 
+enum ProjectStatus {
+  draft
+  published
+}
+
+/// A work project (archive card + /work/[slug] page). `body` holds the rest of the WorkProject contract.
 model Project {
-  id            String         @id @default(cuid())
-  title         String
-  slug          String         @unique
-  summary       String?
-  description   String?
-  year          Int?
-  client        String?
-  coverImageUrl String?
-  published     Boolean        @default(false)
-  order         Int            @default(0)
-  categoryId    String?
-  category      Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  images        ProjectImage[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  name      String
+  category  String
+  status    ProjectStatus @default(draft)
+  order     Int           @default(0)
+  body      Json
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  updatedBy String?
 }
 
-model ProjectImage {
-  id        String  @id @default(cuid())
-  url       String
+model Media {
+  id        String   @id @default(cuid())
+  url       String   @unique
+  pathname  String
+  kind      String
+  mime      String
+  bytes     Int
+  width     Int?
+  height    Int?
   alt       String?
-  order     Int     @default(0)
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model ContactMessage {

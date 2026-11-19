@@ -26,7 +26,7 @@ const RH = 54; // collapsed row height (desktop)
 const EX = 214; // extra height of the open row
 const LT = 140; // list top
 const CY = 470; // lens centre y (stage)
-const IR = { Rp: 356, ap: 361, dl: 21.66, closed: 0.04, dClose: 380, dOpen: 520, swapHold: 100 };
+const IR = { Rp: 356, ap: 361, dl: 21.66, closed: 0.04, dClose: 380, dOpen: 750, dReopen: 1700, swapHold: 100 };
 const REST = [0.94, 0.66, 0.84, 0.74, 0.96, 0.6, 0.8]; // resting aperture per focal length
 const DESKTOP_QUERY = "(min-width: 1100px)";
 // The canvas stage is 900 tall; the last caption ends at y ≈ 884. The section is trimmed to 892 so the Minds columns start closer
@@ -74,9 +74,67 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
   const [rot, setRot] = useState(-initial * STEP);
   const [drag, setDrag] = useState(false);
   const [geom, setGeom] = useState({ s: 1, left: 0 });
+  const [away, setAway] = useState(false); // section scrolled out of view → the iris closes; it reopens when the section is reached again
 
   const rootRef = useRef<HTMLElement>(null);
-  useEntrance(rootRef); // one-shot entrance (ring turn, iris adjustment, supporting text lift) — see services-lens.css
+  // One-shot entrance: starts once the visitor has actually reached the section (≥ 45% in view); the iris opens from fully closed, then the open row drops down.
+  useEntrance(rootRef, { threshold: 0.45, playMs: 2900, sliverMs: 2500 }); // see services-lens.css
+  // Iris follows the visitor: closes when the section is (mostly) scrolled away, and reopens — slowly — only once the section fills the screen
+  // (≥ 90 % of the part of it that can fit in the viewport). Coverage is measured against min(section height, viewport height below the fixed header).
+  const [reopening, setReopening] = useState(false);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    let isAway = false;
+    let seen = false; // the first visit keeps the original (entrance) timing; the full-screen gate applies to every return
+    let t = 0;
+    const hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92; // the fixed header hides the top of the viewport
+    // How much of the part of the section that can fit below the header is on screen (0–1). Measured directly, so it is exact at any scroll position.
+    const coverage = () => {
+      const r = el.getBoundingClientRect();
+      const room = Math.max(1, window.innerHeight - hh);
+      const visible = Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, hh));
+      return visible / Math.max(1, Math.min(r.height, room));
+    };
+    const evaluate = () => {
+      const cover = coverage();
+      if (!isAway && cover < 0.15) {
+        isAway = true;
+        window.clearTimeout(t);
+        setReopening(false);
+        setAway(true);
+      } else if (isAway && cover >= (seen ? 0.9 : 0.3)) {
+        isAway = false;
+        setReopening(seen);
+        seen = true;
+        setAway(false);
+        window.clearTimeout(t);
+        t = window.setTimeout(() => setReopening(false), 1800);
+      }
+    };
+    // IntersectionObserver only calls back when the visible share crosses one of its steps, and a section taller than the screen never reaches
+    // the last step — so on the way back UP the "reopen" moment could fall between two steps and never be reported (the iris stayed closed).
+    // While the iris is closed we therefore also re-check on scroll (passive, one frame at a time, reading only: no scroll capture, no pinning).
+    let raf = 0;
+    const onScroll = () => {
+      if (!isAway || raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        evaluate();
+      });
+    };
+    const io = new IntersectionObserver(evaluate, { threshold: Array.from({ length: 41 }, (_, i) => i / 40), rootMargin: `-${hh}px 0px 0px 0px` });
+    io.observe(el);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.clearTimeout(t);
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      io.disconnect();
+    };
+  }, []);
   const tgt = useRef(initial);
   const shownRef = useRef(initial);
   const phRef = useRef<Phase>("idle");
@@ -285,11 +343,11 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
   const curIdx = drag ? clamp(Math.round(-rot / STEP), 0, N - 1) : sel;
   const T = (t: string) => (reduced ? "none" : t);
   const bladeStyle = {
-    transform: blade(th(op)),
-    // Start state of the entrance only (see services-lens.css): slightly less open, then it opens to the selected service's aperture.
-    "--blade-pre": blade(th(Math.max(IR.closed + 0.05, op - 0.14))),
+    transform: blade(th(away ? IR.closed : op)),
+    // Start state of the entrance only (see services-lens.css): fully closed, then it opens to the selected service's aperture.
+    "--blade-pre": blade(th(IR.closed)),
     transformOrigin: "0 0",
-    transition: reduced ? "none" : ph === "closing" ? `transform ${IR.dClose}ms cubic-bezier(.55,0,.35,1)` : `transform ${IR.dOpen}ms cubic-bezier(.22,0,.12,1)`,
+    transition: reduced ? "none" : ph === "closing" || away ? `transform ${IR.dClose}ms cubic-bezier(.55,0,.35,1)` : reopening ? `transform ${IR.dReopen}ms cubic-bezier(.25,.1,.2,1)` : `transform ${IR.dOpen}ms cubic-bezier(.22,0,.12,1)`,
     filter: "drop-shadow(0 0 5px rgba(0,0,0,.55))",
   } as CSSProperties;
   const cap1 = `${items[sel]?.focal} · ${items[sel]?.name}`;
@@ -445,12 +503,13 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
     const on = i === sel;
     const dly = reduced ? "0s" : ".55s";
     return (
-      <div key={v.id} style={{ height: RH + (on ? EX : 0), overflow: "hidden", transition: T("height .55s cubic-bezier(.2,.8,.2,1)") }}>
+      <div key={v.id} className={`lens-rw ${on ? "on" : ""}`} style={{ height: RH + (on ? EX : 0), overflow: "hidden", transition: T("height .55s cubic-bezier(.2,.8,.2,1)"), "--rh": `${RH}px` } as CSSProperties}>
         <button type="button" data-row="" className="lens-srow" aria-pressed={on} onClick={() => go(i)} style={{ height: RH }}>
           {chip(v, on)}
           <span className="lens-snm" style={{ fontSize: on ? 30 : 24, color: on ? "#F3E8CC" : "rgba(243,232,204,.9)", transition: T("font-size .5s cubic-bezier(.2,.8,.2,1), color .3s ease") }}>{v.name}</span>
         </button>
         <div
+          className="lens-rbody"
           style={{
             padding: "4px 0 0 92px",
             ...(on

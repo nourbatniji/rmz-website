@@ -15,8 +15,8 @@ import { useMedia, useTabHidden } from "@/lib/use-media";
  * 3 s cycle; the per-letter staggers were tightened — exit 26→16 ms, entrance 55→30 ms — to fit 2 s. The style —
  * slide / skew / blur, springy entrance — is unchanged.) The "NN / NN" counter stays; there is no progress bar.
  *
- * - Runs only while the section is ≥45 % visible AND the tab is active; leaving the viewport returns it to a
- *   static first-word state, re-entering replays the intro (as in the source). A hidden tab pauses in place.
+ * - Runs only while the section is ≥45 % visible AND the tab is active. Before it is reached (and after leaving) the section is plain black —
+ *   the sentence is never shown early or flashed; reaching it plays the intro. Only reduced motion shows the static sentence. A hidden tab pauses in place.
  * - All candidate words occupy one grid cell, so the slot is as wide as the longest word: no layout jumps.
  * - Reduced motion: static, readable statement; no rotation, bar or counter.
  * - Screen readers get ONE static sentence listing every word; the animated copy is aria-hidden, so changing
@@ -24,9 +24,9 @@ import { useMedia, useTabHidden } from "@/lib/use-media";
  * - Mobile (<768px) is a first-pass adaptation, PENDING DESIGN REVIEW: larger type, first line may wrap.
  */
 
-const BASE = 260; // first fixed word delay (ms)
-const STEP = 120; // delay between fixed words (ms)
-const FIRST_EXTRA = 1800; // intro lengthens the first cycle
+const BASE = 80; // first fixed word delay (ms)
+const STEP = 70; // delay between fixed words (ms)
+const FIRST_EXTRA = 500; // intro lengthens the first cycle: a normal scroll through the section shows two words; lingering shows the rest
 const CYCLE = 2000; // transition start → next transition start (ms)
 const EXIT_TO_SWAP = 620; // exit letters finish (≤ 0.42 s + 9 × 16 ms ≈ 0.56 s), then the next word swaps in
 const HOLD = CYCLE - EXIT_TO_SWAP; // swap → next exit start
@@ -54,19 +54,22 @@ function Stage({
   active,
   tabActive,
   showCounter,
+  wait = false,
 }: {
   statement: StatementContent;
   active: boolean;
   tabActive: boolean;
   showCounter: boolean;
+  /** Before the section is reached: the black, hidden starting state (nothing of the sentence is visible, nothing runs). */
+  wait?: boolean;
 }) {
   const { lead, connector, words } = statement;
   const n = words.length;
   const [idx, setIdx] = useState(0);
-  const [phase, setPhase] = useState<Phase>(active ? "idle" : "in");
-  const [entered, setEntered] = useState(!active);
+  const [phase, setPhase] = useState<Phase>(active || wait ? "idle" : "in");
+  const [entered, setEntered] = useState(!active && !wait);
   const [looped, setLooped] = useState(false); // false during the first (intro) cycle
-  const phaseRef = useRef<Phase>(active ? "idle" : "in");
+  const phaseRef = useRef<Phase>(active || wait ? "idle" : "in");
   const nextExit = useRef(0); // performance.now() time at which the next exit must START (advanced by exactly CYCLE: no drift)
 
   // Intro: start from the hidden state, then add `.in` two frames later so the transitions play.
@@ -120,7 +123,7 @@ function Stage({
 
   const cur = idx % n;
   const fixedCount = lead.length + connector.length;
-  const letterBase = looped ? 0 : BASE + fixedCount * STEP + 90;
+  const letterBase = looped ? 0 : BASE + fixedCount * STEP + 40;
   let k = 0;
   const fixed = (w: string) => (
     <span key={`${w}-${k}`} className="stm-w" style={{ "--d": `${BASE + k++ * STEP}ms` } as CSSProperties}>
@@ -129,8 +132,8 @@ function Stage({
   );
 
   return (
-    <div className={`stm-stage ${active ? "stm-on" : "stm-st"}`}>
-      <div className={`stm-txt ${active ? "intro" : "static"} ${entered ? "in" : ""}`}>
+    <div className={`stm-stage ${active ? "stm-on" : wait ? "" : "stm-st"}`}>
+      <div className={`stm-txt ${active || wait ? "intro" : "static"} ${entered ? "in" : ""}`}>
         <div className="stm-ln">
           <span className="stm-lni">{lead.map((w, i) => (i ? [" ", fixed(w)] : fixed(w)))}</span>
         </div>
@@ -140,7 +143,7 @@ function Stage({
             <span className="stm-slot">
               {words.map((w, i) => (
                 <span key={w} className={`stm-w stm-lw ${i === cur ? (phase === "in" ? "in" : phase === "out" ? "out" : "") : ""}`}>
-                  <Letters word={w} enter={letterBase} exit={0} step={looped ? ENTER_STEP : 55} />
+                  <Letters word={w} enter={letterBase} exit={0} step={looped ? ENTER_STEP : 34} />
                 </span>
               ))}
             </span>
@@ -175,11 +178,11 @@ export function StatementRotator({ statement }: { statement: StatementContent })
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting && e.intersectionRatio >= 0.45) setInView(true);
+          if (e.isIntersecting && e.intersectionRatio >= 0.3) setInView(true);
           else if (!e.isIntersecting) setInView(false);
         }
       },
-      { threshold: [0, 0.45, 0.75] },
+      { threshold: [0, 0.3, 0.75] },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -250,7 +253,14 @@ export function StatementRotator({ statement }: { statement: StatementContent })
       </div>
 
       <div aria-hidden="true" className="contents">
-        <Stage key={active ? "run" : "static"} statement={statement} active={active} tabActive={!tabHidden} showCounter={!reduced} />
+        <Stage
+          key={active ? "run" : reduced ? "static" : "wait"}
+          statement={statement}
+          active={active}
+          wait={!active && !reduced}
+          tabActive={!tabHidden}
+          showCounter={!reduced}
+        />
       </div>
     </section>
   );

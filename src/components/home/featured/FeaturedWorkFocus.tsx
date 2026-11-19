@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { FeaturedWorkContent, FeaturedWorkItem } from "@/content/types";
+import { pointerOverCards } from "@/lib/use-pinned-skip";
+import { mostlyVisible, useWheelSteps } from "@/lib/use-wheel-steps";
 import { DESKTOP_BOX, MOBILE_BOX, clamp, deskPose, mobPose } from "./featured-pose";
 import "./featured.css";
 
 /**
  * FeaturedWorkFocus — canvas board "HOME - ABOUT SECTION" (titled About; designed as selected work).
  *
- * A pinned stage. Native page scroll through its (reserved-height) track drives ONE continuous step position `s`:
+ * Desktop with a mouse / trackpad: the step position `s` is its own state, NOT derived from page scroll — the section has no reserved scroll
+ * distance. With the pointer over the cards one wheel gesture = one step (src/lib/use-wheel-steps.ts); anywhere else, and at the first / last
+ * step, the page scrolls normally. Touch / small screens keep the approved scroll-linked pinned stage below (their scroll IS the control).
+ * Scroll-linked model: a pinned stage. Native page scroll through its (reserved-height) track drives ONE continuous step position `s`:
  * even → odd = the centred card turns from its image (front) to its description (back); odd → even = the wall moves on to the next card.
  * Scrolling back reverses exactly. `s` is a pure function of scroll position, lightly smoothed (damped, rAF only while it differs from
  * the target; snaps to the exact value and stops). No wheel capture, no scroll locking, no click-to-continue; the track simply scrolls.
@@ -17,8 +22,9 @@ import "./featured.css";
  */
 
 const DESKTOP = "(min-width: 1024px)";
+const NAV = "(min-width: 1024px) and (hover: hover) and (pointer: fine)"; // mouse / trackpad: the wheel steps the cards, the page scrolls on its own
 const REDUCED = "(prefers-reduced-motion: reduce)";
-const TAU = 55; // ms — damping time constant: ≈ 95 % of a change in ≈ 165 ms
+const TAU = 240; // ms — damping time constant: ≈ 95 % of a change in ≈ 720 ms, matching the canvas board's 0.8–0.9 s step
 const SNAP = 0.002; // steps (≈ 1 px of scroll)
 const JUMP = 1.4; // steps in one frame → show the position immediately (anchors, fast flicks)
 const MAX_SCALE = 1.25;
@@ -80,6 +86,23 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
   const [announce, setAnnounce] = useState("");
   const [mobile, setMobile] = useState(false);
 
+  const navRef = useRef(false); // desktop mouse mode: the step is state, not scroll
+  const stepRef = useRef(0); // target step in nav mode
+  const kickRef = useRef<() => void>(() => {});
+  const stepTo = useCallback((v: number) => {
+    stepRef.current = clamp(v, 0, last);
+    kickRef.current();
+  }, [last]);
+  useWheelSteps({
+    active: true,
+    over: (e) => {
+      const root = rootRef.current;
+      return !!root && navRef.current && mostlyVisible(stageRef.current) && pointerOverCards(e, root.querySelectorAll<HTMLElement>("[data-fw-card]"), null, 24, stageRef.current);
+    },
+    canStep: (dir) => (dir > 0 ? stepRef.current < last : stepRef.current > 0),
+    step: (dir) => stepTo(stepRef.current + dir),
+  });
+
   useEffect(() => {
     const root = rootRef.current;
     const track = trackRef.current;
@@ -95,6 +118,7 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
       inner: card.querySelector<HTMLElement>(".fw-inner")!,
     }));
     const desktop = window.matchMedia(DESKTOP);
+    const navQ = window.matchMedia(NAV);
     const reduced = window.matchMedia(REDUCED);
     let hh = 92;
     let raf = 0;
@@ -107,6 +131,9 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
     const fit = () => {
       hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;
       const mob = !desktop.matches;
+      navRef.current = navQ.matches && !reduced.matches;
+      if (navRef.current) root.dataset.nav = "1";
+      else delete root.dataset.nav;
       mobileRef.current = mob;
       setMobile(mob);
       const b = mob ? MOBILE_BOX : DESKTOP_BOX;
@@ -116,7 +143,7 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
       box.style.transform = `translate(${((sw - b.w * sc) / 2).toFixed(2)}px, ${((sh - b.h * sc) / 2).toFixed(2)}px) scale(${sc.toFixed(5)})`;
     };
     const stepPx = () => (track.offsetHeight - stage.offsetHeight) / last;
-    const target = () => clamp((hh - track.getBoundingClientRect().top) / stepPx(), 0, last);
+    const target = () => (navRef.current ? stepRef.current : clamp((hh - track.getBoundingClientRect().top) / stepPx(), 0, last));
 
     const paint = (s: number) => {
       const mob = mobileRef.current;
@@ -181,10 +208,12 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
       root.dataset.ready = "1";
       write(target());
     };
+    kickRef.current = kick;
     resnap();
     window.addEventListener("scroll", kick, { passive: true });
     window.addEventListener("resize", resnap);
     desktop.addEventListener("change", resnap);
+    navQ.addEventListener("change", resnap);
     reduced.addEventListener("change", resnap);
     const ro = new ResizeObserver(resnap);
     ro.observe(stage);
@@ -192,6 +221,7 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
       window.removeEventListener("scroll", kick);
       window.removeEventListener("resize", resnap);
       desktop.removeEventListener("change", resnap);
+      navQ.removeEventListener("change", resnap);
       reduced.removeEventListener("change", resnap);
       ro.disconnect();
       off();
@@ -207,6 +237,7 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
   }, [step, items, last]);
 
   const scrollToStep = (s: number) => {
+    if (navRef.current) { stepTo(s); return; }
     const track = trackRef.current;
     if (!track) return;
     const hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;

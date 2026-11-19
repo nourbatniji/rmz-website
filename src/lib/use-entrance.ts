@@ -11,16 +11,18 @@ import { useEffect, useLayoutEffect, type RefObject } from "react";
  *  • Nothing is applied during SSR or without JS: the server markup is the final state. The attribute is set only after hydration, in a layout
  *    effect (before paint), and only when motion is allowed, IntersectionObserver exists, and the visitor did not navigate to this section by hash.
  *  • Plays when ≥ `threshold` of the section is visible BELOW the fixed header — never while it is offscreen — and only once per page load.
- *    If it sits partly on screen below the threshold for 700 ms (e.g. after a long jump) it is revealed anyway: visible space is never left empty.
+ *    If it sits partly on screen below the threshold for `sliverMs` (default 700 ms) (e.g. after a long jump) it is revealed anyway: visible space is never left empty.
  *  • Any pointer/keyboard/focus interaction inside the section, a hash navigation, or scrolling past the section finishes it INSTANTLY.
  *  • A timer guarantees the final state even if the transitions never run.
- *  • No scroll handlers, no pinning, no extra scroll distance; the observers are removed when it is done.
+ *  • `repeat: true`: once it is done and the section has left the screen (scrolled past it either way) it is re-armed, so it plays again when the
+ *    visitor comes back to it. The observers then stay for the life of the section.
+ *  • No scroll handlers, no pinning, no extra scroll distance; without `repeat` the observers are removed when it is done.
  */
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export function useEntrance(
   ref: RefObject<HTMLElement | null>,
-  { threshold = 0.3, playMs = 1000, mediaQuery }: { threshold?: number; playMs?: number; mediaQuery?: string } = {},
+  { threshold = 0.3, playMs = 1000, mediaQuery, sliverMs = 700, repeat = false }: { threshold?: number; playMs?: number; mediaQuery?: string; sliverMs?: number; repeat?: boolean } = {},
 ) {
   useIsoLayoutEffect(() => {
     const el = ref.current;
@@ -36,25 +38,47 @@ export function useEntrance(
     const hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;
     el.dataset.entrance = "pre";
 
-    const teardown = () => {
-      io.disconnect();
-      pass.disconnect();
+    const unlisten = () => {
       el.removeEventListener("pointerdown", instant, true);
       el.removeEventListener("keydown", instant, true);
       el.removeEventListener("focusin", instant, true);
       window.removeEventListener("hashchange", instant);
+    };
+    const listen = () => {
+      el.addEventListener("pointerdown", instant, true);
+      el.addEventListener("keydown", instant, true);
+      el.addEventListener("focusin", instant, true);
+      window.addEventListener("hashchange", instant);
+    };
+    const teardown = () => {
+      io.disconnect();
+      pass.disconnect();
+      unlisten();
+    };
+    // repeat: back to the hidden start state (only ever while the section is off screen, so nothing visible changes)
+    const rearm = () => {
+      if (state !== "done") return;
+      state = "pre";
+      el.dataset.entrance = "pre";
+      listen();
+    };
+    const offscreen = () => {
+      const r = el.getBoundingClientRect();
+      return r.bottom <= hh || r.top >= window.innerHeight;
     };
     const finish = (immediately: boolean) => {
       if (state === "done") return;
       state = "done";
       window.clearTimeout(timer);
       window.clearTimeout(sliver);
-      teardown();
+      if (repeat) unlisten();
+      else teardown();
       if (immediately) {
         el.dataset.entrance = "instant"; // transitions off for this frame, so everything snaps to its final state
         raf = requestAnimationFrame(() => {
           raf = requestAnimationFrame(() => {
             el.dataset.entrance = "done";
+            if (repeat && offscreen()) rearm();
           });
         });
       } else el.dataset.entrance = "done";
@@ -77,13 +101,14 @@ export function useEntrance(
             play();
           } else if (e.isIntersecting && e.intersectionRatio > 0) {
             // Partly on screen but under the threshold (e.g. after a long jump): never leave visible space empty — reveal it if it stays that way.
-            if (!sliver) sliver = window.setTimeout(() => state === "pre" && play(), 700);
+            if (!sliver) sliver = window.setTimeout(() => state === "pre" && play(), sliverMs);
           } else {
             window.clearTimeout(sliver);
             sliver = 0;
             if (e.boundingClientRect.bottom <= (e.rootBounds ? e.rootBounds.top : hh)) finish(true); // already passed it
           }
         } else if (state === "playing" && !e.isIntersecting) finish(true); // left the screen mid-entrance: complete now, don't animate offscreen
+        else if (repeat && state === "done" && !e.isIntersecting) rearm(); // played, then scrolled away: ready to play again
       },
       { rootMargin: `-${hh}px 0px 0px 0px`, threshold: [0, threshold] },
     );
@@ -99,10 +124,7 @@ export function useEntrance(
       { rootMargin: "100000px 0px 0px 0px", threshold: [0] },
     );
     pass.observe(el);
-    el.addEventListener("pointerdown", instant, true);
-    el.addEventListener("keydown", instant, true);
-    el.addEventListener("focusin", instant, true);
-    window.addEventListener("hashchange", instant);
+    listen();
 
     return () => {
       window.clearTimeout(timer);
@@ -110,5 +132,5 @@ export function useEntrance(
       teardown();
       if (state !== "done") el.dataset.entrance = "done"; // unmounting (or strict-mode re-run): never leave content hidden
     };
-  }, [ref, threshold, playMs, mediaQuery]);
+  }, [ref, threshold, playMs, mediaQuery, sliverMs, repeat]);
 }

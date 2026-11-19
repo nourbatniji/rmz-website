@@ -68,3 +68,19 @@ body {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* ── Admin only: light "studio manager" tokens ────────────────────────────
+   New names, so the public site's tokens above are untouched. Used by classes
+   like text-fg / bg-panel / bg-accent inside src/components/admin and src/app/admin. */
+@theme {
+  --color-paper: #f6f3ec;
+  --color-panel: #ffffff;
+  --color-fg: #1f1d1a;
+  --color-accent: #c8281c;
+  --color-ok: #1f7a3a;
+  --color-warn: #a85a00;
+  --color-bad: #b42318;
+}
+.admin-ui { color-scheme: light; background: var(--color-paper); color: var(--color-fg); }
+.admin-ui :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.admin-ui ::selection { background: var(--color-accent); color: #fff; }

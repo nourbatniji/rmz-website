@@ -42,3 +42,11 @@ List rows are real `<button aria-pressed>` inside a labelled group; arrow keys /
 
 ## Update — entrance
 When ≥ 30% of the section is visible below the fixed header (never while offscreen) it plays once: the outer ring turns in from −12° and settles (0.85s), the aperture blades start slightly more closed and open to the selected service's aperture (0.52s), and the kicker/heading/intro/list/arrows/captions fade in and lift 14px with a 0–125ms stagger. Everything lands in ≈ 0.9s with ease-out deceleration, no bounce. It is layered on the existing lens state (CSS `rotate`/`opacity`/`translate` and a start-state blade angle, driven by a `data-entrance` attribute) so it cannot overwrite the selected service, reset the lens, or fight dragging/clicking/keys: any pointer, key or focus interaction finishes it instantly and the interaction proceeds normally. See `docs/entrances.md`.
+
+## Update — opens when reached, description drops down
+The entrance now starts only once the visitor has reached the section (≥ 45 % in view below the header; the "partly visible" failsafe waits 2.5 s). The iris starts **fully closed** and opens to the selected service's aperture over 1.0 s (ring turn and text lift unchanged); then the open row's description **drops down** (the row height grows .75 s, starting .85 s in; the description text fades/slides in from 1.0–1.2 s) — desktop list and mobile accordion. Any interaction still finishes it instantly. Reduced motion / no JS: final state at once.
+
+**Closes when left:** once less than 15 % of the section is in view the iris closes (380 ms); it reopens to the selected service's aperture when ≥ 30 % is in view again (the first-time entrance still plays once at ≥ 45 %). No-JS keeps the open lens.
+
+## Fix — reopening on the way back up
+The "reopen" moment is now measured directly (visible share of the part of the section that fits below the header) on every scroll frame while the iris is closed, in addition to the IntersectionObserver, which could miss it when the section is taller than the screen (the observer only reports crossings of its steps). Passive, read-only: no scroll capture, no pinning, no extra scroll distance.

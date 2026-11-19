@@ -53,6 +53,17 @@
 .lens-root[data-entrance="pre"] .lens-enter { opacity: 0; translate: 0 14px; }
 .lens-root[data-entrance="pre"] [data-ring] { rotate: -12deg; }
 .lens-root[data-entrance="pre"] .lens-blade { transform: var(--blade-pre) !important; }
+/* The iris opens from fully closed (1.7 s), then the open row's description drops down (height) and its text fades in. */
+.lens-root[data-entrance="playing"] .lens-blade { transition: transform 1.7s cubic-bezier(0.25, 0.1, 0.2, 1) 0.1s !important; }
+.lens-root[data-entrance="pre"] .lens-rw.on { height: var(--rh) !important; }
+.lens-root[data-entrance="pre"] .lens-rw.on .lens-rbody { opacity: 0 !important; transform: translateY(-14px) !important; }
+.lens-root[data-entrance="playing"] .lens-rw.on { transition: height 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s !important; }
+.lens-root[data-entrance="playing"] .lens-rw.on .lens-rbody { transition: opacity 0.5s ease 1.9s, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 1.7s, visibility 0s 0s !important; }
+.lens-root[data-entrance="pre"] .lens-row-open .lens-rb { grid-template-rows: 0fr !important; }
+.lens-root[data-entrance="pre"] .lens-row-open .lens-rb > div { opacity: 0 !important; transform: translateY(-14px) !important; }
+.lens-root[data-entrance="playing"] .lens-row-open .lens-rb { transition: grid-template-rows 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s !important; }
+.lens-root[data-entrance="playing"] .lens-row-open .lens-rb > div { transition: opacity 0.5s ease 1.9s, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 1.7s, visibility 0s 0s !important; }
+.lens-root[data-entrance="instant"] .lens-rw, .lens-root[data-entrance="instant"] .lens-rbody, .lens-root[data-entrance="instant"] .lens-rb, .lens-root[data-entrance="instant"] .lens-rb > div { transition: none !important; }
 .lens-root[data-entrance="instant"] .lens-enter, .lens-root[data-entrance="instant"] [data-ring], .lens-root[data-entrance="instant"] .lens-blade { transition: none !important; }
 
 @media (prefers-reduced-motion: reduce) { .lens-root *, .lens-root *::before, .lens-root *::after { transition: none !important; animation: none !important; } }

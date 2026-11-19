@@ -8,15 +8,17 @@
 - [x] Run first migration
 - [x] Add `/admin` placeholder page
 
-## Dashboard
-- [ ] Login page at `/admin/login`
-- [ ] Session cookie
-- [ ] Script to create the first admin
-- [ ] Protect `/admin` pages and write routes
-- [ ] Categories: create, edit, delete
-- [ ] Projects: create, edit, delete
-- [ ] Image upload
-- [ ] Contact messages inbox
+## Dashboard (built — see docs/admin-dashboard.md; needs `pnpm install`, env vars, `pnpm db:migrate`, `pnpm admin:create` before first use; DB-backed flows not yet exercised against Neon)
+- [x] Login page at `/admin/login`
+- [x] Session cookie
+- [x] Script to create the first admin (`pnpm admin:create`)
+- [x] Protect `/admin` pages and write routes
+- [x] Homepage section editors with draft / publish and live preview (hero, showreel, statement, featured, services, lens, minds, work intro, site/nav)
+- [x] Projects: create, edit, reorder, publish, delete
+- [x] Image upload (Vercel Blob) + media library
+- [x] Contact messages inbox (read-only; public form still deferred)
+- [ ] Collaborations and Footer editors (add when those sections are built)
+- [ ] Users page / change password (use `pnpm admin:create` for now)
 
 ## Launch scope — Sunday 22 Nov 2026
 In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + custom admin/CMS for homepage content & media (no Payload / ready-made CMS). Mobile is part of launch (first pass built; needs design review).
@@ -47,7 +49,8 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [ ] Standalone About page (About lives inside the homepage)
 - [ ] Standalone Contact page
 - [ ] Contact form (fields + delivery requirements not confirmed)
-- [ ] Draft/publish workflow, multiple admin roles (unconfirmed)
+- [x] Draft/publish workflow (built for sections; projects use draft/published status)
+- [ ] Multiple admin roles (unconfirmed)
 
 ## Public site
 - [ ] GSAP animations where useful (do not rewrite working interactions only to use GSAP)
@@ -58,8 +61,8 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [ ] Review and fixes
 
 ## Decisions pending
-- [ ] Auth approach
-- [ ] Media storage provider
+- [x] Auth approach — custom (jose session + bcrypt), see docs/admin-dashboard.md
+- [x] Media storage provider — Vercel Blob (swap point: src/lib/admin/upload-client.ts + media-actions.ts)
 - [ ] Email provider for the contact form
 - [x] Lenis smooth scroll — decided: **no** for now
 
@@ -77,3 +80,7 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [x] Minds reveal smoothed: one damped shared progress value (≈ 125 ms catch-up, exact settle, loop idles, jumps snap). **For visual approval.**
 - [x] Hero banner 1 visual replaced by the 25 delivered frames (WebP, scroll-driven via the existing hero mapping); older cloche keyframes removed. **For visual approval.**
 - [x] Featured work / "HOME - ABOUT SECTION" built: pinned, scroll-linked card flip (desktop wall + approved mobile card); static fallback for reduced motion / no JS; all copy and images provisional. **For visual approval.** Open: mobile adaptation, scroll distance, case pages, real content (docs/featured-work-section.md).
+
+- [x] Work section built from canvas "B3 · Spatial Collection" (archive on the homepage after Minds) and "A · Project page" (`/work/[slug]`), desktop + mobile (docs/work-section.md). **For visual approval.** Pending: real projects/images/credits, header nav target, return-focus.
+
+- [x] Collaborations ("The Collective") + Footer sections built from the canvas (desktop + mobile; footer mobile is an adaptation) — For visual approval. See docs/closing-sections.md.

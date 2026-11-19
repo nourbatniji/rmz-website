@@ -1,0 +1,99 @@
+/* Footer / Contact — canvas "Footer-e01" (desktop 1440 × 900 artboard) + a fluid stacked layout below 1024 px. Prefix: ft- */
+.ft-root { position: relative; background: #0f0f0e; color: #f3e8cc; font-family: var(--font-sans); overflow: hidden; }
+.ft-root a { color: inherit; text-decoration: none; }
+.ft-root a:focus-visible { outline: 2px solid #ffca26; outline-offset: 4px; }
+
+.ft-dwrap { --bh: 900px; position: relative; height: calc(var(--bh) * var(--sc, 1)); display: none; }
+.ft-dbox { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
+.ft-dbox > * { position: absolute; margin: 0; }
+@media (min-width: 1024px) { .ft-dwrap { display: block; } .ft-mob { display: none; } }
+
+.ft-m { font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; margin: 0; }
+.ft-yel { color: #ffca26; }
+.ft-or { color: #f86015; margin-bottom: 18px; }
+.ft-dim { font-size: 10px; opacity: 0.6; }
+.ft-p { font-weight: 300; font-size: 16px; line-height: 1.55; margin: 0; }
+.ft-iv { font-family: var(--font-serif); font-style: italic; font-weight: 700; letter-spacing: -0.04em; text-transform: none; color: #ffca26; font-size: 1.08em; }
+
+/* headline: each line slides up out of a mask */
+.ft-hl, .ft-mhl { font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; margin: 0; color: #f3e8cc; }
+.ft-hl { font-size: 128px; white-space: nowrap; }
+.ft-ln { display: block; overflow: hidden; padding: 0.06em 0 0.12em; margin-bottom: -0.1em; }
+.ft-lni { display: inline-block; }
+
+/* email */
+.ft-em { display: inline-block; font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; font-size: 58px; white-space: nowrap; color: #f3e8cc; padding: 6px 10px 10px 0;
+  background: linear-gradient(#ffca26, #ffca26) left bottom / 100% 5px no-repeat; transition: background-size 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.3s ease, padding 0.45s ease; }
+.ft-dbox .ft-em { position: absolute; left: 64px; top: 392px; }
+.ft-em:hover { background-size: 100% 100%; color: #0f0f0e; padding-left: 14px; }
+.ft-em span { display: inline-block; transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ft-em:hover span { transform: translate(8px, -6px) rotate(45deg); }
+
+/* circle CTA */
+.ft-cta { width: 200px; height: 200px; border-radius: 50%; background: #ffca26; color: #0f0f0e !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease; }
+.ft-dbox .ft-cta { right: 64px; top: 112px; }
+.ft-cta:hover { transform: scale(1.1) rotate(-6deg); background: #f86015; }
+.ft-cta b { font-weight: 900; font-size: 26px; letter-spacing: -0.02em; text-transform: uppercase; line-height: 0.95; text-align: center; }
+.ft-cta i { font-style: normal; font-weight: 600; font-size: 34px; line-height: 1; display: block; transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ft-cta:hover i { transform: rotate(45deg); }
+
+/* columns */
+.ft-rule { left: 64px; right: 64px; top: 520px; height: 1px; background: rgb(243 232 204 / 0.2); transform-origin: left; }
+.ft-col { top: 556px; width: 290px; }
+.ft-lk { display: block; font-weight: 900; font-size: 26px; letter-spacing: -0.02em; text-transform: uppercase; line-height: 1; color: #f3e8cc; padding: 5px 0; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s ease; }
+.ft-lk:hover { transform: translateX(12px); color: #ffca26; }
+.ft-sv { display: block; font-weight: 300; font-size: 16px; line-height: 1.45; padding: 5px 0; }
+.ft-so { display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; padding: 11px 0; border-bottom: 1px solid rgb(243 232 204 / 0.2); transition: color 0.25s ease, padding 0.35s ease, border-color 0.25s ease; }
+.ft-so:hover { color: #ffca26; padding-left: 10px; border-color: #ffca26; }
+
+/* bottom bar */
+.ft-bar { left: 64px; right: 64px; top: 846px; display: flex; justify-content: space-between; align-items: center; }
+.ft-up { color: #f3e8cc; transition: color 0.25s ease; }
+.ft-up:hover { color: #ffca26; }
+
+/* ── Mobile / tablet: fluid single column, accordion sections (canvas "FooterM-B-Accordion") ── */
+.ft-mob { padding: 28px 24px 0; }
+.ft-mtop { display: flex; justify-content: space-between; gap: 16px; }
+.ft-mhead { position: relative; margin-top: 28px; }
+.ft-mhl { font-size: clamp(44px, 14.8vw, 104px); }
+.ft-mhl .ft-iv { display: block; }
+.ft-mhead .ft-mcta { position: absolute; right: 0; bottom: -12px; top: auto; left: auto; width: clamp(104px, 29vw, 160px); height: clamp(104px, 29vw, 160px); gap: 2px; transform: rotate(-8deg); }
+.ft-mhead .ft-mcta b { font-size: clamp(15px, 4.1vw, 22px); }
+.ft-mhead .ft-mcta i { font-size: clamp(18px, 5vw, 26px); }
+.ft-mem { display: inline-block; margin-top: 36px; font-size: clamp(20px, 5.4vw, 40px); white-space: normal; overflow-wrap: anywhere; line-height: 1; }
+.ft-macc { margin-top: 36px; border-bottom: 1px solid rgb(243 232 204 / 0.2); }
+.ft-mrow { border-top: 1px solid rgb(243 232 204 / 0.2); }
+.ft-mbtn { all: unset; box-sizing: border-box; display: flex; width: 100%; align-items: center; justify-content: space-between; height: 64px; cursor: pointer; font-weight: 900; font-size: 24px; letter-spacing: -0.03em; text-transform: uppercase; color: #f3e8cc; transition: color 0.25s ease; }
+.ft-mbtn:focus-visible { outline: 2px solid #ffca26; outline-offset: 2px; }
+.ft-mbtn[aria-expanded="true"] { color: #ffca26; }
+.ft-mpm { position: relative; width: 18px; height: 18px; flex: none; }
+.ft-mpm::before, .ft-mpm::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; background: currentColor; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ft-mpm::after { transform: rotate(90deg); }
+.ft-mbtn[aria-expanded="true"] .ft-mpm::after { transform: rotate(0deg); }
+.ft-mpanel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ft-mpanel > div { overflow: hidden; min-height: 0; }
+.ft-mpanel.is-open { grid-template-rows: 1fr; }
+.ft-mpanel .ft-in { padding: 0 0 22px; }
+.ft-mpanel .ft-p { font-size: 14px; max-width: 520px; }
+.ft-mpanel .ft-lk { font-size: 22px; }
+.ft-mbar { margin: 0 -24px; padding: 22px 24px 28px; background: #f3e8cc; color: #0f0f0e; display: grid; gap: 18px; }
+.ft-mbar .ft-m { color: #0f0f0e; }
+.ft-msoc { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.ft-msoc a { font-weight: 600; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; }
+.ft-mbar .ft-ft { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.ft-mbar .ft-dim { font-size: 9px; opacity: 0.7; }
+.ft-mbar .ft-up { color: #0f0f0e; font-size: 9px; }
+
+/* entrance (data-entrance set by useEntrance; absent = final state) */
+.ft-rise { transition: opacity 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms), transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms); }
+.ft-lni { transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms); }
+.ft-cta { transition-property: transform, background, opacity; }
+.ft-root[data-entrance="pre"] .ft-rise { opacity: 0; transform: translateY(34px); }
+.ft-root[data-entrance="pre"] .ft-lni { transform: translateY(112%); }
+.ft-root[data-entrance="pre"] .ft-rule { transform: scaleX(0); }
+.ft-root[data-entrance="pre"] .ft-cta { opacity: 0; transform: scale(0.2) rotate(-40deg); }
+.ft-root[data-entrance="playing"] .ft-cta { transition: transform 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) 0.48s, opacity 0.6s ease 0.48s, background 0.3s ease; }
+.ft-root[data-entrance="playing"] .ft-rule { transition: transform 1.1s cubic-bezier(0.7, 0, 0.2, 1) 0.62s; }
+.ft-root[data-entrance="instant"] .ft-rise, .ft-root[data-entrance="instant"] .ft-lni, .ft-root[data-entrance="instant"] .ft-cta, .ft-root[data-entrance="instant"] .ft-rule { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .ft-root *, .ft-root *::before { transition: none !important; } }

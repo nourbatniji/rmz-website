@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { SiteContent } from "@/content/types";
 
@@ -13,11 +14,15 @@ export function SiteHeader({ brand, nav }: SiteContent) {
   // Over the hero it keeps the approved transparent gradient. Isolated to the header; hero untouched.
   const [solid, setSolid] = useState(false);
   const ref = useRef<HTMLElement>(null);
+  // Off the homepage (e.g. /work/[slug]) the section anchors must point back at the homepage; "Work" lands on the work archive.
+  const pathname = usePathname();
+  const onHome = pathname === "/" || pathname.startsWith("/admin/preview");
+  const link = (href: string) => (onHome || !href.startsWith("#") ? href : href === "#work" ? "/#work-archive" : `/${href}`);
 
   useEffect(() => {
     const hero = document.querySelector("main#top > section");
-    if (!hero) return;
-    const update = () => setSolid(hero.getBoundingClientRect().bottom <= (ref.current?.offsetHeight ?? 92));
+    // No homepage hero (inner pages): solid bar as soon as the page scrolls.
+    const update = () => setSolid(hero ? hero.getBoundingClientRect().bottom <= (ref.current?.offsetHeight ?? 92) : window.scrollY > 8);
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
@@ -25,7 +30,7 @@ export function SiteHeader({ brand, nav }: SiteContent) {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +56,7 @@ export function SiteHeader({ brand, nav }: SiteContent) {
         className={`pointer-events-none absolute inset-x-0 top-0 transition-opacity duration-200 ${solid ? "h-[var(--header-h)] border-b border-cream/10 bg-ink" : "h-28 bg-gradient-to-b from-ink/75 to-transparent md:h-36"}`}
       />
       <div className="relative flex items-center justify-between px-(--gutter) py-5 md:py-7">
-        <a href="#top" aria-label={`${brand.name} — home`} className="block">
+        <a href={link("#top")} aria-label={`${brand.name} — home`} className="block">
           {logo}
         </a>
 
@@ -59,7 +64,7 @@ export function SiteHeader({ brand, nav }: SiteContent) {
           {nav.map((item) => (
             <a
               key={item.href}
-              href={item.href}
+              href={link(item.href)}
               className="t-meta group relative py-1.5 text-xs text-cream"
             >
               {item.label}
@@ -88,7 +93,7 @@ export function SiteHeader({ brand, nav }: SiteContent) {
           {nav.map((item) => (
             <a
               key={item.href}
-              href={item.href}
+              href={link(item.href)}
               onClick={() => setOpen(false)}
               className="t-display text-5xl text-cream active:text-yellow"
             >
