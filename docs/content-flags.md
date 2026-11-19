@@ -38,10 +38,9 @@ Single source: `services` in `src/content/dev/homepage.ts` (`ServiceTaxonomyItem
 - Nav: "Capabilities" → `#capabilities` unchanged (no per-service nav items are implemented).
 - CMS: edit `services` (name/order) once; each section edits only its own description/media keyed by `serviceId`.
 
-## Video section (ShowreelCorridor) — see `docs/video-section.md`
-- Kicker "Work — walk the corridor", headline "Six rooms. / One long wall.", intro (click clause removed) — canvas copy, **provisional**, pending approval. "walk the corridor" reads like a design note.
-- Projects Alpha…Zeta / "Demo project" — **placeholders**; real projects, names and categories pending. Categories shown are the first six approved services (placeholder mapping only).
-- Showreel video, poster, accessible description — **missing** (typed content fields exist).
-- Project links and archive link — `null` until project/Work pages exist.
-- Accessibility decision: "All projects" label colour changed from canvas orange to `#D52518` on cream.
-- **Arrival copy (video section)** — `arrivalHeadline` "The work, in motion." and `arrivalDescription` ("A selection of recent brand, campaign and digital work from Rebel Mind Zone, together in one reel.") are **provisional build-team wording, pending approval**. Distinct from the approach headline "Six rooms. One long wall.".
+
+## Video section (ShowreelCorridor) — approved design; media and copy pending — see `docs/video-section.md`
+- **Showreel footage — PENDING approval/replacement.** The supplied 5 s clip (2206 × 946, not seamless) is a stand-in; final 2.4:1 master per the export spec.
+- **Poster — PENDING** (frame extracted from the supplied clip).
+- **Copy — PROVISIONAL, pending approval**: kicker "Work — walk the corridor", headline "One reel. / Three walls.", intro, arrivalHeadline "The work, in motion.", arrivalDescription, accessibleDescription. The old "Six rooms…" / "Each project hangs on the wall…" copy was replaced because the project cards no longer exist.
+- Mobile corridor — first-pass adaptation of the same scene, **pending mobile design review**.

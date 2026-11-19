@@ -15,7 +15,7 @@ export default async function Home() {
   return (
     <main id="top">
       <HeroWall hero={hero} />
-      <ShowreelCorridor content={corridor} services={services} />
+      <ShowreelCorridor content={corridor} />
       <StatementRotator statement={statement} />
       <DevSectionPlaceholder label="Featured work (canvas “About”)" />
       <DevSectionPlaceholder label="Services dial" />

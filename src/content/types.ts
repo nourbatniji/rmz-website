@@ -104,44 +104,29 @@ export type ServiceFinsContent = {
   items: ServiceFinItem[];
 };
 
-/** One project card hanging in the showreel corridor. */
-export type CorridorProject = {
-  id: string;
-  /** Two-digit label, e.g. "01". */
-  number: string;
-  title: string;
-  /** References `ServiceTaxonomyItem.id` (category line). */
-  serviceId: string;
-  /** Short suffix after the category, e.g. "Demo project" while projects are placeholders. */
-  tag: string;
-  /** Project page URL. `null` = not linkable yet (project pages are deferred): rendered as a plain card. */
-  href: string | null;
-  /** Static poster for mobile side frames; `null` = labelled placeholder. */
-  poster: ImageRef | null;
-};
-
 /**
- * Home video section ("HOME - VIDEO SECTION" corridor). One showreel video plays on every screen.
+ * Home video section ("corridor"): ONE showreel video is the surface of the front wall and both side walls.
  * Layout, perspective, scroll mapping and animation live in code; only content and media live here.
+ *
+ * MEDIA CONTRACT — one shared master, 2.4:1 (e.g. 3840 × 1600). All three walls are 2.4:1 planes (1680 × 700 world units),
+ * so a 2.4:1 source fills every wall exactly: no crop, no stretch, no letterbox. Other ratios are centre-cropped (never stretched).
  */
 export type CorridorContent = {
   kicker: string;
+  /** Approach headline (visible while walking down the corridor; fades out before arrival). */
   headline: { lead: string; emphasis: string };
+  /** Approach paragraph (fades out with the headline). */
   intro: string;
-  /** Large headline revealed ABOVE the framed video once the camera has arrived (never shown during the approach). */
+  /** Large headline revealed ABOVE the front video once the camera has arrived (never shown during the approach). */
   arrivalHeadline: string;
-  /** Short paragraph revealed BELOW the framed video at arrival. */
+  /** Short paragraph revealed BELOW the front video at arrival. */
   arrivalDescription: string;
-  /** `null` until the final showreel exists: poster / labelled placeholder is shown and no player controls appear. */
+  /** `null` until the final showreel exists: the poster (or a labelled placeholder) is shown on all three walls, with no player controls. */
   video: { src: string } | null;
-  /** Approved poster still. `null` = labelled development placeholder. */
+  /** Poster still, 2.4:1, used on all three walls until the video has frames. `null` = labelled development placeholder. */
   poster: ImageRef | null;
-  /** Accessible description of the video (read by screen readers on the main screen). */
+  /** Accessible description of the video (the 3D scene itself is decorative). */
   accessibleDescription: string;
-  /** Strip under the main screen ("All projects / Open the archive"). `href` null until the Work page exists. */
-  archive: { kicker: string; title: string; href: string | null };
-  /** Six projects: wall order left, right, left, right, left, right (1…6). */
-  projects: CorridorProject[];
 };
 
 export type HomepageContent = {

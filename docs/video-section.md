@@ -1,47 +1,79 @@
-# Home — Video section (ShowreelCorridor)
+# Home — Video section (ShowreelCorridor) — approved baseline
 
-## Exact source
-- Desktop: canvas board **"HOME - VIDEO SECTION"** — file `project/WorkX-e01.dc.html` (1440 × 1000, playable).
-- Mobile: canvas board **"MOBILE · 01 — VIDEO CORRIDOR"** — file `project/Mobile01-Corridor.dc.html` (390 × 844, playable).
-- Not used (other explorations): `WorkB3` / `Mobile05` (spatial collection — deferred Work archive) and `Mobile06a–c` (options for that archive). No versions combined.
-- Component: `src/components/home/corridor/ShowreelCorridor.tsx` + `corridor.css`. Content: `homepage.corridor` (typed, `src/content/types.ts → CorridorContent`).
+**Status: three-wall design APPROVED (baseline).** Still pending approval: the final showreel footage, the poster still, and all copy (see "Pending").
 
-## What the source does
-A red ribbed corridor in 3D (perspective 1000 px, origin 50 % 48 %). A cream-framed 16:9 showreel screen with an "All projects / Open the archive" strip hangs on the back wall; six project cards hang on the side walls (3 + 3, alternating Alpha/Gamma/Epsilon and Beta/Delta/Zeta), all showing **the same video**. Scrolling walks the camera forward 1250 px along z (smoothed, 0.1 lerp) until the back screen fills the view; a caption (project number · category · title) fades in from 6 % to 18 % and follows the nearest project. Headline "Six rooms. / One long wall.", intro copy, three colour squares, and a Play/Pause button.
-Mobile: portrait corridor, two side posters + centre screen, camera dolly with the screen growing to fill the phone; headline/kicker/"scroll to walk" cue fade out; a full-screen player (time, play, scrubber) appears at the end.
+Component: `src/components/home/corridor/ShowreelCorridor.tsx` + `corridor.css`. Content (typed, CMS-ready): `homepage.corridor` → `CorridorContent` in `src/content/types.ts`; values in `src/content/dev/homepage.ts`. One scene serves every breakpoint.
 
-## How it is built here
-- **Scroll mapping**: the canvas captured `wheel` (deltaY/1600) and `preventDefault`ed it inside the section. Here a tall *track* (+1600 px desktop, +2500 px mobile = the canvas' `RANGE_USE`) with a *sticky pin* under the fixed header gives the identical mapping with **native scroll** — reverse, touch, keyboard, anchors, and a clean release into Statement work, and there is **no wheel/touch listener at all**. (Conflict flagged below.)
-- Pin sits at `top: var(--header-h)`; the stage is scaled uniformly to fit the remaining viewport (desktop: `min(1, w/1440, h/1000)`), overlay type stays real-size so it remains readable on short viewports.
-- One hidden `<video>` feeds all canvases (drawn in the same rAF tick → frames identical on every surface). Loads only when the section is within a viewport of the screen; plays only while in view, not user-paused, tab visible. Frame loop and observers run only while the section is near the viewport.
-- Reduced motion: no pin, no walk — the final composition is shown; video does not autoplay.
-- No video configured: the canvas' own labelled "SHOWREEL · 16:9 VIDEO PLACEHOLDER" drawing (or the poster if set), **no `<video>`, no player controls, no duration, no sound/mute**.
-- Direct navigation `#work` lands exactly under the header at the walk start.
+## Experience
+The camera walks down a corridor whose **front wall and both side walls are the same showreel video**. Scroll (native) walks forward; the front video grows until it arrives as a borderless, edge-to-edge 2.4:1 video between a headline (above) and a paragraph (below), which are revealed only at arrival; a short hold; then the whole composition scrolls away into StatementRotator. Fully reversible.
 
-## Conflicts / deviations (flagged, not silently resolved)
-1. **Wheel capture vs. "no trapping"**: canvas hijacks the wheel inside the section; the brief and the earlier decisions forbid wheel/touch interference. Replaced with native scroll-linked pin (same distances). Feel differs slightly: the page moves while the walk plays.
-2. **WorkX's own `<760px` fallback** is a static stacked layout with no walk; the approved **Mobile01** artboard (3D corridor) is used instead, as requested ("use an approved mobile artboard if one exists").
-3. **Click-to-open copy**: canvas says "Click any poster to open its case" / "tap a screen to open its case" and shows "Open project →". Project pages and the Work archive are deferred, so the sentence is trimmed, cards are plain (no link affordance, no "Open project →"), and the archive strip is not a link. Each has an `href` in content (`null` now) ready for later.
-4. **Prototype-only items removed**: Walk slider, "Missing asset…" and "Provisional: guideline photography…" notes, simulated reel/poster canvases, simulated 00:20 clock, "Room 01 — Identity" labels, mock topbar/menu, "open →" toast.
-5. **Old service names**: canvas card categories (Brand Identity, Campaign, Digital Experience, Content & Production, Growth, Creative Direction) are not the approved taxonomy. Cards now take the first six approved services (Branding … Paid Media) as *demo* categories.
-6. **Orange / red small text on cream**: canvas used `#F86015` (≈3:1) for the "All projects" label; `#D52518` (4.6:1) is used on cream. Header-clearance adjustment: kicker sits at 28 px below the header instead of canvas 56 px from section top.
+Timeline in scroll px — desktop / mobile (≤ 760 px):
+1. **Approach** 1600 / 2500 — camera walk (smoothed 0.1 / 0.2).
+2. **Stationary reveal** 450 / 400 — camera and video frozen; headline rises + fades, paragraph follows with a stagger (scroll-linked, eased; never re-triggers).
+3. **Hold** 450 / 450.
+4. **Release** — pin ends; headline, video and paragraph scroll away together.
+No wheel/touch listeners, no scroll lock, no click-to-continue. Reverse is the exact mirror (hold → reveal hides the text → corridor).
 
-## Remaining media / content
-- **Showreel footage** (16:9 MP4/WebM H.264, muted-loopable, ≈10–60 s; WebM/VP9 optional) → `corridor.video.src`; **poster still** (16:9, ≥1600 px) → `corridor.poster`; accessible description text → `corridor.accessibleDescription`.
-- Six **project names/categories/posters** (mobile side frames use the first two) — currently "Demo project" placeholders; project page URLs (`href`) when those pages exist; Work archive URL for the strip.
-- Approve kicker "Work — walk the corridor", headline and intro copy (canvas copy kept, provisional).
+## Geometry (verified from the implementation)
+Scene = 1440 × 1000 stage, CSS perspective 1000 px, origin 50 % 48 %, scaled to fit under the fixed header.
+| Wall | Plane (scene units) | Placement | Ratio |
+|---|---|---|---|
+| Front | 1680 × 700 | z = −1500, x −120…1560, y 110…810 | **2.4 : 1** |
+| Left | 1680 × 700 (length × height) | x = −120, z from −1500 to +180, rotateY(90°) about its near edge | **2.4 : 1** |
+| Right | 1680 × 700 | x = +1560, z from −1500 to +180, rotateY(−90°) about its near edge | **2.4 : 1** |
+(The earlier side walls were 1500 long = 2.14:1; they were extended to 1680 so all three planes are 2.4:1 and a single shared master fills each exactly.) Walls are real 3D planes (no trapezoid crops); junctions meet exactly at the front-wall edges.
+- **Not mirrored**: left wall shows the video's left edge nearest the viewer (outer screen edge) and its right edge at the far end; the right wall shows the video's right edge nearest the viewer. Each wall repeats the *complete* video (not a panorama). Verified with a left→right gradient clip.
+- **Lighting**: front wall untouched (full brightness). Side walls carry a restrained CSS shade overlay (≈ 22 % → 58 % toward the far corner, plus ≈ 26 % at the floor/ceiling lines). No frames, glow or effects. A soft bottom fade exists only during the early approach for legibility of the approach copy and is gone before the front wall grows large.
 
-## Arrival behaviour (added after b5bd82b)
-**Timeline (native scroll, no wheel capture / scroll lock / click-to-continue)** — desktop / mobile, in scroll px:
-1. **Approach** 1600 / 2500 — the corridor walk (unchanged design).
-2. **Stationary arrival + reveal** 450 / 400 — camera and video geometry are frozen; the arrival headline rises and fades in, the paragraph follows with a slight stagger (scroll-linked, eased, so it is fully reversible and never re-triggers or flashes).
-3. **Readable hold** 450 / 450 — everything stays still.
-4. **Release** — the pin ends; headline, framed video and paragraph scroll away together into StatementRotator.
-Reverse order is the exact mirror: hold → reveal reverses (text hides) → corridor reverses. Video playback is independent of scroll and never rewinds.
+## Arrival composition (solved before the approach)
+`layout()` runs on mount, on resize and when fonts/text size change. From the pin size (viewport minus header) it chooses type sizes/gaps, measures the headline and paragraph, finds the largest 2.4:1 front video that fits between them (never wider than the viewport; mobile = full width), and **derives the camera end translation** `T = 2500 − 1000 / scale` and vertical offset from that rect. The front video therefore grows monotonically and is never resized to make room. Side walls leave by geometry as the camera advances (slivers at the edges on desktop, none on mobile). Mobile uses the same scene at a smaller stage scale (corridor starts with the far wall ≈ 62 % of the screen width), headline above, paragraph below, controls row at the bottom.
+> Mobile: the older "Mobile01" artboard (portrait frame + project posters) cannot carry the new direction; this is a first-pass adaptation of the same three-wall scene — **pending mobile design review**.
 
-**Final composition is solved in layout, before the approach** (`layoutD` / `layoutM`): from the pin size below the header it picks type sizes and gaps, measures the headline and paragraph, finds the largest 16:9 framed video that fits between them (desktop ≤ 1180 px wide), and solves the camera's end translation so the cream frame lands exactly on that rect (desktop: scale = 1000 / (2499 − T), plus the vertical offset). The video therefore grows monotonically and is never resized to make room. Gaps are measured from the red back wall's edge. Re-solved on resize and after fonts load.
-- Mobile (Mobile01): the portrait gallery frame and back wall morph to a 16:9 frame (inner video 308 × 173.25) as the camera approaches — no crop at arrival; headline above, paragraph below, player row (only with video) at the bottom.
-- The corridor headline/intro, kicker, caption and bottom fade leave before arrival, so no headline appears twice.
-- Reduced motion: no pin, no camera movement — the completed composition (text visible) is shown directly.
+## Playback
+- **One** hidden `<video>` (muted, loop, playsInline) is the only playback source. Each tick the frame is drawn **once** into the front canvas; the side-wall canvases copy that exact bitmap, so all three walls always show the identical frame (`drawImage(video)` per wall could pick up a newer frame between calls — verified and fixed).
+- One shared Play/Pause control (only when a video is configured). Muted: no audio source, no sound control.
+- Plays only while the section is in view, the tab is visible and the visitor hasn't paused; pauses when out of view/hidden and resumes on return. Independent of scroll — scrolling backward never rewinds it. Buffering/seek keep the last frame on all walls. Reduced motion: starts paused (no autoplay).
+- Loads only when the section is within one viewport of the screen.
+- Frame loop and observers run only while the section is near the viewport.
 
-**Content (typed, `homepage.corridor`)**: new `arrivalHeadline` and `arrivalDescription` (provisional): "The work, in motion." / "A selection of recent brand, campaign and digital work from Rebel Mind Zone, together in one reel." — build-team wording pending approval; do not treat as approved copy. The corridor's own `headline` / `intro` remain the approach copy.
+## Fallbacks
+No video → the poster (if set) on all three walls, otherwise a labelled "SHOWREEL · 2.4:1 VIDEO PLACEHOLDER" panel on all three. No `<video>`, no controls, no duration. Reduced motion: no pin, no camera movement — the completed arrival composition is shown directly.
+
+## Export specification for the content team (confirmed from the geometry)
+**One shared video asset. All three walls are exactly 2.4:1, so no separate dimensions are needed.**
+| Item | Spec |
+|---|---|
+| Aspect ratio | **2.4 : 1 exactly** (width = 2.4 × height) |
+| Master (archive) | **3840 × 1600** px |
+| Web delivery (one file) | **2400 × 1000** px — matches the front-wall canvas (2400 × 1000); larger sources are downscaled in the browser |
+| Codec | **H.264 High profile, 8-bit, yuv420p**, SDR BT.709 (do **not** deliver HEVC / 10-bit / HDR — they do not play in most browsers) |
+| Frame rate | 24–30 fps (constant) |
+| Audio | **None** (video plays muted; strip the audio track) |
+| Container | MP4 with `faststart` (moov atom first) |
+| Length / loop | ≈ 5–30 s, **seamless loop** (first and last frames must match — the video loops and plays on all walls) |
+| Size target | ≈ 4–10 MB (≈ 3–6 Mbps at 2400 × 1000) |
+| Optional | WebM VP9 of the same dimensions as a second source (not wired yet) |
+| Poster | same 2.4:1 frame, **≥ 2400 × 1000**, WebP or JPEG, ≈ 100–300 KB |
+**Composition notes**: at arrival the whole frame is visible on every viewport (no crop at 2.4:1). While walking, the near ends of the side walls are off-screen by perspective (≈ the outer 20 % at the start), so do not rely on the extreme left of the left wall / extreme right of the right wall in the first seconds of the approach. Other ratios are **centre-cropped to 2.4:1, never stretched or letterboxed**.
+Reference conversion: `ffmpeg -i master.mov -an -vf scale=2400:1000 -c:v libx264 -profile:v high -pix_fmt yuv420p -crf 20 -preset slow -movflags +faststart -g 48 showreel.mp4`
+
+## Current media (supplied by the client — approval pending)
+`public/media/showreel/showreel.mp4` (transcoded from the supplied HEVC 10-bit file: H.264 High 8-bit, 2206 × 946, 5.04 s, silent, 1.7 MB) and `poster.webp` (frame at 1.0 s). 2206 × 946 = 2.33:1, so it is centre-cropped ≈ 2.9 % off top and bottom. It is a 5-second clip that does not loop seamlessly (the sphere enters at the left and leaves at the right), so the loop point jumps. Replace with the final 2.4:1 master.
+Content fields: `video.src`, `poster`, `accessibleDescription`, `kicker`, `headline`, `intro`, `arrivalHeadline`, `arrivalDescription`.
+
+## Copy — provisional, pending approval
+| Field | Current (provisional) | Previous canvas copy |
+|---|---|---|
+| kicker | "Work — walk the corridor" (canvas) | same |
+| headline | "One reel. / Three walls." | "Six rooms. / One long wall." |
+| intro | "Scroll to walk the corridor. The showreel plays on every wall and the film fills the front." | "Each project hangs on the wall. Scroll to walk forward; a project turns to face you as you pass." |
+| arrivalHeadline | "The work, in motion." | — |
+| arrivalDescription | "A selection of recent brand, campaign and digital work from Rebel Mind Zone, together in one reel." | — |
+| accessibleDescription | describes the supplied clip (cream sphere gliding past red, amber and cream panels; no sound) | — |
+The canvas wording ("Six rooms", "Each project hangs on the wall…") described project cards that were removed, so it was replaced; revert is a one-line content change if preferred.
+
+## Removed from earlier versions
+Cream frame, borders, caption strip, "All projects / Open the archive", six project cards and project captions, project-specific categories (and the `projects` / `archive` content fields), the red ribbed back wall, the portrait mobile frame and posters, the corridor caption that followed the nearest project.
+
+## Verification
+`docs/review/milestone-7/tests/corridor-tests.mjs` (puppeteer-core, real Chrome): modes `novideo` (missing-media fallback), `clip` (gradient test clip: orientation, brightness, edge-to-edge, loop, sync, tab visibility, no-rewind) and `real` (the shipped footage). Run against a production build; temporary clips are never committed. `screenshots.mjs` / `record-journey.mjs` regenerate the review media.

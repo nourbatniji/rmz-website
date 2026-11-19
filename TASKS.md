@@ -67,3 +67,4 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 
 - [x] Home — Video section (ShowreelCorridor) built from "HOME - VIDEO SECTION" + "MOBILE · 01 — VIDEO CORRIDOR" (docs/video-section.md). **Pending content:** showreel video + poster, real project cards, project/archive links. Mobile follows the approved Mobile01 artboard.
 - [x] Video section arrival composition (16:9 video framed between headline and paragraph; reveal + hold + release; reversible). **Pending:** approve arrival copy.
+- [x] Video section redesigned as a three-wall video corridor — **design approved (baseline)**. Pending: final 2.4:1 showreel + poster, copy approval, mobile review (docs/video-section.md).

@@ -68,36 +68,22 @@ export const devHomepageContent: HomepageContent = {
       },
     ],
   },
-  // Video section. Copy from the approved canvas ("HOME - VIDEO SECTION"), minus the click-to-open clause (project
-  // pages are deferred). No footage yet: poster/video are null → labelled placeholder, no player controls.
-  // Projects are DEMO placeholders (canvas: Alpha…Zeta); categories use the approved service taxonomy.
+  // Video section: one showreel on three walls. No footage yet: poster/video are null → labelled placeholder on all walls,
+  // no player controls. COPY IS PROVISIONAL (pending approval): the canvas wording ("Six rooms. One long wall." / "Each project
+  // hangs on the wall…") described project cards that no longer exist, so it was replaced with wording that matches the
+  // current experience. Previous canvas copy is recorded in docs/video-section.md.
   corridor: {
     kicker: "Work — walk the corridor",
-    headline: { lead: "Six rooms.", emphasis: "One long wall." },
-    intro: "Each project hangs on the wall. Scroll to walk forward; a project turns to face you as you pass.",
-    // PROVISIONAL arrival copy (build-team wording, pending approval): shown only when the camera reaches the video.
+    headline: { lead: "One reel.", emphasis: "Three walls." },
+    intro: "Scroll to walk the corridor. The showreel plays on every wall and the film fills the front.",
     arrivalHeadline: "The work, in motion.",
     arrivalDescription: "A selection of recent brand, campaign and digital work from Rebel Mind Zone, together in one reel.",
-    video: null,
-    poster: null,
-    accessibleDescription: "RMZ showreel: a selection of recent work. Showreel footage is not available yet.",
-    archive: { kicker: "All projects", title: "Open the archive", href: null },
-    projects: [
-      ["alpha", "Alpha", "branding"],
-      ["beta", "Beta", "creative-strategy"],
-      ["gamma", "Gamma", "content-production"],
-      ["delta", "Delta", "social-media"],
-      ["epsilon", "Epsilon", "design"],
-      ["zeta", "Zeta", "paid-media"],
-    ].map(([id, title, serviceId], i) => ({
-      id,
-      number: String(i + 1).padStart(2, "0"),
-      title,
-      serviceId,
-      tag: "Demo project",
-      href: null,
-      poster: null,
-    })),
+    // Supplied showreel (H.264 High 8-bit, 2206 × 946, silent). Centre-cropped to the 2.4:1 walls (≈ 3 % off top/bottom, never
+    // stretched). Replace with the final 2.4:1 master when delivered — see docs/video-section.md for the export spec.
+    video: { src: "/media/showreel/showreel.mp4" },
+    poster: { src: "/media/showreel/poster.webp", alt: "", width: 2206, height: 946 },
+    accessibleDescription:
+      "Showreel footage: a cream sphere glides across a dark space past tall red, amber and cream panels. The film plays without sound.",
   },
   // Copy below is taken verbatim from the approved canvas (board "HOME - TEXT SECTION").
   statement: {
