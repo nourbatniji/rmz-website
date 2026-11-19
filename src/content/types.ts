@@ -169,6 +169,37 @@ export type LensContent = {
   images: Partial<Record<LensImageKey, ImageRef | null>>;
 };
 
+/**
+ * Featured work focus (canvas board "HOME - ABOUT SECTION"). The canvas board is TITLED About but its approved design is a pinned
+ * wall of project cards: each card shows its image on the front and turns (scroll-linked) to its description on the back.
+ * There is no About Us copy in the canvas. All entries below are placeholders until verified case summaries and images are supplied.
+ */
+export type FeaturedWorkItem = {
+  id: string;
+  /** Two-digit label, e.g. "01". */
+  number: string;
+  /** Project name (card title). */
+  name: string;
+  /** Category line, e.g. "Brand identity". */
+  category: string;
+  /** Back-face description. Must stay short (about five lines in the open card). */
+  description: string;
+  /** "placeholder" = temporary content, never final. */
+  copyStatus: "approved" | "placeholder";
+  /** Front-face image. `null` until delivered: a labelled development placeholder fill (`placeholderColor`) is shown. */
+  image: ImageRef | null;
+  /** CSS object-position for the cropped front image. */
+  imagePosition: string;
+  /** Fill of the development placeholder only. */
+  placeholderColor: string;
+};
+
+export type FeaturedWorkContent = {
+  /** Visible section label and accessible heading. */
+  label: string;
+  items: FeaturedWorkItem[];
+};
+
 export type HomepageContent = {
   site: SiteContent;
   hero: HeroContent;
@@ -177,4 +208,5 @@ export type HomepageContent = {
   services: ServiceTaxonomyItem[];
   lens: LensContent;
   minds: MindsContent;
+  featured: FeaturedWorkContent;
 };

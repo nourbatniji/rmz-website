@@ -8,7 +8,7 @@ Mismatches are recorded for separate confirmation of final labels; they do not b
 | 1 | HOME - HERO SECTION | Prism wall, 3 banners, scroll-scrubbed sequence | `HeroWall` | built (placeholders) |
 | 2 | HOME - VIDEO SECTION | 3D corridor with showreel + 6 demo posters | `ShowreelCorridor` | todo |
 | 3 | HOME - TEXT SECTION | Rotating-word statement | `StatementRotator` | built |
-| 4 | HOME - ABOUT SECTION | **Selected work**: pinned, 6 demo projects, case overlay (no about copy) | `FeaturedWorkFocus` | todo |
+| 4 | HOME - ABOUT SECTION | **Selected work**: pinned, 6 demo projects, card turns front→back on scroll (no about copy) | `FeaturedWorkFocus` | built (placeholder content) — see docs/featured-work-section.md |
 | 5 | HOME - SERVICES SECTION | Rotating dial of 7 "focal lengths" (services) | `ServicesDial` | todo |
 | 6 | HOME - MINDS SECTION | **Minds**: 8 expanding columns of minds / team members (NOT services) | `Minds` | built (placeholder content) |
 | 7 | A · The Collective (CollabA) | "Good …" collaborations / partner logos | `Collaborations` | todo |

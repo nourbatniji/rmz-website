@@ -76,3 +76,4 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [x] Minds reveal corrected: starts fully hidden (no stubs), trigger at 80 % of the usable viewport, whole column incl. the expanded cream card masked together, mouse clicks no longer lift the mask. **For visual approval.**
 - [x] Minds reveal smoothed: one damped shared progress value (≈ 125 ms catch-up, exact settle, loop idles, jumps snap). **For visual approval.**
 - [x] Hero banner 1 visual replaced by the 25 delivered frames (WebP, scroll-driven via the existing hero mapping); older cloche keyframes removed. **For visual approval.**
+- [x] Featured work / "HOME - ABOUT SECTION" built: pinned, scroll-linked card flip (desktop wall + approved mobile card); static fallback for reduced motion / no JS; all copy and images provisional. **For visual approval.** Open: mobile adaptation, scroll distance, case pages, real content (docs/featured-work-section.md).

@@ -157,4 +157,33 @@ export const devHomepageContent: HomepageContent = {
       };
     }),
   },
+  // Featured work focus (canvas board "HOME - ABOUT SECTION" — titled About, designed as selected work). The six project names, categories
+  // and colours are the canvas's DEMO entries, and every description is a placeholder: no verified case summaries or images exist yet.
+  // See docs/featured-work-section.md.
+  featured: {
+    label: "Selected work",
+    items: (
+      [
+        ["Arid", "Brand identity", "#F86015"],
+        ["Drift", "Campaign", "#FFCA26"],
+        ["Tidepool", "Digital experience", "#9ACC42"],
+        ["Rouge", "Campaign", "#D52518"],
+        ["Blush", "Content & production", "#E8402F"],
+        ["Bloom", "Brand identity", "#971409"],
+      ] as const
+    ).map(([name, category, color], i) => {
+      const n = String(i + 1).padStart(2, "0");
+      return {
+        id: `work-${n}`,
+        number: n,
+        name,
+        category,
+        description: `Placeholder for ${name}: two or three sentences on the brief, the idea and the result will go here once the verified case summary is supplied.`,
+        copyStatus: "placeholder" as const,
+        image: null,
+        imagePosition: "50% 50%",
+        placeholderColor: color,
+      };
+    }),
+  },
 };
