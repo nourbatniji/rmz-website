@@ -1,13 +1,15 @@
 "use client";
 
 import "./minds.css";
-import { useId, useState, type CSSProperties } from "react";
+import { useId, useRef, useState, type CSSProperties } from "react";
 import type { MindsContent } from "@/content/types";
+import { useEntrance } from "@/lib/use-entrance";
 
 /**
  * Minds — eight columns of minds / team members (formerly "ServiceFins"; canvas "HOME - MINDS SECTION"). NOT a services section:
  * the Services section is the lens (`ServicesLens`).
  *
+ * Layout: a flat red space (80 px desktop / 40 px mobile, same red as the lens) sits above the columns, in normal flow; nothing under them.
  * No visible label/caption: the section is exactly as tall as the columns (an sr-only heading names it).
  * Exactly eight columns, one open at a time. Desktop (≥ 1024 px): the columns span the FULL viewport width, first and last flush
  * against the edges; closed columns are red strips with a vertical name, the open column unrolls into a cream plate (portrait +
@@ -24,9 +26,11 @@ export function Minds({ content }: { content: MindsContent }) {
   const initial = Math.max(0, items.findIndex((i) => i.id === content.initialOpenId));
   const [sel, setSel] = useState(initial);
   const n = items.length;
+  const rootRef = useRef<HTMLElement>(null);
+  useEntrance(rootRef); // one-shot staggered column reveal (opacity + small lift only) — see minds.css
 
   return (
-    <section id="minds" aria-labelledby={`${uid}-h`} className="minds-root">
+    <section ref={rootRef} id="minds" aria-labelledby={`${uid}-h`} className="minds-root">
       <div className="minds-stage">
         {/* Visually hidden: the section keeps an accessible name without any visible caption block. */}
         <h2 id={`${uid}-h`} className="sr-only">
@@ -38,7 +42,7 @@ export function Minds({ content }: { content: MindsContent }) {
             const open = i === sel;
             // Desktop geometry: left = columns before × (closed + gap) + the open column's extra width if it precedes.
             const left = `calc(${i} * (var(--shut) + var(--gap))${i > sel ? " + (var(--open) - var(--shut))" : ""})`;
-            const style = { "--l": left, "--w": open ? "var(--open)" : "var(--shut)" } as CSSProperties;
+            const style = { "--l": left, "--w": open ? "var(--open)" : "var(--shut)", "--i": i } as CSSProperties;
             const plateId = `${uid}-p${i}`;
             return (
               <li key={item.id} className={`mind ${open ? "mind-open" : ""}`} style={style}>

@@ -3,6 +3,7 @@
 import "./services-lens.css";
 import { useEffect, useId, useRef, useState, type CSSProperties, type PointerEvent as RPointerEvent } from "react";
 import type { LensContent, ServiceTaxonomyItem } from "@/content/types";
+import { useEntrance } from "@/lib/use-entrance";
 import { useMedia } from "@/lib/use-media";
 import { LensScene } from "./lens-scenes";
 
@@ -75,6 +76,7 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
   const [geom, setGeom] = useState({ s: 1, left: 0 });
 
   const rootRef = useRef<HTMLElement>(null);
+  useEntrance(rootRef); // one-shot entrance (ring turn, iris adjustment, supporting text lift) — see services-lens.css
   const tgt = useRef(initial);
   const shownRef = useRef(initial);
   const phRef = useRef<Phase>("idle");
@@ -282,12 +284,14 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
 
   const curIdx = drag ? clamp(Math.round(-rot / STEP), 0, N - 1) : sel;
   const T = (t: string) => (reduced ? "none" : t);
-  const bladeStyle: CSSProperties = {
+  const bladeStyle = {
     transform: blade(th(op)),
+    // Start state of the entrance only (see services-lens.css): slightly less open, then it opens to the selected service's aperture.
+    "--blade-pre": blade(th(Math.max(IR.closed + 0.05, op - 0.14))),
     transformOrigin: "0 0",
     transition: reduced ? "none" : ph === "closing" ? `transform ${IR.dClose}ms cubic-bezier(.55,0,.35,1)` : `transform ${IR.dOpen}ms cubic-bezier(.22,0,.12,1)`,
     filter: "drop-shadow(0 0 5px rgba(0,0,0,.55))",
-  };
+  } as CSSProperties;
   const cap1 = `${items[sel]?.focal} · ${items[sel]?.name}`;
   const cap2 = (hint: string) => `Aperture opening ${Math.round(rest(sel) * 100)}% · ${hint}`;
 
@@ -301,7 +305,7 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
         onPointerMove={ringMove}
         onPointerUp={ringUp}
         onPointerCancel={ringUp}
-        style={{ position: "absolute", inset: 0, borderRadius: "50%", touchAction: "none", cursor: "grab", transform: `rotate(${rot}deg)`, transition: drag ? "none" : T("transform .65s cubic-bezier(.2,.8,.2,1)") }}
+        style={{ position: "absolute", inset: 0, borderRadius: "50%", touchAction: "none", cursor: "grab", transform: `rotate(${rot}deg)`, transition: drag ? "none" : T("transform .65s cubic-bezier(.2,.8,.2,1), rotate .85s cubic-bezier(.25,.85,.3,1)") }}
       >
         <div style={RING_TICKS} />
         <div style={RING_MAJOR} />
@@ -361,7 +365,7 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
         <g clipPath={`url(#${uid}-c)`}>
           {Array.from({ length: 8 }, (_, k) => (
             <g key={k} transform={`rotate(${k * 45})`}>
-              <g style={bladeStyle}>
+              <g className="lens-blade" style={bladeStyle}>
                 <path d={BLADE_D} fill={`url(#${uid}-g1)`} />
                 <path d={BLADE_D} fill={`url(#${uid}-g2)`} />
                 <path d="M 387.66 -176.50 L 387.66 407.54" stroke="rgba(243,232,204,.10)" strokeWidth="1" fill="none" />
@@ -469,30 +473,30 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
       <p ref={live} className="lens-sr" aria-live="polite" />
       {desktop ? (
         <div className="lens-stage" style={{ left: geom.left, transform: `scale(${geom.s})` }}>
-          <p className="lens-nm" style={{ position: "absolute", left: 64, top: 42 }}>{content.kicker}</p>
-          <div style={{ position: "absolute", left: 64, top: 68 }}>{heading(34)}</div>
-          <p className="lens-nl" style={{ position: "absolute", left: 64, top: 108, fontSize: 15, width: 560 }}>{content.intro}</p>
+          <p className="lens-nm lens-enter" style={{ position: "absolute", left: 64, top: 42, "--d": "0ms" } as CSSProperties}>{content.kicker}</p>
+          <div className="lens-enter" style={{ position: "absolute", left: 64, top: 68, "--d": "30ms" } as CSSProperties}>{heading(34)}</div>
+          <p className="lens-nl lens-enter" style={{ position: "absolute", left: 64, top: 108, fontSize: 15, width: 560, "--d": "55ms" } as CSSProperties}>{content.intro}</p>
           {/* connectors: row → vertical rail → lens axis */}
           <div aria-hidden="true" style={{ position: "absolute", left: 632, width: 40, height: 1.5, background: "#F3E8CC", top: ry, transition: T("top .55s cubic-bezier(.2,.8,.2,1)") }} />
           <div aria-hidden="true" style={{ position: "absolute", left: 672, width: 1.5, background: "#F3E8CC", top: y1, height: y2 - y1, transition: T("top .55s cubic-bezier(.2,.8,.2,1), height .55s cubic-bezier(.2,.8,.2,1)") }} />
           <div aria-hidden="true" style={{ position: "absolute", left: 672, top: CY, width: 48, height: 1.5, background: "#F3E8CC" }} />
           <span aria-hidden="true" style={{ position: "absolute", left: 669, width: 8, height: 8, background: "#FFCA26", top: ry - 4, transition: T("top .55s cubic-bezier(.2,.8,.2,1)") }} />
           <span aria-hidden="true" style={{ position: "absolute", left: 669, top: CY - 4, width: 8, height: 8, background: "#FFCA26" }} />
-          <div role="group" aria-label="Services" onKeyDown={(e) => onKey(e, true)} style={{ position: "absolute", left: 64, top: LT, width: 560, borderBottom: "1px solid #F3E8CC" }}>
+          <div role="group" aria-label="Services" className="lens-enter" onKeyDown={(e) => onKey(e, true)} style={{ position: "absolute", left: 64, top: LT, width: 560, borderBottom: "1px solid #F3E8CC", "--d": "80ms" } as CSSProperties}>
             {rows}
           </div>
-          <div style={{ position: "absolute", left: 64, top: 790, display: "flex", gap: 12, alignItems: "center" }}>{arrows}</div>
-          <p className="lens-nm" style={{ position: "absolute", left: 64, top: 848, fontSize: 11, letterSpacing: ".12em", width: 560, whiteSpace: "nowrap" }}>{cap1}</p>
-          <p className="lens-nm" style={{ position: "absolute", left: 64, top: 868, fontSize: 11, letterSpacing: ".12em", width: 560 }}>{cap2(content.hintDesktop)}</p>
+          <div className="lens-enter" style={{ position: "absolute", left: 64, top: 790, display: "flex", gap: 12, alignItems: "center", "--d": "100ms" } as CSSProperties}>{arrows}</div>
+          <p className="lens-nm lens-enter" style={{ position: "absolute", left: 64, top: 848, fontSize: 11, letterSpacing: ".12em", width: 560, whiteSpace: "nowrap", "--d": "115ms" } as CSSProperties}>{cap1}</p>
+          <p className="lens-nm lens-enter" style={{ position: "absolute", left: 64, top: 868, fontSize: 11, letterSpacing: ".12em", width: 560, "--d": "125ms" } as CSSProperties}>{cap2(content.hintDesktop)}</p>
           <div style={{ position: "absolute", left: 740, top: 70, width: 800, height: 800 }} data-lens="">
             {dial(false)}
           </div>
         </div>
       ) : (
         <div className="lens-m">
-          <p className="lens-nm">{content.kicker}</p>
-          <div style={{ marginTop: 14 }}>{heading(34, true)}</div>
-          <p className="lens-nl" style={{ marginTop: 12, fontSize: 15 }}>{content.intro}</p>
+          <p className="lens-nm lens-enter" style={{ "--d": "0ms" } as CSSProperties}>{content.kicker}</p>
+          <div className="lens-enter" style={{ marginTop: 14, "--d": "30ms" } as CSSProperties}>{heading(34, true)}</div>
+          <p className="lens-nl lens-enter" style={{ marginTop: 12, fontSize: 15, "--d": "55ms" } as CSSProperties}>{content.intro}</p>
           <div style={{ marginTop: 22 }}>
             <div
               role="group"
@@ -505,10 +509,10 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
               <div style={{ position: "absolute", left: 0, top: 0, width: 800, height: 800, transform: `scale(${330 / 800})`, transformOrigin: "0 0", "--tf": 2.2 } as CSSProperties}>{dial(true)}</div>
             </div>
           </div>
-          <div style={{ marginTop: 22 }}>{arrows}</div>
-          <p className="lens-nm" style={{ marginTop: 16, fontSize: 11, letterSpacing: ".12em" }}>{cap1}</p>
-          <p className="lens-nm" style={{ marginTop: 6, fontSize: 11, letterSpacing: ".12em" }}>{cap2(content.hintMobile)}</p>
-          <div role="group" aria-label="Services" onKeyDown={(e) => onKey(e, true)} style={{ marginTop: 26, borderBottom: "1px solid #F3E8CC" }}>
+          <div className="lens-enter" style={{ marginTop: 22, "--d": "80ms" } as CSSProperties}>{arrows}</div>
+          <p className="lens-nm lens-enter" style={{ marginTop: 16, fontSize: 11, letterSpacing: ".12em", "--d": "100ms" } as CSSProperties}>{cap1}</p>
+          <p className="lens-nm lens-enter" style={{ marginTop: 6, fontSize: 11, letterSpacing: ".12em", "--d": "115ms" } as CSSProperties}>{cap2(content.hintMobile)}</p>
+          <div role="group" aria-label="Services" className="lens-enter" onKeyDown={(e) => onKey(e, true)} style={{ marginTop: 26, borderBottom: "1px solid #F3E8CC", "--d": "125ms" } as CSSProperties}>
             {items.map((v, i) => {
               const on = i === sel;
               return (
