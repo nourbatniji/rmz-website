@@ -115,7 +115,6 @@ const sampler = (p, sel, f, ms, kind) => p.evaluate(([sel, f, ms, kind]) => new 
   const p = await open(D);
   const out = await sampler(p, '#minds', 0.5, 1500, 'minds'); const play = out.find((s) => s.a === 'playing'); const t0 = play.t;
   const starts = Array.from({ length: 8 }, (_, i) => { const s = out.find((q) => q.t >= t0 && q.op[i] >= 0.05); return s ? s.t : null; });
-  const diffs = starts.slice(1).map((v, i) => v - starts[i]); const avg = diffs.reduce((a, c) => a + c, 0) / diffs.length;
   const done = out.find((s) => s.t > t0 && s.op.every((o) => o > 0.995) && s.ty.every((v) => v < 0.05)); const total = done ? done.t - t0 : 9999;
   const first = out.find((s) => s.a === 'pre' || s.a === 'playing');
   const slots = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((li) => +li.style.getPropertyValue('--o')));
