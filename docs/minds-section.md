@@ -1,0 +1,25 @@
+# Minds section (`Minds`) — eight columns of minds / team members
+
+Formerly `ServiceFins` (canvas board "HOME - MINDS SECTION"). **Two separate sections**: *Services* = the lens (`ServicesLens`, id `services`); *Minds* = this eight-column section directly below it (`Minds`, id `minds`). The rename was explicitly authorised (the component had been frozen).
+Files: `src/components/home/minds/Minds.tsx`, `minds.css`. Content (typed): `homepage.minds` → `MindsContent` / `MindItem` in `src/content/types.ts`; values in `src/content/dev/homepage.ts`. CSS prefixes: `.minds-` (section) and `.mind-` (column).
+
+## Changes in this revision
+1. **Spacing**: the Services lens section was trimmed from 900 to **892 px** (its last caption ends at ≈ 884), so the columns start 8 px higher; no overlap — caption/controls stay ≥ 4 px clear of the columns (tested). Mobile top padding reduced (64 → 28 px; lens bottom padding 56 → 36 px).
+2. **Exactly eight columns**, including the open one.
+3. **Flush, full-bleed**: the list spans the full viewport width (no 1440 px max-width, no outer margins). Geometry is pure CSS using container units: `open = min(520px, 42cqw)`, `shut = (100cqw − 10px × 7 − open) / 7`; every column's `left`/`width` is derived from those, so the first column is at 0 and the last column's right edge is exactly the viewport's right edge whichever column is open (tested for every open column at 1024, 1100, 1280, 1440, 1920, 2560 px; also during the animation). The open plate is 520 px on ≥ 1240 px screens and 42 % of the width below that.
+4. **Flat junction, continuous red**: the Minds section background is the same red as the lens (#D52518); the dark gaps between columns come from the list's own dark background. The columns' drop shadow was removed (it bled onto the red), and the lens ring's *outer* drop shadow (it reached the section's bottom edge) was softened so it ends before the seam; the lens's internal shading (blades, glass vignette, highlight, ring inset) is untouched. Verified: pixels 4 px and 7 px above and 3 px below the seam are the same red.
+   > Interpretation note: the reference screenshot was not attached, so "continuous red background" was read as *the Minds section sits on the same red as the lens*. The red/dark relationship is two lines of CSS (`.minds-root` background, `.minds-list` background) if the intended look differs.
+5. **Content**: no services. Eight clearly-marked **temporary placeholders** ("Mind 01 … Mind 08", role "Role to be confirmed", biography "Placeholder: …", portraits labelled "Temporary placeholder · NN Mind NN · portrait 520×380"). `copyStatus: "placeholder"`. Nothing invented.
+6. **Behaviour preserved**: one column open at a time; `left`/`width` transition 0.7 s ease; rotated names, cream plate (portrait, number · role, name, biography), colours and typography unchanged; real `<button aria-expanded aria-controls>`; yellow focus ring; Enter/Space/click; reduced motion = no transitions.
+7. **Mobile (< 1024 px) — pending design review**: a vertical accordion (full-width 60 px headers, one open) so all eight remain readable and reachable; bars sit inside the page gutters. Touch scrolling is untouched; no horizontal overflow at 390/360/320 px.
+
+## Naming (rename map)
+`ServiceFins` → `Minds` · `serviceFins` (content key) → `minds` · `ServiceFinsContent` / `ServiceFinItem` → `MindsContent` / `MindItem` · `service-fins.css` → `minds.css` · `.fins-*` / `.fin-*` → `.minds-*` / `.mind-*` · section id `capabilities` → `minds` · header nav: Capabilities → `#services` (lens), Studio → `#minds`. The shared `services` taxonomy stays; it is used by the Services lens only. Tests moved to `docs/review/milestone-9/tests/minds-tests.mjs` (and the header/anchor suite now targets `#services` / `#minds`).
+
+## Pending content
+Approved minds: names, roles, short biographies, order and portraits (520×380, ≥ 1040×760, centred subject); caption intro copy; which column opens first; confirmation that "Studio" should point to Minds; mobile review.
+
+## Update — flat red space above the columns + entrance
+- **Space**: a flat red space (same `#D52518` as the lens) sits **above** the columns, in normal flow: `.minds-root { padding-top: 80px }` on desktop (40px below 1024px). No shadow, gradient or divider. **Nothing was added under the columns** — the section still ends exactly at their bottom edge and the next section starts immediately. Column height (760px) and the edge-to-edge width are unchanged.
+- **Entrance**: on desktop the columns grow downward from their fixed top edge as you scroll (scroll-linked clip of each whole column incl. the expanded card, fully hidden until the section top reaches 80 % of the usable viewport, shuffled per-column offsets); the mobile accordion keeps its one-shot staggered lift. See `docs/entrances.md`.
+- Mechanism and safety rules: see `docs/entrances.md`.

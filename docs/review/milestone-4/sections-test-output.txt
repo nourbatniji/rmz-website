@@ -1,0 +1,47 @@
+PASS statement is static + first word before it is in view 
+counter changes (ms since entering view): [["02 / 04",4854],["03 / 04",7861],["04 / 04",10907],["01 / 04",13911],["02 / 04",16937]]
+PASS rotation cycles 01→02→03→04→01 02→03→04→01→02
+PASS source timing: ≈3.0 s per word after the first cycle 3007, 3046, 3004, 3026 ms
+PASS first cycle ≈4.8 s (3.0 s + 1.8 s intro, as in the source) 4854 ms
+PASS NO layout shift between words: line boxes, fixed words and slot width stay identical over 3+ word swaps (samples 137) font 102.3px, slot 493.1×107.8
+PASS leaving the viewport stops rotation and resets to the static first word 01 / 04 / 01 / 04 / broken
+PASS re-entering resumes with the intro (first change ≈4.8 s) 4933 ms
+PASS hidden tab pauses the rotation and the progress bar bar paused, 02 / 04 → 02 / 04 after 5.5 s hidden
+PASS visible again: rotation resumes 02 / 04 → 03 / 04
+PASS screen readers get one static sentence; animated copy hidden; no live region RMZ, when expectations are broken, rewritten, exceeded or challenged.
+PASS reduced motion: readable static statement, no rotation/bar/counter stm-txt static in / broken
+PASS reduced motion: last word is visible (opacity 1) opacity 1
+PASS mobile 390: type ≥ 36px, fits the width, wraps, no horizontal overflow font 48.8px, right edge 370px
+PASS mobile: even "challenged" never exceeds the viewport max right 382
+PASS fins: initial composition = canvas (7 fins, 520 open + 6×143.3, 10px gaps, 760 tall, #3 open) 143.3,143.3,520,143.3,143.3,143.3,143.3
+PASS fins: solid #0F0F0E background, no stripes/textures/gradients {"c":"rgb(15, 15, 14)","img":"none","gradients":0}
+PASS fins: click #1 → only it open, correct geometry, plate readable 
+PASS fins: click #7 → only it open, correct geometry, plate readable 
+PASS fins: click #4 → only it open, correct geometry, plate readable 
+PASS fins: click #6 → only it open, correct geometry, plate readable 
+PASS fins: click #2 → only it open, correct geometry, plate readable 
+PASS fins: keyboard Enter opens the focused fin 
+PASS fins: keyboard Space opens the focused fin 
+PASS fins: visible keyboard focus ring (yellow) solid rgb(255, 202, 38)
+PASS fins: Tab visits all 7 fins in order 0,1,2,3,4,5,6
+PASS fins: 40 rapid clicks (25 ms apart) settle on the last choice with correct geometry last #5
+PASS fins: mid-transition fins stay inside the 1440 stage 
+PASS fins 1280px: fits, no overflow, closed fins 117px wide 
+PASS fins 1100px: fits, no overflow, closed fins 87px wide 
+PASS fins 1024px: fits, no overflow, closed fins 74px wide 
+PASS fins reduced motion: no transitions; state changes instantly {"fin":"0s","plate":"0s"} left of fin#2 after click=530
+PASS mobile fins: 7 horizontal headers, full width, ≥ 44 px tall, title ≥ 18 px, not rotated {"h":60,"w":350,"fs":18,"rot":"none"}
+PASS mobile fins: initial #3 open, others collapsed to 0 height 
+PASS mobile fins: tap #1 → only it open 
+PASS mobile fins: tap #7 → only it open 
+PASS mobile fins: tap #4 → only it open 
+PASS mobile fins: rapid taps settle with exactly one open (#7) 
+PASS mobile: touch-dragging over the fins scrolls the page normally scrollY 1670→2122
+PASS mobile 390px: whole page has no horizontal overflow 
+PASS mobile 360px: whole page has no horizontal overflow 
+PASS mobile 320px: whole page has no horizontal overflow 
+section order: ["Introduction","work","statement","Upcoming section · Featured ","Upcoming section · Services ","capabilities","Upcoming section · Collabora","contact"]
+PASS homepage order matches canvas: hero → corridor → statement → work → dial → fins → collab → footer Introduction | work | statement | Upcoming section · Featured  | Upcoming section · Services  | capabilities | Upcoming section · Collabora | contact
+no console or page errors
+
+42/42 passed

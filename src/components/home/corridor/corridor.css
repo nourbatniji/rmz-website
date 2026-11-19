@@ -1,0 +1,77 @@
+/*
+ * ShowreelCorridor — a three-wall video corridor (one scene for every breakpoint).
+ *
+ * Geometry (scene units, perspective 1000 px, origin 50 % 48 % of a 1440 × 1000 stage):
+ *   front wall : 1680 × 700 at z = −1500          → 2.4 : 1
+ *   side walls : 1680 × 700 (length × height), x = −120 / 1560, z from −1500 to +180 → 2.4 : 1
+ * Every wall is a real 3D plane carrying a <canvas> of the SAME video, so a 2.4 : 1 master fills all three exactly.
+ * Left wall: rotateY(90°) about its near edge → video runs left→right toward the far end (not mirrored).
+ * Right wall: rotateY(−90°) about its near edge → video's right edge is nearest the viewer (not mirrored).
+ */
+.cor-root {
+  position: relative; background: #0f0f0e; color: #f3e8cc;
+  scroll-margin-top: -16px; /* cancels the global +16px so #work lands exactly under the header = walk start */
+  --cor-total: 2500px; /* scroll distance of approach + reveal + hold (desktop: 1600 + 450 + 450) */
+}
+@media (max-width: 760px) { .cor-root { --cor-total: 3350px; } /* mobile: 2500 + 400 + 450 */ }
+.cor-nm { font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; margin: 0; }
+.cor-nk { font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; margin: 0; }
+.cor-nl { font-weight: 300; font-size: 15px; line-height: 1.55; margin: 0; }
+.cor-iv { font-family: var(--font-serif); font-style: italic; font-weight: 700; letter-spacing: -0.04em; text-transform: none; line-height: 0.9; }
+
+/* Track = scroll distance; the pin stays directly under the fixed header. Native scroll only. */
+.cor-track { position: relative; height: calc(max(100svh - var(--header-h), 520px) + var(--cor-total)); }
+.cor-pin { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); min-height: 520px; overflow: hidden; background: #0f0f0e; }
+.cor-fit { position: absolute; left: 50%; top: 0; width: 1440px; height: 1000px; margin-left: -720px; transform-origin: 50% 0; }
+.cor-world { position: absolute; inset: 0; perspective: 1000px; perspective-origin: 50% 48%; }
+.cor-scene { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; }
+.cor-wall { position: absolute; left: -120px; top: 110px; width: 1680px; height: 700px; background: #0f0f0e; }
+.cor-wall canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.cor-front { transform: translateZ(-1500px); }
+.cor-wl { transform-origin: 0 0; transform: translateZ(180px) rotateY(90deg); }
+.cor-wr { transform-origin: 100% 0; transform: translateZ(180px) rotateY(-90deg); }
+/* Side walls: subtly darker, a touch more toward the far corner and the floor/ceiling lines. Nothing else. */
+.cor-shade { position: absolute; inset: 0; pointer-events: none; }
+.cor-wl .cor-shade { background:
+  linear-gradient(180deg, rgba(15, 15, 14, 0.26), rgba(15, 15, 14, 0) 16%, rgba(15, 15, 14, 0) 84%, rgba(15, 15, 14, 0.26)),
+  linear-gradient(90deg, rgba(15, 15, 14, 0.22) 0%, rgba(15, 15, 14, 0.34) 65%, rgba(15, 15, 14, 0.58) 100%); }
+.cor-wr .cor-shade { background:
+  linear-gradient(180deg, rgba(15, 15, 14, 0.26), rgba(15, 15, 14, 0) 16%, rgba(15, 15, 14, 0) 84%, rgba(15, 15, 14, 0.26)),
+  linear-gradient(270deg, rgba(15, 15, 14, 0.22) 0%, rgba(15, 15, 14, 0.34) 65%, rgba(15, 15, 14, 0.58) 100%); }
+
+/* Approach legibility: a soft bottom fade that is gone before the front wall grows large (front video stays at full brightness). */
+.cor-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 28%; background: linear-gradient(rgba(15, 15, 14, 0), rgba(15, 15, 14, 0.78)); pointer-events: none; }
+
+/* Overlay UI in real pixels (not scaled with the scene) so type stays readable on short and narrow viewports. */
+.cor-ui { position: absolute; inset: 0; max-width: 1440px; margin: 0 auto; pointer-events: none; }
+.cor-kicker { position: absolute; left: 64px; top: 28px; color: #f3e8cc; text-shadow: 0 1px 14px rgba(0, 0, 0, 0.7); }
+.cor-lead { position: absolute; left: 64px; right: 64px; bottom: 44px; display: flex; align-items: flex-end; gap: 60px; text-shadow: 0 2px 22px rgba(0, 0, 0, 0.7); }
+.cor-lead h2 { font-size: 56px; color: #f3e8cc; flex: none; }
+.cor-lead h2 .cor-iv { display: block; color: #ffca26; font-size: 1.08em; }
+.cor-lead p { color: #f3e8cc; max-width: 380px; }
+.cor-ah { position: absolute; left: 0; right: 0; margin: 0 auto; text-align: center; color: #f3e8cc; opacity: 0; line-height: 0.95; will-change: transform, opacity; }
+.cor-ap { position: absolute; left: 0; right: 0; margin: 0 auto; text-align: center; color: rgba(243, 232, 204, 0.92); opacity: 0; will-change: transform, opacity; }
+.cor-ctl { position: absolute; right: 64px; bottom: 36px; display: flex; align-items: center; gap: 24px; pointer-events: auto; }
+.cor-sq { display: flex; gap: 10px; }
+.cor-sq span { width: 14px; height: 14px; }
+.cor-btn {
+  display: inline-flex; gap: 12px; align-items: center; justify-content: center; height: 44px; min-width: 132px; padding: 0 20px;
+  background: rgba(15, 15, 14, 0.7); color: #f3e8cc; border: 1px solid #f3e8cc; font-family: inherit; font-weight: 800; font-size: 12px;
+  letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.cor-btn:hover { background: #ffca26; color: #0f0f0e; border-color: #ffca26; }
+.cor-btn:focus-visible { outline: 2px solid #ffca26; outline-offset: 3px; }
+.cor-vid { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+@media (max-width: 760px) {
+  .cor-kicker { left: 20px; top: 20px; }
+  .cor-lead { left: 20px; right: 20px; bottom: 28px; flex-direction: column; align-items: flex-start; gap: 14px; }
+  .cor-lead h2 { font-size: clamp(34px, 10vw, 48px); }
+  .cor-lead p { max-width: 320px; font-size: 14.5px; }
+  .cor-ctl { right: 20px; bottom: 14px; gap: 16px; }
+}
+
+/* Reduced motion: no pin, no walk — the completed composition is shown directly. */
+.cor-static .cor-track { height: auto; }
+.cor-static .cor-pin { position: relative; top: 0; }
+@media (prefers-reduced-motion: reduce) { .cor-btn { transition: none; } }

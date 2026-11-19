@@ -45,3 +45,7 @@ next-env.d.ts
 /src/generated
 _to_delete
 neon-init.sql
+
+# original (full-resolution) media delivered by the content team; derivatives live in public/media
+/assets-src/*
+!/assets-src/README.md
