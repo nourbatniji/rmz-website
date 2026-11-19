@@ -55,7 +55,7 @@ function Stage({
   tabActive: boolean;
   showProgress: boolean;
 }) {
-  const { label, lead, connector, words } = statement;
+  const { lead, connector, words } = statement;
   const n = words.length;
   const [idx, setIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>(active ? "idle" : "in");
@@ -119,7 +119,6 @@ function Stage({
 
   return (
     <div className={`stm-stage ${active ? "stm-on" : "stm-st"}`}>
-      <p className="stm-lab stm-label t-meta text-xs">{label}</p>
       <div className={`stm-txt ${active ? "intro" : "static"} ${entered ? "in" : ""}`}>
         <div className="stm-ln">
           <span className="stm-lni">{lead.map((w, i) => (i ? [" ", fixed(w)] : fixed(w)))}</span>

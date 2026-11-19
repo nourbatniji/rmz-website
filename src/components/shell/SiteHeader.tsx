@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SiteContent } from "@/content/types";
 
 /**
@@ -9,6 +9,23 @@ import type { SiteContent } from "@/content/types";
  */
 export function SiteHeader({ brand, nav }: SiteContent) {
   const [open, setOpen] = useState(false);
+  // Past the hero the header gets a solid ink bar so it never sits translucent over section content.
+  // Over the hero it keeps the approved transparent gradient. Isolated to the header; hero untouched.
+  const [solid, setSolid] = useState(false);
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const hero = document.querySelector("main#top > section");
+    if (!hero) return;
+    const update = () => setSolid(hero.getBoundingClientRect().bottom <= (ref.current?.offsetHeight ?? 92));
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -28,10 +45,10 @@ export function SiteHeader({ brand, nav }: SiteContent) {
   );
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
+    <header ref={ref} className="fixed inset-x-0 top-0 z-50">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-ink/75 to-transparent md:h-36"
+        className={`pointer-events-none absolute inset-x-0 top-0 transition-opacity duration-200 ${solid ? "h-[var(--header-h)] border-b border-cream/10 bg-ink" : "h-28 bg-gradient-to-b from-ink/75 to-transparent md:h-36"}`}
       />
       <div className="relative flex items-center justify-between px-(--gutter) py-5 md:py-7">
         <a href="#top" aria-label={`${brand.name} — home`} className="block">

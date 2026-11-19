@@ -63,8 +63,6 @@ export type SiteContent = {
 
 /** Statement: a fixed sentence whose final word rotates. Timing/animation live in code. */
 export type StatementContent = {
-  /** Small label above the statement (e.g. "Statement"). */
-  label: string;
   /** Fixed words of the first line, e.g. ["RMZ,", "when", "expectations"]. */
   lead: string[];
   /** Fixed words before the rotating word on the second line, e.g. ["are"]. */

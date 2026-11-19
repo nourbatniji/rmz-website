@@ -24,6 +24,8 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 ### Homepage (internal names by behaviour; see docs/homepage-sections.md for label mismatches)
 - [x] Design tokens + typography (Figtree, Playfair Display)
 - [x] Site shell + header
+- [x] Header overlap fix (scroll-padding + solid bar past hero), design-note copy removed, fin label contrast fixed, hero regression suite updated for the photographic banner (see docs/header-offsets.md, docs/content-flags.md)
+- [ ] DECISIONS PENDING: approve provisional Capabilities intro; decide the single source for the repeated services list (dial vs fins vs footer); hero headline/intro copy ("One wall. Three faces.", "Scroll to move the picture…") still reads like design notes
 - [x] 1. HeroWall — per-banner image sequences driven by GLOBAL page-scroll progress; 5 s auto banner change (pause control); dev sequences in public/media/dev until real assets arrive
 - [ ] Content team: continuous source video or coherent frame sequence for each hero banner (six keyframes are test imagery only)
 - HeroWall is the APPROVED BASELINE (docs/hero-baseline.md): no further visual/behavioural changes unless explicitly requested

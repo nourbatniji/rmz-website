@@ -19,12 +19,14 @@
 :root {
   color-scheme: dark;
   --gutter: 1.25rem; /* mobile gutter — NOT yet design-approved */
+  --header-h: 84px; /* measured height of the fixed header (py-5 + 44px menu button) */
 }
 @media (min-width: 768px) {
-  :root { --gutter: 4rem; } /* 64px, as on the approved desktop canvas */
+  :root { --gutter: 4rem; --header-h: 92px; } /* 64px gutter as on the approved desktop canvas; header measured 92px */
 }
 
-html { background: var(--color-ink); }
+/* Anchor jumps and keyboard-focus scrolling land BELOW the fixed header (not applied to scroll animations). */
+html { background: var(--color-ink); scroll-padding-top: calc(var(--header-h) + 16px); }
 body {
   background: var(--color-ink);
   color: var(--color-cream);

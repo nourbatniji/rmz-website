@@ -70,7 +70,6 @@ export const devHomepageContent: HomepageContent = {
   },
   // Copy below is taken verbatim from the approved canvas (board "HOME - TEXT SECTION").
   statement: {
-    label: "Statement",
     lead: ["RMZ,", "when", "expectations"],
     connector: ["are"],
     words: ["broken", "rewritten", "exceeded", "challenged"],
@@ -79,9 +78,9 @@ export const devHomepageContent: HomepageContent = {
   // PROVISIONAL / REPEATED — see docs/content-flags.md: items 01–07 repeat the services dial's copy; the intro
   // sentence describes the design mechanic; images are not delivered (placeholders are shown).
   serviceFins: {
-    label: "Capabilities — fins of one wall",
+    label: "Capabilities",
     intro:
-      "Eight services hang from the top like architectural fins. Select one: it unrolls into a plate. Colour blocks echo the logo.",
+      "Brand identities, campaigns and digital experiences, from strategy to production. Select a service to see what it covers.",
     initialOpenId: "creative-direction",
     items: [
       {
