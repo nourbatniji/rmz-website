@@ -29,7 +29,6 @@ for (const [name, vp] of [['desktop 1440', { width: 1440, height: 900 }], ['tabl
   for (let i = 0; i < n; i++) {
     await p.evaluate((i) => { document.querySelectorAll('.fin-cover')[i].focus(); }, i); await sleep(120);
     const r = await p.evaluate((i) => { const e = document.querySelectorAll('.fin-cover')[i].getBoundingClientRect(); return [e.top, e.bottom]; }, i);
-    const vh = vp.height; const visibleTop = Math.max(r[0], H); // the focused control must start at/below header
     if (r[0] < H - 1 && r[1] > H) bad.push(i); // partially under header
   }
   ok(`${name}: keyboard-focused fins never sit under the header`, bad.length === 0, bad.join(','));

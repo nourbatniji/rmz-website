@@ -24,7 +24,7 @@ const down=[],bad=[]; const ys=[]; for(let y=0;y<=1260;y+=12) ys.push(y);
 for(const y of ys){await goto(y,80); const mm=await match(0); const f=mm.idx.length===1?mm.idx[0]:-1; down.push(f); if(f!==expIdx(y)) bad.push(`${y}:${f}≠${expIdx(y)}`);} await sleep(300);
 ok('slow scroll: every step shows the expected keyframe on ALL ribs (106 samples)', bad.length===0, bad.slice(0,5).join(' '));
 const seen=[...new Set(down)]; ok('opening passes through all 6 keyframes in order 1→6', JSON.stringify(seen.slice(0,6))==='[0,1,2,3,4,5]', 'sequence seen: '+down.filter((v,i)=>i===0||v!==down[i-1]).map(v=>v+1).join('→'));
-const pk=down.indexOf(5); ok('ping-pong: peak frame 6 at y=720, then 5 (no jump to frame 1)', down[ys.indexOf(720)]===5 && down[ys.indexOf(732)]===5 && down[ys.indexOf(840)]===4, `y=720:${down[ys.indexOf(720)]+1} y=840:${down[ys.indexOf(840)]+1} y=1260:${down[down.length-1]+1}`);
+ok('ping-pong: peak frame 6 at y=720, then 5 (no jump to frame 1)', down[ys.indexOf(720)]===5 && down[ys.indexOf(732)]===5 && down[ys.indexOf(840)]===4, `y=720:${down[ys.indexOf(720)]+1} y=840:${down[ys.indexOf(840)]+1} y=1260:${down[down.length-1]+1}`);
 // no jump anywhere
 let mx=0;for(let i=1;i<down.length;i++)mx=Math.max(mx,Math.abs(down[i]-down[i-1])); ok('never skips more than one keyframe between 12px samples', mx<=1, 'max step '+mx);
 // hold

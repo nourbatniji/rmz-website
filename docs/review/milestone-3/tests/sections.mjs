@@ -45,7 +45,7 @@ const word=p=>p.evaluate(()=>{const l=document.querySelector('.stm-lw.in, .stm-l
   ok('reduced motion: last word is visible (opacity 1)', vis==='1', 'opacity '+vis); await p.close(); }
 // ───────── STATEMENT mobile ─────────
 { const p=await open({width:390,height:844,isMobile:true,hasTouch:true}); const st=await secTop(p,'#statement'); await p.evaluate(y=>scrollTo(0,y),st); await sleep(2800);
-  const r=await p.evaluate(()=>{const t=document.querySelector('.stm-txt');const fs=parseFloat(getComputedStyle(t).fontSize);const lines=[...document.querySelectorAll('.stm-ln')].map(l=>l.getBoundingClientRect());return {fs,right:Math.max(...[...document.querySelectorAll('.stm-lni')].map(e=>e.getBoundingClientRect().right)),ow:document.documentElement.scrollWidth>innerWidth,wrap:document.querySelector('.stm-root').classList.contains('stm-wrap')};});
+  const r=await p.evaluate(()=>{const t=document.querySelector('.stm-txt');const fs=parseFloat(getComputedStyle(t).fontSize);return {fs,right:Math.max(...[...document.querySelectorAll('.stm-lni')].map(e=>e.getBoundingClientRect().right)),ow:document.documentElement.scrollWidth>innerWidth,wrap:document.querySelector('.stm-root').classList.contains('stm-wrap')};});
   ok('mobile 390: type ≥ 36px, fits the width, wraps, no horizontal overflow', r.fs>=36&&r.right<=390&&!r.ow&&r.wrap, `font ${r.fs}px, right edge ${Math.round(r.right)}px`);
   // longest word fits at every swap
   let maxr=0; for(let i=0;i<14;i++){ await sleep(500); maxr=Math.max(maxr,await p.evaluate(()=>Math.max(...[...document.querySelectorAll('.stm-lw .stm-lt')].map(e=>e.getBoundingClientRect().right)))); }
@@ -85,7 +85,7 @@ const word=p=>p.evaluate(()=>{const l=document.querySelector('.stm-lw.in, .stm-l
   let s=await st(); ok('mobile fins: initial #3 open, others collapsed to 0 height', s[2].open&&s[2].ph>200&&s.filter((x,i)=>i!==2).every(x=>x.ph===0));
   for(const i of [0,6,3]){ const hs=await p.$$('.fin-cover'); await hs[i].evaluate(e=>e.scrollIntoView({block:'center'})); await sleep(350); const box=await hs[i].boundingBox(); await p.touchscreen.tap(box.x+box.width/2,box.y+box.height/2); await sleep(900); s=await st(); ok(`mobile fins: tap #${i+1} → only it open`, s[i].open&&s[i].ph>200&&s.filter(x=>x.exp==='true').length===1&&s.filter((x,j)=>j!==i).every(x=>x.ph===0)); await p.evaluate(()=>scrollTo(0,document.querySelector('#capabilities').getBoundingClientRect().top+scrollY-70)); await sleep(300); }
   // rapid taps
-  const hs=await p.$$('.fin-cover'); for(const i of [1,5,2,7,0,4,3,6]){ await p.evaluate((i)=>document.querySelectorAll('.fin-cover')[i].click(),i); await sleep(40);} await sleep(900); s=await st(); ok('mobile fins: rapid taps settle with exactly one open (#7)', s[6].open&&s.filter(x=>x.exp==='true').length===1&&s.filter((x,j)=>j!==6).every(x=>x.ph===0));
+  for(const i of [1,5,2,7,0,4,3,6]){ await p.evaluate((i)=>document.querySelectorAll('.fin-cover')[i].click(),i); await sleep(40);} await sleep(900); s=await st(); ok('mobile fins: rapid taps settle with exactly one open (#7)', s[6].open&&s.filter(x=>x.exp==='true').length===1&&s.filter((x,j)=>j!==6).every(x=>x.ph===0));
   // normal vertical scroll by touch drag across the fins
   const y0=await p.evaluate(()=>scrollY); await p.touchscreen.touchStart(200,600); for(let i=1;i<=10;i++){await p.touchscreen.touchMove(200,600-i*30);await sleep(16);} await p.touchscreen.touchEnd(); await sleep(500); const y1=await p.evaluate(()=>scrollY);
   ok('mobile: touch-dragging over the fins scrolls the page normally', y1>y0+100, `scrollY ${y0}→${y1}`);

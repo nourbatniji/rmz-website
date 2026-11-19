@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer-core';
 const URL='http://localhost:3113/';
-const BASE=[30,150,250], N=[6,36,64];
+const N=[6,36,64];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const b=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:'new'});
 const p=await b.newPage(); await p.setViewport({width:1440,height:900});
@@ -89,7 +89,7 @@ ok('auto: cycle 1→2→3→1', ev.length>=3 && ev[0][0]===1&&ev[1][0]===2&&ev[2
 ok('auto: next change = 5s settled + ~1.8s transition', ev[1]&&Math.abs((ev[1][1]-ev[0][1])-6800)<500, ev[1]&&(ev[1][1]-ev[0][1])+'ms');
 // manual resets timer
 await p.click('button[aria-label$="automatic banner changes"]'); await chip(0); await p.click('button[aria-label$="automatic banner changes"]');
-const m0=Date.now(); await sleep(4000); const mid=(await st()).active; await p.click(`[role=group] button:nth-child(3)`); const m1=Date.now(); let a0=2, tn=null; // manual to banner 3
+await sleep(4000); await p.click(`[role=group] button:nth-child(3)`); const m1=Date.now(); let a0=2, tn=null; // manual to banner 3
 while(Date.now()-m1<9000){ await sleep(100); const a=(await st()).active; if(a!==a0){ tn=Date.now()-m1; break; } }
 ok('manual selection resets timer (next auto ≈6.8s after click, not sooner)', tn>6200&&tn<7600, tn+'ms');
 // pause stops, tab hidden pauses
