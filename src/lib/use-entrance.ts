@@ -18,11 +18,15 @@ import { useEffect, useLayoutEffect, type RefObject } from "react";
  */
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-export function useEntrance(ref: RefObject<HTMLElement | null>, { threshold = 0.3, playMs = 1000 }: { threshold?: number; playMs?: number } = {}) {
+export function useEntrance(
+  ref: RefObject<HTMLElement | null>,
+  { threshold = 0.3, playMs = 1000, mediaQuery }: { threshold?: number; playMs?: number; mediaQuery?: string } = {},
+) {
   useIsoLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || typeof IntersectionObserver === "undefined") return;
+    if (mediaQuery && !window.matchMedia(mediaQuery).matches) return; // only where this entrance applies (checked at load)
     if (el.id && window.location.hash === `#${el.id}`) return; // direct navigation: never land on hidden content
 
     let state: "pre" | "playing" | "done" = "pre";
@@ -106,5 +110,5 @@ export function useEntrance(ref: RefObject<HTMLElement | null>, { threshold = 0.
       teardown();
       if (state !== "done") el.dataset.entrance = "done"; // unmounting (or strict-mode re-run): never leave content hidden
     };
-  }, [ref, threshold, playMs]);
+  }, [ref, threshold, playMs, mediaQuery]);
 }

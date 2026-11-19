@@ -21,6 +21,5 @@ Approved minds: names, roles, short biographies, order and portraits (520×380, 
 
 ## Update — flat red space above the columns + entrance
 - **Space**: a flat red space (same `#D52518` as the lens) sits **above** the columns, in normal flow: `.minds-root { padding-top: 80px }` on desktop (40px below 1024px). No shadow, gradient or divider. **Nothing was added under the columns** — the section still ends exactly at their bottom edge and the next section starts immediately. Column height (760px) and the edge-to-edge width are unchanged.
-- **Entrance** (`useEntrance`, plays once per page load): the eight columns lift 28px and fade in, staggered left → right 50ms apart (whole sequence ≈ 0.95s). Mobile accordion: 16px lift, 35ms stagger (≈ 0.7s). Only `opacity` and `translate` animate — widths, positions and the open column never change; no shadows; the section's own overflow clip only trims the (transparent) lift. Easing `cubic-bezier(.25,.85,.3,1)`, no bounce.
+- **Entrance**: on desktop the columns grow downward from their fixed top edge as you scroll (scroll-linked clip, shuffled per-column offsets, ≈ 450px range); the mobile accordion keeps its one-shot staggered lift. See `docs/entrances.md`.
 - Mechanism and safety rules: see `docs/entrances.md`.
-- **Desktop reveal order is shuffled** (once per page load, 50 ms apart; mobile unchanged) — see `docs/entrances.md`.

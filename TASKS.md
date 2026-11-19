@@ -72,3 +72,4 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [x] Minds section (rename of ServiceFins): exactly eight full-bleed columns, flat continuous-red junction with the lens. **Pending:** approved minds content (names, roles, biographies, portraits, order), Studio nav mapping, mobile review.
 - [x] Minds: 80px/40px flat red space above the columns (nothing below); one-shot entrances for the Services lens and Minds (docs/entrances.md). **For visual approval.**
 - [x] StatementRotator: progress bar removed (counter kept); rotation interval 2000ms start-to-start (docs/statement-section.md).
+- [x] Minds desktop entrance reworked: scroll-linked downward reveal (replaces the timed lift/fade); mobile accordion unchanged (docs/entrances.md). **For visual approval.**

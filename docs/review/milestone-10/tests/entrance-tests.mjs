@@ -21,17 +21,15 @@ const sampler = (p, sel, f, ms, kind) => p.evaluate(([sel, f, ms, kind]) => new 
 // ───────── A. start state, thresholds, layout reserved ─────────
 {
   const p = await open(D);
-  const a0 = await attr(p); const pre = await p.evaluate(() => ({ lens: [...document.querySelectorAll('#services .lens-enter')].map((e) => +getComputedStyle(e).opacity), cols: [...document.querySelectorAll('#minds .mind')].map((e) => +getComputedStyle(e).opacity), sh: document.documentElement.scrollHeight, lensH: document.querySelector('#services').getBoundingClientRect().height, mindsH: document.querySelector('#minds').getBoundingClientRect().height, list: [...document.querySelectorAll('#minds .mind')].map((e) => Math.round(e.getBoundingClientRect().left) + ':' + Math.round(e.getBoundingClientRect().width)).join() }));
-  ok('both entrances wait offscreen: start state applied after hydration, nothing plays while the sections are below the fold', a0[0] === 'pre' && a0[1] === 'pre' && pre.lens.every((o) => o === 0) && pre.cols.every((o) => o === 0), JSON.stringify(a0));
+  const a0 = await attr(p); const pre = await p.evaluate(() => ({ lens: [...document.querySelectorAll('#services .lens-enter')].map((e) => +getComputedStyle(e).opacity), sh: document.documentElement.scrollHeight, lensH: document.querySelector('#services').getBoundingClientRect().height, mindsH: document.querySelector('#minds').getBoundingClientRect().height, list: [...document.querySelectorAll('#minds .mind')].map((e) => Math.round(e.getBoundingClientRect().left) + ':' + Math.round(e.getBoundingClientRect().width)).join(), reveal: document.querySelector('#minds').dataset.reveal }));
+  ok('lens waits offscreen (start state after hydration); Minds uses the scroll-linked reveal on desktop (no timed entrance)', a0[0] === 'pre' && pre.lens.every((o) => o === 0) && a0[1] == null && pre.reveal === 'on', JSON.stringify([a0, pre.reveal]));
   await reach(p, '#services', 0.2); await sleep(500); const s20 = await lensNow(p);
   ok('lens does NOT start while only ~20 % is visible below the header', s20.a === 'pre' && s20.op === 0, s20.a);
   await reach(p, '#services', 0.45); await sleep(1500); const s45 = await lensNow(p);
   ok('lens starts once a meaningful portion (≥ 30 %) is visible, then completes', s45.a === 'done' && s45.op === 1, s45.a);
-  await reach(p, '#minds', 0.2); await sleep(500); const m20 = await p.evaluate(() => [document.querySelector('#minds').dataset.entrance, +getComputedStyle(document.querySelector('#minds .mind')).opacity]);
-  ok('Minds does NOT start while only ~20 % is visible', m20[0] === 'pre' && m20[1] === 0, m20.join());
-  await reach(p, '#minds', 0.45); await sleep(1700);
-  const post = await p.evaluate(() => ({ cols: [...document.querySelectorAll('#minds .mind')].map((e) => +getComputedStyle(e).opacity), sh: document.documentElement.scrollHeight, lensH: document.querySelector('#services').getBoundingClientRect().height, mindsH: document.querySelector('#minds').getBoundingClientRect().height, list: [...document.querySelectorAll('#minds .mind')].map((e) => Math.round(e.getBoundingClientRect().left) + ':' + Math.round(e.getBoundingClientRect().width)).join() }));
-  ok('Minds completes; the page never changed size: document height, section heights and column geometry identical before and after (no layout shift)', post.cols.every((o) => o === 1) && post.sh === pre.sh && post.lensH === pre.lensH && post.mindsH === pre.mindsH && post.list === pre.list, JSON.stringify([pre.sh, post.sh]));
+  await reach(p, '#minds', 0.45); await sleep(800);
+  const post = await p.evaluate(() => ({ sh: document.documentElement.scrollHeight, lensH: document.querySelector('#services').getBoundingClientRect().height, mindsH: document.querySelector('#minds').getBoundingClientRect().height, list: [...document.querySelectorAll('#minds .mind')].map((e) => Math.round(e.getBoundingClientRect().left) + ':' + Math.round(e.getBoundingClientRect().width)).join() }));
+  ok('the page never changes size: document height, section heights and column geometry identical before and after the lens entrance and the Minds reveal (no layout shift)', post.sh === pre.sh && post.lensH === pre.lensH && post.mindsH === pre.mindsH && post.list === pre.list, JSON.stringify([pre.sh, post.sh]));
   const pos = await p.evaluate(() => ['#services', '#minds'].map((s) => getComputedStyle(document.querySelector(s)).position));
   ok('native scrolling only: neither section is pinned/sticky', pos.every((v) => v === 'relative'), pos.join());
   const sl = await open(D); await reach(sl, '#services', 0.15); await sleep(2300); const slS = await lensNow(sl);
@@ -84,58 +82,26 @@ const sampler = (p, sel, f, ms, kind) => p.evaluate(([sel, f, ms, kind]) => new 
   const p = await open(D); await reach(p, '#services', 0.5); await sleep(1500); await reach(p, '#minds', 0.5); await sleep(1500);
   await p.evaluate(() => scrollTo(0, 0)); await sleep(500); const top = await attr(p);
   const rep = await sampler(p, '#services', 0.6, 700, 'lens');
-  ok('plays once per page load: scrolling back up and down again does not replay or hide content', top[0] === 'done' && top[1] === 'done' && rep.every((s) => s.a === 'done' && s.op === 1 && s.rot === 0 && s.ty === 0), JSON.stringify(top));
-  await p.setViewport({ width: 1100, height: 800 }); await sleep(700); await p.setViewport(D); await sleep(700); ok('resizing after the entrance does not replay it', (await attr(p)).every((a) => a === 'done')); await p.close();
+  ok('lens plays once per page load: scrolling back up and down again does not replay or hide content', top[0] === 'done' && rep.every((s) => s.a === 'done' && s.op === 1 && s.rot === 0 && s.ty === 0), JSON.stringify(top));
+  await p.setViewport({ width: 1100, height: 800 }); await sleep(700); await p.setViewport(D); await sleep(700); ok('resizing after the entrance does not replay it', (await attr(p))[0] === 'done'); await p.close();
   const f = await open(D); await f.evaluate(() => scrollTo(0, document.documentElement.scrollHeight)); await sleep(350); const fa = await attr(f);
   ok('fast scroll straight past the lens (to the bottom of the page): it completes instantly, with no animation continuing offscreen', ['instant', 'done'].includes(fa[0]), fa.join());
   await f.evaluate(() => scrollTo(0, 0)); await sleep(400);
   const lens2 = await sampler(f, '#services', 0.6, 400, 'lens');
   ok('scrolling back to the lens later shows its final content with no delayed animation', lens2.every((s) => s.a === 'done' && s.op === 1 && s.rot === 0 && s.ty === 0), lens2[0].a);
   await f.close();
-  const f2 = await open(D); await reach(f2, '#minds', 0.45); await sleep(110); await f2.evaluate(() => scrollTo(0, 0)); await sleep(350);
-  const fm = await f2.evaluate(() => [document.querySelector('#minds').dataset.entrance, [...document.querySelectorAll('#minds .mind')].map((e) => +getComputedStyle(e).opacity)]);
-  ok('leaving Minds mid-entrance (fast scroll away): it completes immediately instead of continuing offscreen', ['instant', 'done'].includes(fm[0]) && fm[1].every((o) => o === 1), fm[0]);
-  const back = await sampler(f2, '#minds', 0.6, 400, 'minds'); ok('…and returning shows final columns with no delayed animation', back.every((s) => s.a === 'done' && s.op.every((o) => o === 1) && s.ty.every((v) => v === 0))); await f2.close();
   const g = await open(D); await reach(g, '#services', 0.5); await sleep(120); await g.evaluate(() => { const e = document.querySelector('#minds'); scrollTo(0, scrollY + e.getBoundingClientRect().bottom + 600); }); await sleep(120);
   ok('passing the lens quickly mid-entrance completes it immediately', ['instant', 'done'].includes((await attr(g))[0]) && (await lensNow(g)).op === 1); await g.close();
   const h = await open(D, { hash: '#services' }); const ha = await attr(h); const ho = await lensNow(h);
   ok('direct load on #services: no entrance, content visible at once', !['pre', 'playing'].includes(ha[0]) && ho.op === 1 && ho.rot === 'none', ha.join()); await h.close();
   const h2 = await open(D, { hash: '#minds' }); const hm = await h2.evaluate(() => [document.querySelector('#minds').dataset.entrance, +getComputedStyle(document.querySelector('#minds .mind')).opacity]);
   ok('direct load on #minds: columns visible at once', hm[0] !== 'pre' && hm[1] === 1, hm.join()); await h2.close();
-  const n = await open(D); await n.evaluate(() => document.querySelector('header nav a[href="#minds"]').click()); await sleep(100); const na = await n.evaluate(() => [document.querySelector('#minds').dataset.entrance, +getComputedStyle(document.querySelector('#minds .mind')).opacity]);
-  ok('navigation (Studio → #minds) lands on visible columns, not a pending animation', ['instant', 'done'].includes(na[0]) && na[1] === 1, na.join()); await sleep(900); const nt = await n.evaluate(() => document.querySelector('#minds').getBoundingClientRect().top); ok('…and the anchor lands below the header', nt >= 90, String(nt)); await n.close();
+  const n = await open(D); await n.evaluate(() => document.querySelector('header nav a[href="#minds"]').click()); await sleep(1000); const na = await n.evaluate(() => { const l = document.querySelector('.minds-list').getBoundingClientRect(); return [l.top, +document.querySelector('.minds-list').style.getPropertyValue('--rp')]; });
+  ok('navigation (Studio → #minds) lands on a state-by-position: the reveal is already well advanced (no pending animation)', na[1] >= 0.8, na.join()); const nt = await n.evaluate(() => document.querySelector('#minds').getBoundingClientRect().top); ok('…and the anchor lands below the header', nt >= 90, String(nt)); await n.close();
   const n2 = await open(D); await n2.evaluate(() => document.querySelector('header nav a[href="#services"]').click()); await sleep(100); const nb = await lensNow(n2); ok('navigation (Capabilities → #services) lands on visible content', ['instant', 'done'].includes(nb.a) && nb.op === 1 && nb.rot === 'none', nb.a); await n2.close();
-  const k = await open(D); await k.evaluate(() => document.querySelectorAll('#minds .mind-cover')[0].focus()); await sleep(60); const ka = await k.evaluate(() => [document.querySelector('#minds').dataset.entrance, +getComputedStyle(document.querySelector('#minds .mind')).opacity]);
-  ok('keyboard focus into Minds never lands on hidden content', ['instant', 'done'].includes(ka[0]) && ka[1] === 1, ka.join()); await k.close();
+  const k = await open(D); await k.evaluate(() => { const l = document.querySelector('.minds-list').getBoundingClientRect(); scrollTo(0, scrollY + l.top - 700); }); await sleep(300); await k.evaluate(() => document.querySelectorAll('#minds .mind-cover')[4].focus({ preventScroll: true })); await sleep(100); const ka = await k.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((m) => getComputedStyle(m).clipPath));
+  ok('keyboard focus into a partly revealed column reveals it fully (clip removed); the others stay as they were', ka[4] === 'none' && ka.filter((c, i) => i !== 4).every((c) => c !== 'none'), ka.join(' | ')); await k.close();
   const k2 = await open(D); await k2.evaluate(() => document.querySelectorAll('#services [data-row]')[3].focus()); await sleep(60); const kb = await lensNow(k2); ok('keyboard focus into the lens never lands on hidden content', ['instant', 'done'].includes(kb.a) && kb.op === 1 && kb.rot === 'none'); await k2.close();
-}
-
-// ───────── E. Minds desktop entrance ─────────
-{
-  const p = await open(D);
-  const out = await sampler(p, '#minds', 0.5, 1500, 'minds'); const play = out.find((s) => s.a === 'playing'); const t0 = play.t;
-  const starts = Array.from({ length: 8 }, (_, i) => { const s = out.find((q) => q.t >= t0 && q.op[i] >= 0.05); return s ? s.t : null; });
-  const done = out.find((s) => s.t > t0 && s.op.every((o) => o > 0.995) && s.ty.every((v) => v < 0.05)); const total = done ? done.t - t0 : 9999;
-  const first = out.find((s) => s.a === 'pre' || s.a === 'playing');
-  const slots = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((li) => +li.style.getPropertyValue('--o')));
-  const sorted = [...starts].sort((a, c) => a - c); const sd = sorted.slice(1).map((v, i) => v - sorted[i]); const savg = sd.reduce((a, c) => a + c, 0) / sd.length; const rank = starts.map((v) => starts.filter((x) => x < v).length);
-  ok(`each of the eight columns starts exactly once, in a shuffled order: slots ${slots.join(',')} form a permutation of 0–7 and the observed start order matches them`, starts.every((v) => v !== null) && new Set(slots).size === 8 && slots.every((v) => v >= 0 && v <= 7) && rank.join() === slots.join(), `starts ${starts.map((v) => Math.round(v)).join(',')} rank ${rank.join(',')}`);
-  ok(`starts are ≈ 50 ms apart in that order (${savg.toFixed(0)} ms average, every gap 30–75 ms)`, savg >= 42 && savg <= 62 && sd.every((d) => d > 30 && d < 75), sd.map(Math.round).join());
-  ok('every column rises exactly once (offset only ever decreases: no restart, no duplicate animation)', out.every((s2, i) => i === 0 || s2.ty.every((v, k) => v <= out[i - 1].ty[k] + 0.01)));
-  ok(`whole sequence in ${Math.round(total)} ms (< ~1 s)`, total <= 1050 && out[out.length - 1].a === 'done', `${Math.round(total)}ms`);
-  ok(`small upward reveal: start offset ${first.ty[0]}px (24–32px), opacity 0 → 1, no shadows`, first.ty.every((v) => v >= 24 && v <= 32) && first.op.every((o) => o === 0) && out.every((s) => s.sh.every((x) => x === 'none')));
-  const l0 = out[0].l, w0 = out[0].w; const devL = Math.max(...out.map((s) => Math.max(...s.l.map((v, i) => Math.abs(v - l0[i]))))); const devW = Math.max(...out.map((s) => Math.max(...s.w.map((v, i) => Math.abs(v - w0[i])))));
-  ok(`widths and positions never animate during the entrance (max drift ${devL.toFixed(2)} / ${devW.toFixed(2)} px) and heights stay 760`, devL < 0.5 && devW < 0.5 && out.every((s) => s.h.every((h) => Math.abs(h - 760) < 0.5)));
-  ok('active column preserved: the third column is open before, during and after (nothing opens or closes)', out.every((s) => s.open.join() === 'false,false,true,false,false,false,false,false'));
-  const mono = out.every((s, i) => i === 0 || s.op.every((o, k) => o >= out[i - 1].op[k] - 0.005)); ok('opacity only increases (no flash, no bounce)', mono);
-  const clip = await p.evaluate(() => { const c = document.querySelector('#minds .mind-open'); const cr = c.getBoundingClientRect(); const t = [...c.querySelectorAll('.mind-kicker, .mind-h, .mind-d')].map((e) => e.getBoundingClientRect()); return t.every((r) => r.left >= cr.left - 0.5 && r.right <= cr.right + 0.5 && r.top >= cr.top - 0.5 && r.bottom <= cr.bottom + 0.5); });
-  ok('expanded content not clipped (kicker, name and biography fully inside the open column)', clip);
-  const ex = await p.evaluate(() => { const m = document.querySelector('#minds'); const l = document.querySelector('.minds-list'); return [m.getBoundingClientRect().bottom - l.getBoundingClientRect().bottom, m.nextElementSibling.getBoundingClientRect().top - m.getBoundingClientRect().bottom]; });
-  ok('bottom edge still meets the next section immediately after the entrance', Math.abs(ex[0]) < 0.5 && Math.abs(ex[1]) < 0.5, ex.join());
-  await p.close();
-  const q = await open(D); await reach(q, '#minds', 0.5); await sleep(150); await (await q.$$('#minds .mind-cover'))[5].click(); await sleep(60); const qa = await q.evaluate(() => [document.querySelector('#minds').dataset.entrance, [...document.querySelectorAll('#minds .mind')].map((e) => +getComputedStyle(e).opacity)]);
-  ok('interacting with a column during the entrance finishes it instantly; the click opens that column normally', ['instant', 'done'].includes(qa[0]) && qa[1].every((o) => o === 1)); await sleep(1000); ok('…and the clicked column is the open one', await q.evaluate(() => document.querySelectorAll('#minds .mind')[5].classList.contains('mind-open')));
-  await q.close();
 }
 
 // ───────── E2. the shuffle: generated once per page load, different between loads ─────────
@@ -146,10 +112,10 @@ const sampler = (p, sel, f, ms, kind) => p.evaluate(([sel, f, ms, kind]) => new 
   ok('the order is genuinely shuffled: it differs between page loads and is not the left-to-right order', new Set(orders.map((o) => o.join())).size >= 3 && orders.some((o) => o.join() !== '0,1,2,3,4,5,6,7'), orders.map((o) => o.join('')).join(' | '));
   const p = await open(D); const geom = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.width), e.querySelector('.mind-title').textContent, e.classList.contains('mind-open')].join(':'); }).join('|'));
   const idx = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((e) => e.style.getPropertyValue('--i')).join());
-  ok('only the reveal order is random: column positions, content order (Mind 01 → 08), indices and the active (third) column are untouched', idx === '0,1,2,3,4,5,6,7' && /:Mind 01:false\|.*:Mind 03:true\|.*:Mind 08:false$/.test(geom) && geom.split('|').map((g) => g.split(':')[2]).join() === Array.from({ length: 8 }, (_, i) => `Mind 0${i + 1}`).join(), geom);
-  await reach(p, '#minds', 0.45); await sleep(160);
-  const targets = await p.evaluate(() => [...new Set(document.getAnimations().filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('#minds')).map((a) => a.effect.target.className.split(' ')[0]))]);
-  ok('whole-column animation: the only animated elements are the .mind columns themselves (background and content move as one, nothing animates inside them)', targets.length > 0 && targets.every((t) => t === 'mind'), targets.join());
+  ok('only the reveal offsets are random: column positions, content order (Mind 01 → 08), indices and the active (third) column are untouched', idx === '0,1,2,3,4,5,6,7' && /:Mind 01:false\|.*:Mind 03:true\|.*:Mind 08:false$/.test(geom) && geom.split('|').map((g) => g.split(':')[2]).join() === Array.from({ length: 8 }, (_, i) => `Mind 0${i + 1}`).join(), geom);
+  for (const y of [700, 560, 420, 300]) { await p.evaluate((y) => { const l = document.querySelector('.minds-list').getBoundingClientRect(); scrollTo(0, scrollY + l.top - y); }, y); await sleep(120); }
+  const anims = await p.evaluate(() => document.getAnimations().filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('#minds')).length);
+  ok('no timed playback at all while the reveal runs: zero CSS animations/transitions on the Minds section during scrolling', anims === 0, String(anims));
   await p.close();
 }
 
@@ -181,9 +147,9 @@ const sampler = (p, sel, f, ms, kind) => p.evaluate(([sel, f, ms, kind]) => new 
   for (const [name, vp] of [['desktop', D], ['mobile', M]]) {
     const p = await open(vp, { rm: true }); const a = await attr(p); const s = await lensNow(p); const m = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((e) => [+getComputedStyle(e).opacity, getComputedStyle(e).translate]));
     ok(`reduced motion (${name}): final state immediately — no start state, rotation, blade movement, translation or stagger`, a.every((x) => !x || x === 'done') && s.op === 1 && s.rot === 'none' && s.ty === 'none' && Math.abs(s.blade - 37.7) < 0.5 && m.every((c) => c[0] === 1 && c[1] === 'none'), JSON.stringify([a, s.rot, s.ty]));
-    const tr = await p.evaluate(() => ({ e: getComputedStyle(document.querySelector('#services .lens-enter')).transitionDuration, m: getComputedStyle(document.querySelector('#minds .mind')).transitionDuration })); ok(`reduced motion (${name}): no entrance transitions exist`, /^0s/.test(tr.e) && /^0s/.test(tr.m), JSON.stringify(tr)); await p.close();
+    const tr = await p.evaluate(() => ({ e: getComputedStyle(document.querySelector('#services .lens-enter')).transitionDuration, m: getComputedStyle(document.querySelector('#minds .mind')).transitionDuration })); ok(`reduced motion (${name}): no scroll reveal either — no data-reveal, columns not clipped`, await p.evaluate(() => !document.querySelector('#minds').dataset.reveal && [...document.querySelectorAll('#minds .mind')].every((m) => getComputedStyle(m).clipPath === 'none'))); ok(`reduced motion (${name}): no entrance transitions exist`, /^0s/.test(tr.e) && /^0s/.test(tr.m), JSON.stringify(tr)); await p.close();
   }
-  const j = await open(D, { js: false }); const jv = await j.evaluate(() => ({ lens: [...document.querySelectorAll('#services .lens-enter')].every((e) => +getComputedStyle(e).opacity === 1), cols: [...document.querySelectorAll('#minds .mind')].every((e) => +getComputedStyle(e).opacity === 1 && getComputedStyle(e).translate === 'none'), a: [document.querySelector('#services').dataset.entrance, document.querySelector('#minds').dataset.entrance], n: document.querySelectorAll('#minds .mind').length }));
-  ok('JavaScript off: server markup is the final state — all content visible, no hidden start state', jv.lens && jv.cols && jv.a.every((x) => !x) && jv.n === 8, JSON.stringify(jv)); await j.close();
+  const j = await open(D, { js: false }); const jv = await j.evaluate(() => ({ lens: [...document.querySelectorAll('#services .lens-enter')].every((e) => +getComputedStyle(e).opacity === 1), cols: [...document.querySelectorAll('#minds .mind')].every((e) => +getComputedStyle(e).opacity === 1 && getComputedStyle(e).translate === 'none'), a: [document.querySelector('#services').dataset.entrance, document.querySelector('#minds').dataset.entrance], n: document.querySelectorAll('#minds .mind').length, clip: [...document.querySelectorAll('#minds .mind')].every((e) => getComputedStyle(e).clipPath === 'none') && !document.querySelector('#minds').dataset.reveal }));
+  ok('JavaScript off: server markup is the final state — all content visible, no hidden start state, columns not clipped', jv.lens && jv.cols && jv.a.every((x) => !x) && jv.n === 8 && jv.clip, JSON.stringify(jv)); await j.close();
 }
 console.log(`\n${pass}/${tot} passed`); await b.close(); process.exit(pass === tot ? 0 : 1);

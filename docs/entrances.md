@@ -19,10 +19,21 @@ One shared hook, `src/lib/use-entrance.ts`, drives both. It sets a `data-entranc
 - **No JS**: the server markup is the final state; nothing is hidden.
 
 ## Timing
-Lens ≈ 0.9s (ring 0.85s, blades 0.52s, text 0.8s + ≤125ms stagger). Minds ≈ 0.95s desktop (50ms × 8 slots + 0.6s), ≈ 0.7s mobile (35ms × 8 + 0.45s). Curve `cubic-bezier(.25,.85,.3,1)` — fast start, long deceleration, no overshoot.
+Lens ≈ 0.9s (ring 0.85s, blades 0.52s, text 0.8s + ≤125ms stagger). Minds **mobile accordion** ≈ 0.7s (35ms × 8 + 0.45s). Curve `cubic-bezier(.25,.85,.3,1)` — fast start, long deceleration, no overshoot. (Minds on desktop is not timed at all — see the scroll-linked reveal below.)
 
 ## Tests
 `docs/review/milestone-10/tests/entrance-tests.mjs` (frame-sampled timing/easing, thresholds, interaction during the entrance, once-only, fast scroll, anchors, focus, reduced motion, JS-off, layout stability, mobile) and the updated `minds-tests.mjs` (spacing).
 
-## Minds desktop reveal order (shuffled)
-On desktop the eight columns start in a **shuffled order**: one random permutation per page load (module-level in `Minds.tsx`, Fisher–Yates), applied after hydration as a per-column `--o` custom property (slot 0…7 → `--o × 50ms` start delay). Each column has exactly one slot, so it animates exactly once with no duplicates. Only the reveal order is random — positions (`--l`/`--w`), content order, `--i` and the active column are untouched. The whole column (the `.mind` list item: background and content) is the animated element — nothing inside it animates separately. The server markup, reduced motion, JS-off and the **mobile accordion** (which keeps the top→bottom `--i` order, 35 ms) are unchanged; movement distance (28px), opacity, duration (0.6s) and easing are as before.
+## Minds on desktop: scroll-linked downward reveal (replaces the timed entrance)
+The eight columns **grow downward from their fixed top edge as the page scrolls**, as if emerging from the red Services section. There is no timer, fade, lift or `useEntrance` involvement on desktop — the state is a pure function of the scroll position, so stopping holds the exact partial state, scrolling back retracts along the same path, and any jump (anchor, fast scroll, reload) shows the right state at once.
+
+- **Mechanism** (`Minds.tsx`, `minds.css`): columns are laid out at their final size from the start (nothing reflows); each is clipped from the bottom with `clip-path: inset(0 0 (1 − p) × 100% 0)` — never scaled, translated or faded — so surface, text, portrait and biography are revealed together. `p` runs from 8% (short stubs attached to the junction) to 100%.
+- **Scroll window**: JS sets one number, `--rp` (0…1), on the list from a passive rAF-coalesced scroll listener (also on resize): `rp = clamp((L0 − listTop) / D, 0, 1)` with `D = clamp(50% of the viewport height, 380, 500)` px (450 at 900px) and `L0 = vh + D − 760 − 20`. `L0` is chosen so the growing front stays **inside the viewport** during the whole range (otherwise it would happen below the fold): the reveal completes with the list top ≈ 120px from the viewport top, i.e. with the complete section on screen. Before `L0` (the boundary has just arrived) only the stubs show.
+- **Irregular, shuffled growth**: each column has one slot 0…7 of a single shuffled permutation per page load (module-level, stored as `--o`, stable through reverse scrolling). Column *i* grows while `rp ∈ [0.04·slot, 0.04·slot + 0.72]`, so earlier slots lead; all finish by `rp = 1`.
+- **Unrevealed area** is the dark list background (the same dark as the page/next section), never red; the 80px red space above the columns stays seamless with the lens.
+- **Interaction**: expansion (`left`/`width`) is independent of the clip. `:focus-within` removes the clip from a column, so keyboard focus is never on hidden content (the others keep following the scroll).
+- **Safeguards**: `data-reveal="on"` is set only by JS, only ≥ 1024px and without reduced motion; JS-off, reduced motion and the mobile accordion get the complete layout. No scroll locking, wheel capture or added scroll distance; the section height is reserved (840px) from the start.
+- **Mobile accordion unchanged**: it keeps the one-shot `useEntrance` (16px lift, 35ms top→bottom stagger).
+
+## Tests
+`docs/review/milestone-10/tests/entrance-tests.mjs` (lens entrance, mobile accordion entrance, interaction, once-only, fast scroll, anchors, focus, reduced motion, JS-off) and `docs/review/milestone-13/tests/reveal-tests.mjs` (pixel-measured reveal: start stubs, forward/reverse path equality, holding, ≈450px range, irregular shuffled growth, completion, fast jumps, no transform/opacity/animation, layout reserved, interaction, focus, other viewports, reduced motion, JS-off, mobile).

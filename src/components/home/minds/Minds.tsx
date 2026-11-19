@@ -16,14 +16,16 @@ import { useEntrance } from "@/lib/use-entrance";
  * number + name + role + biography). Geometry is pure CSS from the item count (container units), so nothing overflows whichever
  * column is open. Each column is a real <button> (Enter/Space/click) with aria-expanded.
  *
+ * Desktop entrance: the columns grow DOWNWARD from their fixed top edge as the page scrolls (scroll-linked clip, shuffled per-column offsets).
+ *
  * Below 1024 px (MOBILE PASS — pending design review) the columns become a vertical accordion so all eight stay readable and
  * reachable without eight narrow columns; same single-open behaviour. Normal vertical scrolling throughout.
  * Until approved names/roles/biographies/portraits exist, entries are labelled temporary placeholders.
  */
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-// The desktop entrance reveals the columns in a SHUFFLED order. One permutation per page load (module-level, so remounts/strict mode reuse it):
-// each column gets exactly one slot 0…n−1 (slot × 50 ms = its start delay). Only the reveal order is random — never positions, content or state.
+// Desktop scroll reveal: each column has its own slot 0…n−1 in ONE shuffled permutation per page load (module-level, so remounts/strict mode reuse it).
+// The slot only offsets when that column starts/finishes growing (irregular, not left→right) — never positions, content or state.
 let revealOrder: number[] | null = null;
 function getRevealOrder(n: number): number[] {
   if (revealOrder && revealOrder.length === n) return revealOrder;
@@ -36,6 +38,10 @@ function getRevealOrder(n: number): number[] {
   return a;
 }
 
+const DESKTOP = "(min-width: 1024px)";
+const REDUCED = "(prefers-reduced-motion: reduce)";
+const clamp = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
+
 export function Minds({ content }: { content: MindsContent }) {
   const { items } = content;
   const uid = useId();
@@ -44,12 +50,54 @@ export function Minds({ content }: { content: MindsContent }) {
   const n = items.length;
   const rootRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  // Applied imperatively after hydration (as `--o`, desktop only reads it): the server markup and the mobile accordion keep the index order.
+  // Desktop scroll-linked reveal. The columns are laid out at their FINAL size from the start (nothing reflows); each is clipped from the bottom
+  // (clip-path, never scaled/translated/faded) with its top edge fixed at the junction. `--rp` (0…1) is a pure function of the scroll position:
+  // stopping holds the exact state, scrolling back retracts along the same path, jumping anywhere shows the right state. No timers, no animation.
+  // The window starts when the list top reaches `L0` and lasts `D` px of ordinary scrolling, positioned so the growing front stays inside the
+  // viewport (otherwise the effect would happen below the fold). Nothing is applied for reduced motion, mobile, or without JS (server markup = complete).
   useIsoLayoutEffect(() => {
+    const root = rootRef.current;
+    const list = listRef.current;
+    if (!root || !list) return;
     const order = getRevealOrder(n);
-    listRef.current?.querySelectorAll<HTMLElement>(":scope > li").forEach((li, i) => li.style.setProperty("--o", String(order[i])));
+    list.querySelectorAll<HTMLElement>(":scope > li").forEach((li, i) => li.style.setProperty("--o", String(order[i])));
+    const desktop = window.matchMedia(DESKTOP);
+    const reduced = window.matchMedia(REDUCED);
+    let raf = 0;
+    const apply = () => {
+      raf = 0;
+      if (!desktop.matches || reduced.matches) {
+        root.removeAttribute("data-reveal");
+        list.style.removeProperty("--rp");
+        return;
+      }
+      root.dataset.reveal = "on";
+      const vh = window.innerHeight;
+      const H = list.offsetHeight; // the final column height (reserved from the start)
+      const D = clamp(Math.round(vh * 0.5), 380, 500); // scroll distance of the whole reveal
+      const L0 = vh + D - H - 20; // list-top position (px from the viewport top) at which growth begins
+      const rp = clamp((L0 - list.getBoundingClientRect().top) / D, 0, 1);
+      list.style.setProperty("--rp", rp.toFixed(4));
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    apply();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    desktop.addEventListener("change", schedule);
+    reduced.addEventListener("change", schedule);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      desktop.removeEventListener("change", schedule);
+      reduced.removeEventListener("change", schedule);
+      root.removeAttribute("data-reveal");
+      list.style.removeProperty("--rp");
+    };
   }, [n]);
-  useEntrance(rootRef); // one-shot staggered column reveal (opacity + small lift only) — see minds.css
+  useEntrance(rootRef, { mediaQuery: "(max-width: 1023.98px)" }); // mobile accordion only: unchanged one-shot staggered lift (see minds.css)
 
   return (
     <section ref={rootRef} id="minds" aria-labelledby={`${uid}-h`} className="minds-root">

@@ -52,8 +52,7 @@
   }
   .mind {
     position: absolute; top: 0; height: 100%; left: var(--l); width: var(--w); z-index: 4; cursor: pointer;
-    transition: left 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
-      opacity 0.6s cubic-bezier(0.25, 0.85, 0.3, 1) calc(var(--o, var(--i, 0)) * 50ms), translate 0.6s cubic-bezier(0.25, 0.85, 0.3, 1) calc(var(--o, var(--i, 0)) * 50ms);
+    transition: left 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .mind-open { z-index: 5; }
   .mind-cover { box-shadow: inset -10px 0 12px -10px rgba(15, 15, 14, 0.35); position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; display: block; padding: 0;
@@ -72,11 +71,20 @@
   .mind-h { font-size: 36px; }
 }
 
-/* ── Entrance (data-entrance set by useEntrance; absent = final state). Opacity + a small upward lift only: widths/positions never animate,
-   nothing opens or closes, no shadows. Desktop: the whole column (background + content) starts in a SHUFFLED order, one slot per column, 50 ms apart (--o, ≈ 0.95 s total).
-   Mobile: unchanged, top → bottom 35 ms apart (--i, ≈ 0.7 s). ── */
-.minds-root[data-entrance="pre"] .mind { opacity: 0; translate: 0 16px; }
-@media (min-width: 1024px) { .minds-root[data-entrance="pre"] .mind { translate: 0 28px; } }
+/* ── Desktop: scroll-linked downward reveal (data-reveal="on" is set by JS only when motion is allowed on ≥ 1024 px; absent = complete layout).
+   Every column keeps its final size and top edge; only its bottom is clipped. --rp (0…1, from the scroll position, set on the list) drives it;
+   each column's slot --o (a shuffled permutation, once per page load) offsets its start/end: it grows during rp ∈ [0.04·slot, 0.04·slot + 0.72],
+   from 8 % of its height to 100 %. Whole column (surface + content) is clipped together; nothing scales, translates or fades. ── */
+.minds-root[data-reveal="on"] .mind {
+  --s: calc(var(--o, 0) * 0.04);
+  --q: clamp(0, (var(--rp, 1) - var(--s)) / 0.72, 1);
+  --p: calc(0.08 + 0.92 * var(--q));
+  clip-path: inset(0 0 calc((1 - var(--p)) * 100%) 0);
+}
+.minds-root[data-reveal="on"] .mind:focus-within { clip-path: none; } /* a focused column is always fully visible */
+
+/* ── Mobile accordion entrance (data-entrance set by useEntrance, < 1024 px only; absent = final state): opacity + a 16 px lift, top → bottom 35 ms apart. ── */
+@media (max-width: 1023.98px) { .minds-root[data-entrance="pre"] .mind { opacity: 0; translate: 0 16px; } }
 .minds-root[data-entrance="instant"] .mind { transition: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
