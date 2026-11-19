@@ -62,3 +62,5 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [ ] Media storage provider
 - [ ] Email provider for the contact form
 - [x] Lenis smooth scroll — decided: **no** for now
+
+- [x] Shared 7-service taxonomy (Branding, Creative Strategy, Content Production, Social Media, Design, Paid Media, Web Experiences) applied to ServiceFins; Lens + footer must use it (docs/content-flags.md). Fin copy provisional.

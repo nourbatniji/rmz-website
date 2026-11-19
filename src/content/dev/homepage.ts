@@ -74,82 +74,32 @@ export const devHomepageContent: HomepageContent = {
     connector: ["are"],
     words: ["broken", "rewritten", "exceeded", "challenged"],
   },
-  // Copy below is taken verbatim from the approved canvas (board "HOME - MINDS SECTION", actually services fins).
-  // PROVISIONAL / REPEATED — see docs/content-flags.md: items 01–07 repeat the services dial's copy; the intro
-  // sentence describes the design mechanic; images are not delivered (placeholders are shown).
+  // APPROVED service taxonomy (client-confirmed names and order). Single source of truth for every section.
+  services: [
+    { id: "branding", name: "Branding" },
+    { id: "creative-strategy", name: "Creative Strategy" },
+    { id: "content-production", name: "Content Production" },
+    { id: "social-media", name: "Social Media" },
+    { id: "design", name: "Design" },
+    { id: "paid-media", name: "Paid Media" },
+    { id: "web-experiences", name: "Web Experiences" },
+  ],
+  // Service fins. Names/order come from `services`; descriptions here are PROVISIONAL build-team copy written for
+  // the new taxonomy (the old eight-service descriptions were not carried over) — pending client approval.
+  // Images are not delivered (labelled placeholders are shown). See docs/content-flags.md.
   serviceFins: {
     label: "Capabilities",
     intro:
       "Brand identities, campaigns and digital experiences, from strategy to production. Select a service to see what it covers.",
-    initialOpenId: "creative-direction",
+    initialOpenId: "content-production",
     items: [
-      {
-        id: "brand-strategy",
-        number: "01",
-        title: "Brand Strategy",
-        description:
-          "Positioning, naming and the idea a brand stands on. We start wide, with the whole market in frame.",
-        image: null,
-        imagePosition: "50% 40%",
-      },
-      {
-        id: "brand-identity",
-        number: "02",
-        title: "Brand Identity",
-        description: "Marks, systems, type and guidelines. One distinctive detail, drawn so it works everywhere.",
-        image: null,
-        imagePosition: "50% 40%",
-      },
-      {
-        id: "creative-direction",
-        number: "03",
-        title: "Creative Direction",
-        description:
-          "One point of view across every frame, format and channel. We set the direction, then keep it consistent from the first sketch to the last post.",
-        image: null,
-        imagePosition: "50% 25%",
-      },
-      {
-        id: "advertising-campaigns",
-        number: "04",
-        title: "Advertising & Campaigns",
-        description: "Campaign ideas, scripts and production. One idea, carried across coordinated executions.",
-        image: null,
-        imagePosition: "50% 40%",
-      },
-      {
-        id: "digital-experiences",
-        number: "05",
-        title: "Digital Experiences",
-        description: "Websites and interactive work, designed for the screen they will be seen on.",
-        image: null,
-        imagePosition: "50% 40%",
-      },
-      {
-        id: "content-production",
-        number: "06",
-        title: "Content & Production",
-        description: "Photo, film and social content, shot close enough to see the craft.",
-        image: null,
-        imagePosition: "50% 20%",
-      },
-      {
-        id: "growth-marketing",
-        number: "07",
-        title: "Growth & Marketing",
-        description: "Media performance and measurement, so the work reaches the people it was made for.",
-        image: null,
-        imagePosition: "50% 36%",
-      },
-      {
-        id: "packaging-print",
-        number: "08",
-        title: "Packaging & Print",
-        description:
-          "Packaging, print and physical touchpoints, finished with the same care as the screen.",
-        image: null,
-        imagePosition: "50% 40%",
-      },
+      { serviceId: "branding", description: "Identity, naming and the visual system a brand is built on, designed to hold up everywhere it appears.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
+      { serviceId: "creative-strategy", description: "The idea and the direction behind the work: where a brand stands, who it speaks to and how it should sound.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
+      { serviceId: "content-production", description: "Photo, film and written content, produced close enough to see the craft and made to run across channels.", copyStatus: "provisional", image: null, imagePosition: "50% 25%" },
+      { serviceId: "social-media", description: "Social presence planned, created and managed, so a brand shows up consistently where its audience already is.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
+      { serviceId: "design", description: "Layouts, campaign visuals and design assets for screen and print, finished with care.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
+      { serviceId: "paid-media", description: "Paid campaigns planned and measured, so the work reaches the people it was made for.", copyStatus: "provisional", image: null, imagePosition: "50% 36%" },
+      { serviceId: "web-experiences", description: "Websites and interactive work, designed and built for the screen they will be seen on.", copyStatus: "provisional", image: null, imagePosition: "50% 40%" },
     ],
   },
 };

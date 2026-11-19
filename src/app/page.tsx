@@ -10,7 +10,7 @@ import { getHomepageContent } from "@/lib/content/homepage";
  * Sections not built yet are compact dev markers (DevSectionPlaceholder).
  */
 export default async function Home() {
-  const { hero, statement, serviceFins } = await getHomepageContent();
+  const { hero, statement, services, serviceFins } = await getHomepageContent();
   return (
     <main id="top">
       <HeroWall hero={hero} />
@@ -18,7 +18,7 @@ export default async function Home() {
       <StatementRotator statement={statement} />
       <DevSectionPlaceholder label="Featured work (canvas “About”)" />
       <DevSectionPlaceholder label="Services dial" />
-      <ServiceFins content={serviceFins} />
+      <ServiceFins content={serviceFins} services={services} />
       <DevSectionPlaceholder label="Collaborations" />
       <DevSectionPlaceholder id="contact" label="Footer" />
     </main>

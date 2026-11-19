@@ -71,12 +71,23 @@ export type StatementContent = {
   words: string[];
 };
 
-export type ServiceFinItem = {
+/**
+ * The ONE shared service taxonomy (approved names and order). Every section that lists services (fins, Lens
+ * selector, footer, nav, future CMS) takes names/order/ids from here; sections add their own copy and media.
+ */
+export type ServiceTaxonomyItem = {
+  /** Stable id — never change once published; other content references it. */
   id: string;
-  /** Two-digit label, e.g. "01". */
-  number: string;
-  title: string;
+  name: string;
+};
+
+export type ServiceFinItem = {
+  /** References `ServiceTaxonomyItem.id`. Title and number come from the taxonomy (name + position). */
+  serviceId: string;
+  /** Section-specific copy. Not shared with other sections. */
   description: string;
+  /** "provisional" = written by the build team, not approved by the client. */
+  copyStatus: "approved" | "provisional";
   /** `null` until delivered — a labelled development placeholder is shown. */
   image: ImageRef | null;
   /** CSS object-position for the cropped image, e.g. "50% 40%". */
@@ -87,8 +98,9 @@ export type ServiceFinItem = {
 export type ServiceFinsContent = {
   label: string;
   intro: string;
-  /** Id of the fin open on first render. */
+  /** Service id of the fin open on first render. */
   initialOpenId: string;
+  /** One entry per service, in taxonomy order. */
   items: ServiceFinItem[];
 };
 
@@ -96,5 +108,6 @@ export type HomepageContent = {
   site: SiteContent;
   hero: HeroContent;
   statement: StatementContent;
+  services: ServiceTaxonomyItem[];
   serviceFins: ServiceFinsContent;
 };

@@ -15,9 +15,9 @@ All copy below comes verbatim from the approved canvas and lives in `src/content
 | Canvas label "Capabilities — fins of one wall" and intro "Eight services hang from the top like architectural fins…" | **Replaced** (they described the design mechanic). Now: label "Capabilities", intro "Brand identities, campaigns and digital experiences, from strategy to production. Select a service to see what it covers." — **PROVISIONAL, pending approval.** Grounded in the hero intro ("brand identities, campaigns and digital experiences") and the service titles; "from strategy to production" is drawn from services 01 and 06. Needs client sign-off. |
 | Plate placeholder text "Dev placeholder · NN Title · image 520×380" | Visible only while images are missing; disappears when `image` is set. Not copy. |
 | Hero intro "…Scroll to move the picture. Turn the wall to see each face." and headline "One wall. Three faces." | Also read like design notes (approved canvas copy; HeroWall is frozen and was not touched). **Decision pending** — see report. |
-| Services 01–07 (titles and descriptions) | **REPEATED**: the same services/descriptions also appear in the "Services dial" board (canvas board 5). Descriptions are identical except **Creative Direction** (fins: "…We set the direction, then keep it consistent from the first sketch to the last post." vs dial: "…from first sketch to last post."). Decide ONE source of truth; the CMS should likely share one services list between both sections. Nothing was merged in this milestone. |
-| Service 08 "Packaging & Print" | Exists only in the fins (dial has seven). Confirm it is a real service. |
-| Service images (8) | **Missing** — canvas images could not be exported. Labelled placeholders at 520×380 (≈1.37:1) are shown. |
+| ~~Old services 01–07 / 08 descriptions~~ — **SUPERSEDED** by the approved taxonomy below. (Historical:) | **REPEATED**: the same services/descriptions also appear in the "Services dial" board (canvas board 5). Descriptions are identical except **Creative Direction** (fins: "…We set the direction, then keep it consistent from the first sketch to the last post." vs dial: "…from first sketch to last post."). Decide ONE source of truth; the CMS should likely share one services list between both sections. Nothing was merged in this milestone. |
+| "Packaging & Print" | **Removed** as a standalone service. It may later become a deliverable under Design — no copy added yet. |
+| Service images (7) | **Missing** — canvas images could not be exported. Labelled placeholders at 520×380 (≈1.37:1) are shown. |
 | Footer "What we do" list (5 items) | Third list of services in the canvas (different wording) — also to be reconciled. |
 
 No business claims were added or invented.
@@ -26,3 +26,14 @@ No business claims were added or invented.
 - **Fixed:** the "NN · Service" label is now ink `#0F0F0E` on cream (≈15.7:1). Orange `#F86015` stays as a short decorative bar before the label. Palette unchanged.
 - **Fixed:** fixed-header overlap — see `docs/header-offsets.md`.
 - Open: the orange `#F86015` numerals/accents elsewhere are decorative only; any new small orange-on-cream text must use ink.
+
+## Approved service taxonomy (client-confirmed)
+Branding · Creative Strategy · Content Production · Social Media · Design · Paid Media · Web Experiences — in exactly this order.
+Single source: `services` in `src/content/dev/homepage.ts` (`ServiceTaxonomyItem {id, name}`; ids are stable: `branding`, `creative-strategy`, `content-production`, `social-media`, `design`, `paid-media`, `web-experiences`). Fin titles/numbers are derived from it.
+- Fin descriptions are **PROVISIONAL** build-team copy (`copyStatus: "provisional"`) for the new names. Old descriptions/images were NOT carried over (the old list does not map 1:1). Pending client approval.
+- Initially open fin: Content Production (3rd, matching the canvas's 3rd-open composition) — provisional.
+- Per-section copy/media stay separate: do not auto-repeat identical descriptions across sections.
+- **Required content for the unbuilt Lens (services) section:** use this taxonomy (names, order, ids). Its descriptions/media are its own and still to be supplied. The earlier "dial vs fins" repeated-copy question is closed for names; descriptions are per section.
+- **Footer** (unbuilt): list services from the same taxonomy; the old five-item "What we do" list is superseded.
+- Nav: "Capabilities" → `#capabilities` unchanged (no per-service nav items are implemented).
+- CMS: edit `services` (name/order) once; each section edits only its own description/media keyed by `serviceId`.

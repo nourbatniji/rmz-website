@@ -10,7 +10,7 @@ Mismatches are recorded for separate confirmation of final labels; they do not b
 | 3 | HOME - TEXT SECTION | Rotating-word statement | `StatementRotator` | built |
 | 4 | HOME - ABOUT SECTION | **Selected work**: pinned, 6 demo projects, case overlay (no about copy) | `FeaturedWorkFocus` | todo |
 | 5 | HOME - SERVICES SECTION | Rotating dial of 7 "focal lengths" (services) | `ServicesDial` | todo |
-| 6 | HOME - MINDS SECTION | **Services**: 8 expanding fins (not team profiles) | `ServiceFins` | built (placeholders for images) |
+| 6 | HOME - MINDS SECTION | **Services**: 7 expanding fins from the shared service taxonomy (not team profiles) | `ServiceFins` | built (placeholders for images) |
 | 7 | A · The Collective (CollabA) | "Good …" collaborations / partner logos | `Collaborations` | todo |
 | 8 | RMZ · Footer | Contact CTA + columns | `SiteFooter` | todo |
 

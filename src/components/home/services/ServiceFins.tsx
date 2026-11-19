@@ -2,10 +2,10 @@
 
 import "./service-fins.css";
 import { useId, useState, type CSSProperties } from "react";
-import type { ServiceFinsContent } from "@/content/types";
+import type { ServiceFinsContent, ServiceTaxonomyItem } from "@/content/types";
 
 /**
- * ServiceFins — eight services as architectural "fins" (approved canvas: "HOME - MINDS SECTION").
+ * ServiceFins — the shared service taxonomy (seven services) as architectural "fins" (approved canvas: "HOME - MINDS SECTION").
  *
  * One fin is open at a time. Desktop (≥1024px): closed fins are solid RMZ-red strips with a vertical title;
  * the open fin unrolls into a cream plate (image + number + title + description). Geometry is pure CSS from the
@@ -15,8 +15,13 @@ import type { ServiceFinsContent } from "@/content/types";
  * readable and targets are ≥ 60px tall; same single-open behaviour. Normal vertical scrolling throughout.
  * Missing imagery renders a labelled development placeholder with the correct proportions.
  */
-export function ServiceFins({ content }: { content: ServiceFinsContent }) {
-  const { items } = content;
+export function ServiceFins({ content, services }: { content: ServiceFinsContent; services: ServiceTaxonomyItem[] }) {
+  // Titles and numbers come from the shared taxonomy (name + position); only services with a fin entry are shown.
+  const byId = new Map(content.items.map((c) => [c.serviceId, c]));
+  const items = services.flatMap((s, i) => {
+    const c = byId.get(s.id);
+    return c ? [{ ...c, id: s.id, title: s.name, number: String(i + 1).padStart(2, "0") }] : [];
+  });
   const uid = useId();
   const initial = Math.max(0, items.findIndex((i) => i.id === content.initialOpenId));
   const [sel, setSel] = useState(initial);
