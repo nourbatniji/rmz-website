@@ -11,6 +11,32 @@ pnpm lint && pnpm typecheck && pnpm build
 Homepage content is read only through `src/lib/content/homepage.ts` (development content in `src/content/dev/`).
 Missing media -> labelled dev placeholders; see `docs/asset-checklist.md`, `docs/homepage-sections.md`, `TASKS.md`.
 
+## Admin dashboard
+
+The studio manager lives under `/admin` (full guide: `docs/admin-dashboard.md`). It has no public sign-in page and no public sign-up.
+
+**Environment variables** (copy `.env.example` to `.env`; never commit `.env`):
+
+| Variable | What it is |
+| --- | --- |
+| `DATABASE_URL` | Neon Postgres connection string |
+| `SESSION_SECRET` | Long random string that signs admin sessions |
+| `ADMIN_ENTRY` | Long random word: the private sign-in address is `/enter/<ADMIN_ENTRY>` |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob read-write token, needed for image and video uploads |
+
+**Signing in:** `/admin` and `/admin/login` answer 404 to anyone who is not signed in. Open `http://localhost:3000/enter/<ADMIN_ENTRY>` (bookmark it).
+In production, with `ADMIN_ENTRY` unset, nobody can reach the sign-in page. Locally, with it unset, `/admin/login` works.
+
+**Adding an admin (there is no sign-up page):** run this in the project folder, then send the person the private address and their password through a safe channel.
+
+```bash
+pnpm admin:create new.person@example.com "a password of 12+ characters" "Their Name"
+```
+
+- It creates the account in whichever database `DATABASE_URL` points to. Check which one before you run it.
+- Running it again for an existing email resets that person's password.
+- Each person signs in with their own email and password.
+
 ## Getting Started
 
 First, run the development server:

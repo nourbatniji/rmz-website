@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { SiteHeader } from "@/components/shell/SiteHeader";
-import { getHomepageContent } from "@/lib/content/homepage";
 
 const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"], display: "swap" });
 const playfair = Playfair_Display({
@@ -21,14 +19,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: "#0F0F0E" };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const { site } = await getHomepageContent();
+/** Root layout: fonts and document only. The public site header lives in the (site) group; /admin has its own shell. */
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${figtree.variable} ${playfair.variable} h-full antialiased`}>
-      <body className="min-h-full">
-        <SiteHeader brand={site.brand} nav={site.nav} />
-        {children}
-      </body>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

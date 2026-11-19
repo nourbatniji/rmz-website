@@ -11,7 +11,7 @@
 }
 
 /* ── Pinned stage: the track reserves the whole scroll distance up front (no layout jump); the stage sticks below the fixed header. ── */
-.fw-flip { --fw-step: max(360px, 50svh); }
+.fw-flip { --fw-step: max(300px, 40svh); }
 .fw-track { position: relative; height: calc(100svh - var(--header-h) + var(--fw-n) * var(--fw-step)); }
 .fw-stage { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); overflow: hidden; background: #0f0f0e; }
 .fw-root:not([data-ready]) .fw-wall { visibility: hidden; }
@@ -116,3 +116,6 @@
 @media (min-width: 768px) {
   .fw-st-item { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 40px; align-items: center; }
 }
+
+/* Mouse mode: the step is state, not scroll — no reserved scroll distance (see FeaturedWorkFocus). */
+.fw-root[data-nav] .fw-track { height: calc(100svh - var(--header-h)); }

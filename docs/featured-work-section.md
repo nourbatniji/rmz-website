@@ -28,3 +28,8 @@ Project names, categories and fill colours are the canvas's **demo** entries; de
 
 ## Tests
 `docs/review/milestone-16/tests/featured-work-tests.mjs` (41 checks: reserved layout, pinning and header clearance, angle = 180° × ease at 7 positions forward and reverse, one visible face / no bleed-through / not mirrored, proportions, hold, smoothing, fast jumps, full sequence, no capture, keyboard, controls, accessibility, resizing, other viewports, mobile flip + slide, reduced motion, JS off, CLS) and `record-featured-work.mjs` (screenshots + recordings).
+
+## Scroll model (current)
+Desktop with a mouse / trackpad (`(hover: hover) and (pointer: fine)`, ≥1024 px): the step position is state, the track has no reserved scroll
+distance (`.fw-root[data-nav]`), and one wheel gesture over the cards = one step (`src/lib/use-wheel-steps.ts`); elsewhere and at the first / last step the
+page scrolls normally. Touch / small screens keep the scroll-linked pinned stage described above.
