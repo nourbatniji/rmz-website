@@ -8,9 +8,12 @@ import { useMedia, useTabHidden } from "@/lib/use-media";
 /**
  * StatementRotator — a fixed sentence whose final word rotates (approved canvas: "HOME - TEXT SECTION").
  *
- * Timing is the source timing: the whole sentence animates in once (intro), then every ~3 s only the last
- * word leaves (letters exit at 2.3 s) and the next enters (swap at 3.0 s). The first cycle is 1.8 s longer
- * because of the intro, exactly as in the source.
+ * The whole sentence animates in once (intro), then only the last word rotates: every 2000 ms (measured from one
+ * transition START to the next, drift-free) its letters exit, the next word swaps in 620 ms later and its letters
+ * enter. Exit (≈ 0.56 s) and entrance (≈ 1.1 s) always finish before the next exit starts, so animations never
+ * overlap. The first transition is 1.8 s later because of the intro, as in the source. (The original source ran a
+ * 3 s cycle; the per-letter staggers were tightened — exit 26→16 ms, entrance 55→30 ms — to fit 2 s. The style —
+ * slide / skew / blur, springy entrance — is unchanged.) The "NN / NN" counter stays; there is no progress bar.
  *
  * - Runs only while the section is ≥45 % visible AND the tab is active; leaving the viewport returns it to a
  *   static first-word state, re-entering replays the intro (as in the source). A hidden tab pauses in place.
@@ -24,17 +27,19 @@ import { useMedia, useTabHidden } from "@/lib/use-media";
 const BASE = 260; // first fixed word delay (ms)
 const STEP = 120; // delay between fixed words (ms)
 const FIRST_EXTRA = 1800; // intro lengthens the first cycle
-const OUT_AT = 2300;
-const SWAP_AT = 3000;
-const CYCLE = 3000;
+const CYCLE = 2000; // transition start → next transition start (ms)
+const EXIT_TO_SWAP = 620; // exit letters finish (≤ 0.42 s + 9 × 16 ms ≈ 0.56 s), then the next word swaps in
+const HOLD = CYCLE - EXIT_TO_SWAP; // swap → next exit start
+const ENTER_STEP = 30; // per-letter entrance stagger while rotating (the intro keeps the source's 55 ms)
+const EXIT_STEP = 16; // per-letter exit stagger
 
 const joinWords = (w: string[]) => (w.length < 2 ? w.join("") : `${w.slice(0, -1).join(", ")} or ${w[w.length - 1]}`);
 
-function Letters({ word, enter, exit }: { word: string; enter: number; exit: number }) {
+function Letters({ word, enter, exit, step }: { word: string; enter: number; exit: number; step: number }) {
   return (
     <>
       {word.split("").map((c, j) => (
-        <span key={j} className="stm-lt" style={{ "--d": `${enter + j * 55}ms`, "--x": `${exit + j * 26}ms` } as CSSProperties}>
+        <span key={j} className="stm-lt" style={{ "--d": `${enter + j * step}ms`, "--x": `${exit + j * EXIT_STEP}ms` } as CSSProperties}>
           {c}
         </span>
       ))}
@@ -48,12 +53,12 @@ function Stage({
   statement,
   active,
   tabActive,
-  showProgress,
+  showCounter,
 }: {
   statement: StatementContent;
   active: boolean;
   tabActive: boolean;
-  showProgress: boolean;
+  showCounter: boolean;
 }) {
   const { lead, connector, words } = statement;
   const n = words.length;
@@ -62,6 +67,7 @@ function Stage({
   const [entered, setEntered] = useState(!active);
   const [looped, setLooped] = useState(false); // false during the first (intro) cycle
   const phaseRef = useRef<Phase>(active ? "idle" : "in");
+  const nextExit = useRef(0); // performance.now() time at which the next exit must START (advanced by exactly CYCLE: no drift)
 
   // Intro: start from the hidden state, then add `.in` two frames later so the transitions play.
   useEffect(() => {
@@ -83,23 +89,28 @@ function Stage({
   // Word cycle. Re-runs on every word change; pausing (hidden tab) clears the timers, resuming reschedules.
   useEffect(() => {
     if (!active || !tabActive || !entered) return;
-    const x = looped ? 0 : FIRST_EXTRA;
-    const swap = () => {
+    let t1 = 0;
+    let t2 = 0;
+    const swap = (followUp: number) => {
+      nextExit.current = followUp;
       phaseRef.current = "in";
       setPhase("in");
       setLooped(true);
       setIdx((i) => i + 1);
     };
-    let t1 = 0;
-    let t2 = 0;
+    const now = performance.now();
     if (phaseRef.current === "in") {
+      if (nextExit.current === 0) nextExit.current = now + (looped ? HOLD : FIRST_EXTRA + HOLD);
+      else if (nextExit.current < now) nextExit.current = now + HOLD; // resumed after a pause: restart the hold
+      const target = nextExit.current;
+      const delay = Math.max(0, target - now);
       t1 = window.setTimeout(() => {
         phaseRef.current = "out";
         setPhase("out");
-      }, OUT_AT + x);
-      t2 = window.setTimeout(swap, SWAP_AT + x);
+      }, delay);
+      t2 = window.setTimeout(() => swap(target + CYCLE), delay + EXIT_TO_SWAP);
     } else if (phaseRef.current === "out") {
-      t2 = window.setTimeout(swap, 450); // resumed mid-exit: finish the swap
+      t2 = window.setTimeout(() => swap(performance.now() + HOLD), 200); // resumed mid-exit: finish the swap
     }
     return () => {
       window.clearTimeout(t1);
@@ -129,27 +140,18 @@ function Stage({
             <span className="stm-slot">
               {words.map((w, i) => (
                 <span key={w} className={`stm-w stm-lw ${i === cur ? (phase === "in" ? "in" : phase === "out" ? "out" : "") : ""}`}>
-                  <Letters word={w} enter={letterBase} exit={0} />
+                  <Letters word={w} enter={letterBase} exit={0} step={looped ? ENTER_STEP : 55} />
                 </span>
               ))}
             </span>
           </span>
         </div>
       </div>
-      {showProgress && (
+      {showCounter && (
         <div className="stm-lab stm-foot">
           <p className="stm-count t-meta" aria-hidden="true">
             {String(cur + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
           </p>
-          <div className="stm-track" aria-hidden="true">
-            {active && entered && (
-              <span
-                key={idx}
-                className="stm-bar"
-                style={{ animationDuration: `${CYCLE + (looped ? 0 : FIRST_EXTRA)}ms`, animationPlayState: tabActive ? "running" : "paused" }}
-              />
-            )}
-          </div>
         </div>
       )}
     </div>
@@ -248,7 +250,7 @@ export function StatementRotator({ statement }: { statement: StatementContent })
       </div>
 
       <div aria-hidden="true" className="contents">
-        <Stage key={active ? "run" : "static"} statement={statement} active={active} tabActive={!tabHidden} showProgress={!reduced} />
+        <Stage key={active ? "run" : "static"} statement={statement} active={active} tabActive={!tabHidden} showCounter={!reduced} />
       </div>
     </section>
   );

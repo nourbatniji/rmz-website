@@ -43,17 +43,14 @@
 }
 .stm-txt.static .stm-w:not(.stm-lw), .stm-txt.static .stm-lt { transition: none !important; }
 
-/* footer (counter + bar) fades in when the section starts running; visible immediately in the static state */
+/* footer (the "NN / NN" counter) fades in when the section starts running; visible immediately in the static state */
 .stm-lab { opacity: 0; transform: translateY(8px); transition: opacity 0.8s ease 0.1s, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s; }
 .stm-on .stm-lab { opacity: 1; transform: none; }
 .stm-st .stm-lab { opacity: 1; transform: none; transition: none; }
 
-.stm-foot { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 32px; display: flex; align-items: center; gap: 20px; }
+.stm-foot { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 32px; display: flex; align-items: center; }
 @media (min-width: 768px) { .stm-foot { bottom: 56px; } }
 .stm-count { font-size: 11px; color: #f3e8cc; opacity: 0.85; min-width: 64px; }
-.stm-track { flex: 1; height: 2px; background: rgba(243, 232, 204, 0.22); position: relative; overflow: hidden; }
-.stm-bar { position: absolute; inset: 0; background: #e8402f; transform-origin: 0 50%; transform: scaleX(0); animation: stm-bar linear forwards; }
-@keyframes stm-bar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 /* Off-screen measuring copy (font-size 100px) used to fit the statement to the available width */
 .stm-measure { position: absolute; left: -9999px; top: 0; visibility: hidden; pointer-events: none; font-size: 100px;
@@ -63,5 +60,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stm-lab, .stm-w, .stm-lt { transition: none !important; }
-  .stm-bar { animation: none; }
-}
+  }

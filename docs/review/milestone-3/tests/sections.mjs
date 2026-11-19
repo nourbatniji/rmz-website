@@ -18,20 +18,20 @@ const word=p=>p.evaluate(()=>{const l=document.querySelector('.stm-lw.in, .stm-l
   while(Date.now()-t0<17000){ await sleep(100); const c=await count(p); if(c!==last){ev.push([c,Date.now()-t0]);last=c;} if(Date.now()-t0>2800) geo.push(await sample()); }
   console.log('counter changes (ms since entering view):',JSON.stringify(ev));
   ok('rotation cycles 01→02→03→04→01', ev.map(e=>e[0].slice(0,2)).join(',').startsWith('02,03,04,01'), ev.map(e=>e[0].slice(0,2)).join('→'));
-  const gaps=ev.slice(1).map((e,i)=>e[1]-ev[i][1]); ok('source timing: ≈3.0 s per word after the first cycle', gaps.every(g=>g>2700&&g<3500), gaps.join(', ')+' ms');
-  ok('first cycle ≈4.8 s (3.0 s + 1.8 s intro, as in the source)', ev[0][1]>4300&&ev[0][1]<5600, ev[0][1]+' ms');
+  const gaps=ev.slice(1).map((e,i)=>e[1]-ev[i][1]); ok('rotation interval: a new word every 2.0 s (transition start to start)', gaps.length>=4&&gaps.every(g=>g>1750&&g<2250), gaps.join(', ')+' ms');
+  ok('first transition ≈3.8 s (2.0 s + the 1.8 s intro)', ev[0][1]>3400&&ev[0][1]<4600, ev[0][1]+' ms');
   const ref=geo[0]; const dev=(f)=>Math.max(...geo.map(g=>Math.abs(f(g)-f(ref)))); 
   ok('NO layout shift between words: line boxes, fixed words and slot width stay identical over 3+ word swaps (samples '+geo.length+')', dev(g=>g.l1[0])<=.1&&dev(g=>g.l1[1])<=.1&&dev(g=>g.l1[2])<=.1&&dev(g=>g.l2[1])<=.1&&dev(g=>g.l2[3])<=.1&&dev(g=>g.slot[2])<=.1&&dev(g=>g.slot[3])<=.1&&geo.every(g=>g.fixed.every((f,i)=>Math.abs(f[0]-ref.fixed[i][0])<=.1&&Math.abs(f[1]-ref.fixed[i][1])<=.1))&&geo.every(g=>g.fs===ref.fs), `font ${ref.fs}, slot ${ref.slot[2]}×${ref.slot[3]}`);
   // pause when leaving view
   await p.evaluate(()=>scrollTo(0,0)); await sleep(1200); const off1=await count(p); const w1=await word(p); await sleep(4000); const off2=await count(p);
   ok('leaving the viewport stops rotation and resets to the static first word', off1==='01 / 04'&&off2==='01 / 04'&&w1==='broken', `${off1} / ${off2} / ${w1}`);
   await p.evaluate(y=>scrollTo(0,y-60),st); const t1=Date.now(); let c0=await count(p),tc=null; while(Date.now()-t1<7500){await sleep(100); if((await count(p))!==c0){tc=Date.now()-t1;break;}}
-  ok('re-entering resumes with the intro (first change ≈4.8 s)', tc>4300&&tc<5600, tc+' ms');
+  ok('re-entering resumes with the intro (first change ≈3.8 s)', tc>3400&&tc<4600, tc+' ms');
   // tab hidden
   await sleep(300); const before=await count(p); await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));}); await sleep(200);
-  const ps=await p.evaluate(()=>getComputedStyle(document.querySelector('.stm-bar')).animationPlayState); await sleep(5500); const during=await count(p);
-  ok('hidden tab pauses the rotation and the progress bar', ps==='paused'&&during===before, `bar ${ps}, ${before} → ${during} after 5.5 s hidden`);
-  await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'));}); await sleep(4500); const after=await count(p);
+  await sleep(5500); const during=await count(p);
+  ok('hidden tab pauses the rotation', during===before, `${before} → ${during} after 5.5 s hidden`);
+  await p.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'));}); await sleep(4000); const after=await count(p);
   ok('visible again: rotation resumes', after!==before, `${before} → ${after}`);
   // a11y structure
   const a11y=await p.evaluate(()=>({h2:[...document.querySelectorAll('#statement h2')].map(h=>h.textContent),hidden:document.querySelector('#statement .contents').getAttribute('aria-hidden'),live:document.querySelectorAll('#statement [aria-live]').length}));
