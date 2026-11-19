@@ -30,3 +30,18 @@ Mobile: portrait corridor, two side posters + centre screen, camera dolly with t
 - **Showreel footage** (16:9 MP4/WebM H.264, muted-loopable, ≈10–60 s; WebM/VP9 optional) → `corridor.video.src`; **poster still** (16:9, ≥1600 px) → `corridor.poster`; accessible description text → `corridor.accessibleDescription`.
 - Six **project names/categories/posters** (mobile side frames use the first two) — currently "Demo project" placeholders; project page URLs (`href`) when those pages exist; Work archive URL for the strip.
 - Approve kicker "Work — walk the corridor", headline and intro copy (canvas copy kept, provisional).
+
+## Arrival behaviour (added after b5bd82b)
+**Timeline (native scroll, no wheel capture / scroll lock / click-to-continue)** — desktop / mobile, in scroll px:
+1. **Approach** 1600 / 2500 — the corridor walk (unchanged design).
+2. **Stationary arrival + reveal** 450 / 400 — camera and video geometry are frozen; the arrival headline rises and fades in, the paragraph follows with a slight stagger (scroll-linked, eased, so it is fully reversible and never re-triggers or flashes).
+3. **Readable hold** 450 / 450 — everything stays still.
+4. **Release** — the pin ends; headline, framed video and paragraph scroll away together into StatementRotator.
+Reverse order is the exact mirror: hold → reveal reverses (text hides) → corridor reverses. Video playback is independent of scroll and never rewinds.
+
+**Final composition is solved in layout, before the approach** (`layoutD` / `layoutM`): from the pin size below the header it picks type sizes and gaps, measures the headline and paragraph, finds the largest 16:9 framed video that fits between them (desktop ≤ 1180 px wide), and solves the camera's end translation so the cream frame lands exactly on that rect (desktop: scale = 1000 / (2499 − T), plus the vertical offset). The video therefore grows monotonically and is never resized to make room. Gaps are measured from the red back wall's edge. Re-solved on resize and after fonts load.
+- Mobile (Mobile01): the portrait gallery frame and back wall morph to a 16:9 frame (inner video 308 × 173.25) as the camera approaches — no crop at arrival; headline above, paragraph below, player row (only with video) at the bottom.
+- The corridor headline/intro, kicker, caption and bottom fade leave before arrival, so no headline appears twice.
+- Reduced motion: no pin, no camera movement — the completed composition (text visible) is shown directly.
+
+**Content (typed, `homepage.corridor`)**: new `arrivalHeadline` and `arrivalDescription` (provisional): "The work, in motion." / "A selection of recent brand, campaign and digital work from Rebel Mind Zone, together in one reel." — build-team wording pending approval; do not treat as approved copy. The corridor's own `headline` / `intro` remain the approach copy.

@@ -128,6 +128,10 @@ export type CorridorContent = {
   kicker: string;
   headline: { lead: string; emphasis: string };
   intro: string;
+  /** Large headline revealed ABOVE the framed video once the camera has arrived (never shown during the approach). */
+  arrivalHeadline: string;
+  /** Short paragraph revealed BELOW the framed video at arrival. */
+  arrivalDescription: string;
   /** `null` until the final showreel exists: poster / labelled placeholder is shown and no player controls appear. */
   video: { src: string } | null;
   /** Approved poster still. `null` = labelled development placeholder. */

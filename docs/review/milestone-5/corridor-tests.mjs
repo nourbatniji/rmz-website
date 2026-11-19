@@ -24,7 +24,7 @@ for (const [name, vp] of [['desktop 1440×900', { width: 1440, height: 900 }], [
   ok(`${name}: pin sits directly under the header (${Math.round(pr[0])} = ${hh})`, Math.abs(pr[0] - hh) < 1.5);
   const vals = [];
   for (const f of [0.1, 0.25, 0.5, 0.75, 1]) { await at(p, g, f); vals.push(await prog(p, false)); }
-  ok(`${name}: approach is monotonic and reaches the final state`, vals.every((v, i) => i === 0 || v >= vals[i - 1]) && vals[4] === 1, vals.join('→'));
+  ok(`${name}: approach is monotonic and reaches the final state`, vals.every((v, i) => i === 0 || v >= vals[i - 1]) && vals[4] >= 1, vals.join('→') + ' (camera end is solved per viewport, ≥ the old 1250 px)');
   // header clearance through the whole journey
   let bad = [];
   for (const f of [0, 0.2, 0.4, 0.6, 0.8, 1]) { await at(p, g, f, 700); const r = await p.evaluate(() => { const els = ['.cor-kicker', '.cor-lead h2', '.cor-lead p', '.cor-ctl'].map((s) => document.querySelector('.cor-d ' + s)).map((e) => e.getBoundingClientRect()); const pin = document.querySelector('[data-d-pin]').getBoundingClientRect(); const hdr = document.querySelector('header').children[1].getBoundingClientRect().bottom; return { els: els.map((r) => [Math.round(r.top), Math.round(r.bottom), Math.round(r.left), Math.round(r.right)]), pinTop: pin.top, pinBottom: pin.bottom, hdr, vh: innerHeight }; }); if (r.els.some((e) => e[0] < r.hdr - 1 || e[1] > r.vh + 1 || e[2] < 0 || e[3] > 1441) || r.pinTop < r.hdr - 1.5) bad.push(f + ':' + JSON.stringify(r)); }
@@ -115,11 +115,59 @@ if (!WITH_VIDEO) {
   }
 }
 
-// reduced motion
-for (const [name, vp, mob] of [['desktop', { width: 1440, height: 900 }, false], ['mobile', { width: 390, height: 844, isMobile: true, hasTouch: true }, true]]) {
-  const p = await open(vp, true);
-  const r = await p.evaluate((mob) => { const pin = document.querySelector(mob ? '[data-m-pin]' : '[data-d-pin]'); const tr = document.querySelector(mob ? '[data-m-track]' : '[data-d-track]'); return { pos: getComputedStyle(pin).position, trH: tr.getBoundingClientRect().height, pinH: pin.getBoundingClientRect().height, scene: mob ? document.querySelector('[data-m-pct]').textContent : new DOMMatrix(getComputedStyle(document.querySelector('[data-d-scene]')).transform).m43, capOp: mob ? '' : getComputedStyle(document.querySelector('[data-d-cap]')).opacity }; }, mob);
-  ok(`reduced motion ${name}: no pin / no walk — final composition shown directly`, r.pos === 'relative' && Math.abs(r.trH - r.pinH) < 2 && (mob ? r.scene === '100%' : Math.abs(r.scene - 1250) < 1 && +r.capOp === 1), JSON.stringify(r));
+
+// ── arrival composition: approach → stationary reveal → hold → release; reversible ──
+for (const [name, vp, mob] of [['desktop 1440×900', { width: 1440, height: 900 }, false], ['short desktop 1440×700', { width: 1440, height: 700 }, false], ['mobile 390×844', { width: 390, height: 844, isMobile: true, hasTouch: true }, true]]) {
+  const p = await open(vp); const g = await geo(p, mob);
+  const A = mob ? 2500 : 1600, REV = mob ? 400 : 450, HOLD = 450;
+  const S = mob ? { frame: '.cm-fc', video: '.cm-fc .cm-galvid canvas', ah: '[data-m-ah]', ap: '[data-m-ap]', lead: '[data-m-hl]', pin: '[data-m-pin]' } : { frame: '.cor-plate', video: '.cor-plate .cor-frame canvas', ah: '[data-d-ah]', ap: '[data-d-ap]', lead: '[data-d-lead]', pin: '[data-d-pin]' };
+  const R = (sel) => p.evaluate((sel) => { const e = document.querySelector(sel); const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, r: r.right, b: r.bottom, op: +getComputedStyle(e).opacity }; }, sel);
+  const go = async (off, wait = 1700) => { await p.evaluate((y) => scrollTo(0, y), g.top - g.hh + off); await sleep(wait); };
+  const hdr = await p.evaluate(() => document.querySelector('header').children[1].getBoundingClientRect().bottom);
+  const widths = []; for (const f of [0.2, 0.4, 0.6, 0.8, 0.95, 1]) { await go(A * f, 1300); widths.push((await R(S.frame)).w); }
+  ok(`arrival ${name}: video grows monotonically through the approach and never shrinks to make room (${widths.map(Math.round).join('→')})`, widths.every((v, i) => i === 0 || v >= widths[i - 1] - 0.5) && widths[5] / widths[4] < 1.2);
+  await go(A * 0.5, 1300); const mid = [await R(S.ah), await R(S.ap)];
+  ok(`arrival ${name}: arrival headline and paragraph hidden throughout the approach`, mid.every((x) => x.op === 0));
+  await go(A, 1800); const st = await R(S.frame); const hs0 = [await R(S.ah), await R(S.ap)];
+  ok(`arrival ${name}: at final size the text is still hidden (reveal has not started)`, hs0.every((x) => x.op < 0.02));
+  const lead = await R(S.lead); ok(`arrival ${name}: corridor headline has left (no duplicate headline)`, lead.op < 0.02, 'op ' + lead.op);
+  await go(A + REV + HOLD * 0.5, 2000); const fin = await R(S.frame); const vid = await R(S.video); const ah = await R(S.ah); const ap = await R(S.ap);
+  ok(`arrival ${name}: camera and video geometry identical before/after the reveal (Δ ≤ 1px)`, ['x', 'y', 'w', 'h'].every((k) => Math.abs(st[k] - fin[k]) <= 1.2), JSON.stringify([st, fin].map((o) => [o.x, o.y, o.w, o.h].map(Math.round))));
+  ok(`arrival ${name}: video is 16:9, uncropped (canvas ${Math.round(vid.w)}×${Math.round(vid.h)} = ${(vid.w / vid.h).toFixed(3)})`, Math.abs(vid.w / vid.h - 16 / 9) < 0.012);
+  ok(`arrival ${name}: headline and paragraph fully revealed`, ah.op > 0.99 && ap.op > 0.99, `${ah.op}/${ap.op}`);
+  const pinR = await R(S.pin); const vh = vp.height;
+  ok(`arrival ${name}: headline above the frame, paragraph below it — outside the footage, no overlap`, ah.b <= fin.y + 1 && ap.y >= fin.b - 1 && ah.y >= hdr - 1 && ap.b <= Math.min(pinR.b, vh) + 1 && ah.b <= ap.y, JSON.stringify({ hdr, ah: [ah.y, ah.b], frame: [fin.y, fin.b], ap: [ap.y, ap.b], pinB: pinR.b }));
+  ok(`arrival ${name}: composition fits below the header with room to spare`, fin.y >= hdr && fin.b <= Math.min(pinR.b, vh) && fin.x >= -1 && fin.r <= vp.width + 1);
+  const ctl = await p.evaluate((mob) => { const e = document.querySelector(mob ? '[data-m-pl]' : '.cor-d .cor-btn'); if (!e || !e.getClientRects().length) return null; const r = e.getBoundingClientRect(); return { y: r.top, b: r.bottom, x: r.left, r: r.right }; }, mob);
+  if (ctl) ok(`arrival ${name}: player controls do not overlap the paragraph`, ctl.y >= ap.b - 1 || ctl.x >= ap.x + ap.w - 1 || ctl.r <= ap.x + 1);
+  const fs = await p.evaluate((S) => [parseFloat(getComputedStyle(document.querySelector(S.ah)).fontSize), parseFloat(getComputedStyle(document.querySelector(S.ap)).fontSize)], S);
+  ok(`arrival ${name}: readable type (headline ${fs[0]}px, paragraph ${fs[1]}px)`, fs[0] >= 24 && fs[1] >= 14);
+  // stop during the reveal: stable, partial
+  await go(A + REV * 0.3, 1800); const q1 = await R(S.ah); await sleep(900); const q2 = await R(S.ah);
+  ok(`arrival ${name}: stopping mid-reveal holds a stable partial state (${q1.op.toFixed(2)})`, q1.op > 0.02 && q1.op < 0.98 && Math.abs(q1.op - q2.op) < 0.005 && Math.abs(q1.y - q2.y) < 0.5);
+  // reverse: through the hold, the reveal, back into the corridor
+  await go(A + REV + HOLD * 0.5, 1800); await go(A + REV * 0.3, 1800); const rv = await R(S.ah);
+  ok(`arrival ${name}: reversing returns the same partial reveal`, Math.abs(rv.op - q1.op) < 0.03);
+  await go(A, 1800); const r0 = [await R(S.ah), await R(S.ap), await R(S.frame)];
+  ok(`arrival ${name}: reversing to the arrival point hides the text and keeps the final video geometry`, r0[0].op < 0.02 && r0[1].op < 0.02 && ['x', 'y', 'w', 'h'].every((k) => Math.abs(r0[2][k] - st[k]) <= 1.2));
+  await go(A * 0.6, 1800); const w6 = (await R(S.frame)).w; ok(`arrival ${name}: continuing upward moves back through the corridor (video ${Math.round(w6)}px < ${Math.round(st.w)}px)`, w6 < st.w - 20);
+  // no flicker / repeated triggers while scrolling forward and back through the reveal
+  await go(A - 40, 1500); const fw = []; for (let i = 0; i <= 30; i++) { await p.evaluate((y) => scrollTo(0, y), g.top - g.hh + A - 40 + (REV + 80) * (i / 30)); await sleep(60); fw.push((await R(S.ah)).op); }
+  await sleep(600); const bw = []; for (let i = 30; i >= 0; i--) { await p.evaluate((y) => scrollTo(0, y), g.top - g.hh + A - 40 + (REV + 80) * (i / 30)); await sleep(60); bw.push((await R(S.ah)).op); }
+  ok(`arrival ${name}: reveal opacity is monotonic forward and back (no flashing)`, fw.every((v, i) => i === 0 || v >= fw[i - 1] - 0.02) && bw.every((v, i) => i === 0 || v <= bw[i - 1] + 0.02), `max ${Math.max(...fw).toFixed(2)}`);
+  // hold then release
+  await go(A + REV + HOLD - 30, 1800); const held = await R(S.ah); const pinH = await R(S.pin);
+  ok(`arrival ${name}: text is still fully shown at the end of the hold; pin has not released yet`, held.op > 0.99 && Math.abs(pinH.y - hdr) < 2.5);
+  await go(A + REV + HOLD + 260, 1200); const rel = await p.evaluate((S) => ({ pinTop: document.querySelector(S.pin).getBoundingClientRect().top, st: document.querySelector('#statement').getBoundingClientRect().top }), S);
+  ok(`arrival ${name}: after the hold the whole composition scrolls away together toward Statement`, rel.pinTop < hdr - 100 && rel.st > 0);
+  ok(`arrival ${name}: no page errors`, p.errs.length === 0, p.errs.join('|')); await p.close();
+}
+
+// reduced motion: completed arrival composition, no pin, no walk
+for (const [name, vp, mob] of [['desktop', { width: 1440, height: 900 }, false], ['short desktop', { width: 1440, height: 700 }, false], ['mobile', { width: 390, height: 844, isMobile: true, hasTouch: true }, true]]) {
+  const p = await open(vp, true); await p.evaluate(() => document.querySelector('#work').scrollIntoView()); await sleep(1200); const S = mob ? { frame: '.cm-fc', video: '.cm-fc .cm-galvid canvas', ah: '[data-m-ah]', ap: '[data-m-ap]', lead: '[data-m-hl]', pin: '[data-m-pin]', tr: '[data-m-track]' } : { frame: '.cor-plate', video: '.cor-plate .cor-frame canvas', ah: '[data-d-ah]', ap: '[data-d-ap]', lead: '[data-d-lead]', pin: '[data-d-pin]', tr: '[data-d-track]' };
+  const r = await p.evaluate((S) => { const g = (s) => { const e = document.querySelector(s); const r = e.getBoundingClientRect(); return { y: r.top, b: r.bottom, w: r.width, h: r.height, op: +getComputedStyle(e).opacity }; }; return { pos: getComputedStyle(document.querySelector(S.pin)).position, trH: g(S.tr).h, pinH: g(S.pin).h, ah: g(S.ah), ap: g(S.ap), fr: g(S.frame), vid: g(S.video), lead: g(S.lead), hdr: document.querySelector('header').children[1].getBoundingClientRect().bottom }; }, S);
+  ok(`reduced motion ${name}: completed arrival composition shown directly, no pin or walk`, r.pos === 'relative' && Math.abs(r.trH - r.pinH) < 2 && r.ah.op === 1 && r.ap.op === 1 && r.lead.op < 0.02 && r.ah.b <= r.fr.y + 1 && r.ap.y >= r.fr.b - 1 && Math.abs(r.vid.w / r.vid.h - 16 / 9) < 0.012, JSON.stringify(r));
   if (WITH_VIDEO) ok(`reduced motion ${name}: video does not autoplay`, await p.evaluate(() => { const v = document.querySelector('video.cor-vid'); return !v || v.paused; }));
   ok(`reduced motion ${name}: no horizontal overflow, no errors`, (await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth)) && p.errs.length === 0, p.errs.join('|'));
   await p.close();

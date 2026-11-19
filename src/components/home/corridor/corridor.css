@@ -117,10 +117,7 @@
 .cm-pct { color: #ffca26; font-variant-numeric: tabular-nums; }
 .cm-bar { margin-top: 10px; height: 2px; background: rgba(243, 232, 204, 0.2); }
 .cm-bar i { display: block; height: 100%; width: 0; background: #ffca26; }
-.cm-scr { left: 0; right: 0; opacity: 0; pointer-events: none; }
-.cm-scr-t { top: 0; height: 110px; background: linear-gradient(180deg, rgba(15, 15, 14, 0.5), transparent); }
-.cm-scr-b { bottom: 0; height: 250px; background: linear-gradient(0deg, rgba(15, 15, 14, 0.68), transparent); }
-.cm-pl { left: 24px; right: 24px; bottom: 34px; opacity: 0; pointer-events: none; }
+.cm-pl { left: 24px; right: 24px; bottom: 20px; opacity: 0; pointer-events: none; }
 .cm-pltop { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }
 .cm-tc { font-weight: 800; font-size: 22px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: #f3e8cc; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5); }
 .cm-tc em { font-style: normal; font-weight: 400; font-size: 15px; opacity: 0.7; }
@@ -130,6 +127,12 @@
 .cm-rail { position: absolute; left: 0; right: 0; top: 21px; height: 2px; background: rgba(243, 232, 204, 0.34); }
 .cm-rail i { position: absolute; left: 0; top: 0; height: 2px; width: 0; background: #ffca26; }
 .cm-thumb { position: absolute; top: 17px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: #ffca26; left: 0; }
+
+/* Arrival composition (revealed only once the camera has arrived; position/size set from layout) */
+.cor-ah { position: absolute; left: 0; right: 0; margin: 0 auto; text-align: center; color: #f3e8cc; opacity: 0; line-height: 0.95; will-change: transform, opacity; }
+.cor-ap { position: absolute; left: 0; right: 0; margin: 0 auto; text-align: center; color: rgba(243, 232, 204, 0.92); opacity: 0; will-change: transform, opacity; }
+.cm-ah { left: 20px; right: 20px; margin: 0; text-align: center; font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.95; color: #f3e8cc; opacity: 0; will-change: transform, opacity; }
+.cm-ap { left: 20px; right: 20px; margin: 0; text-align: center; font-size: 15px; line-height: 1.5; color: rgba(243, 232, 204, 0.92); opacity: 0; will-change: transform, opacity; }
 
 /* Reduced motion: no pin, no walk — the final composition is shown directly. */
 .cor-static .cor-pin, .cor-static .cm-pin { position: relative; top: 0; }

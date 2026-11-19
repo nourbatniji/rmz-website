@@ -66,3 +66,4 @@ In scope: the approved homepage (canvas boards 1–6, 8, 9 in canvas order) + cu
 - [x] Shared 7-service taxonomy (Branding, Creative Strategy, Content Production, Social Media, Design, Paid Media, Web Experiences) applied to ServiceFins; Lens + footer must use it (docs/content-flags.md). Fin copy provisional.
 
 - [x] Home — Video section (ShowreelCorridor) built from "HOME - VIDEO SECTION" + "MOBILE · 01 — VIDEO CORRIDOR" (docs/video-section.md). **Pending content:** showreel video + poster, real project cards, project/archive links. Mobile follows the approved Mobile01 artboard.
+- [x] Video section arrival composition (16:9 video framed between headline and paragraph; reveal + hold + release; reversible). **Pending:** approve arrival copy.

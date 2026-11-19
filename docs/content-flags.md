@@ -44,3 +44,4 @@ Single source: `services` in `src/content/dev/homepage.ts` (`ServiceTaxonomyItem
 - Showreel video, poster, accessible description — **missing** (typed content fields exist).
 - Project links and archive link — `null` until project/Work pages exist.
 - Accessibility decision: "All projects" label colour changed from canvas orange to `#D52518` on cream.
+- **Arrival copy (video section)** — `arrivalHeadline` "The work, in motion." and `arrivalDescription` ("A selection of recent brand, campaign and digital work from Rebel Mind Zone, together in one reel.") are **provisional build-team wording, pending approval**. Distinct from the approach headline "Six rooms. One long wall.".

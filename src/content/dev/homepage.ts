@@ -75,6 +75,9 @@ export const devHomepageContent: HomepageContent = {
     kicker: "Work — walk the corridor",
     headline: { lead: "Six rooms.", emphasis: "One long wall." },
     intro: "Each project hangs on the wall. Scroll to walk forward; a project turns to face you as you pass.",
+    // PROVISIONAL arrival copy (build-team wording, pending approval): shown only when the camera reaches the video.
+    arrivalHeadline: "The work, in motion.",
+    arrivalDescription: "A selection of recent brand, campaign and digital work from Rebel Mind Zone, together in one reel.",
     video: null,
     poster: null,
     accessibleDescription: "RMZ showreel: a selection of recent work. Showreel footage is not available yet.",

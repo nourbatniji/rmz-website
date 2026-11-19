@@ -18,8 +18,10 @@ import { useMedia, useTabHidden } from "@/lib/use-media";
  * Frame loop and observers run only while the section is near the viewport.
  */
 
-const DESKTOP_RANGE = 1600; // scroll px for the full walk (canvas: wheel deltaY / 1600)
-const MOBILE_RANGE = 2500; // canvas: RANGE_USE
+// Scroll timeline in px: approach (canvas: wheel deltaY / 1600 · RANGE_USE 2500), then the stationary text reveal, then a readable hold.
+const DESKTOP = { approach: 1600, reveal: 450, hold: 450 };
+const MOBILE = { approach: 2500, reveal: 400, hold: 450 };
+const total = (t: { approach: number; reveal: number; hold: number }) => t.approach + t.reveal + t.hold;
 const MOBILE_QUERY = "(max-width: 760px)";
 
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -44,6 +46,8 @@ export function ShowreelCorridor({ content, services }: Props) {
   const paused = userPaused ?? reduced;
   const hasVideo = !!content.video && videoOk;
   const dirty = useRef(true);
+  const rrRef = useRef(reduced ? 1 : 0);
+  const onResizeRef = useRef<(() => void) | null>(null);
   const cpRef = useRef(reduced ? 1 : 0); // camera progress persists if the engine restarts (e.g. when the video becomes ready)
   const apiRef = useRef<{ seek: (f: number) => void } | null>(null);
 
@@ -133,7 +137,7 @@ export function ShowreelCorridor({ content, services }: Props) {
       im.src = p.poster.src;
       return im;
     });
-    document.fonts?.ready.then(() => (dirty.current = true));
+    document.fonts?.ready.then(() => { dirty.current = true; onResizeRef.current?.(); });
 
     const drawPlaceholder = (g: CanvasRenderingContext2D, W: number, H: number) => {
       const f = sans();
@@ -213,6 +217,12 @@ export function ShowreelCorridor({ content, services }: Props) {
       for (const c of qa("canvas[data-pp]")) if (c.getClientRects().length) drawProjectPoster(c as HTMLCanvasElement, Number(c.dataset.pp));
     };
 
+    // ── final composition (computed in layout, before any approach) ──
+    // The camera's end state is solved so the framed 16:9 video lands exactly on a target rect, with room reserved above
+    // (arrival headline) and below (arrival paragraph). Nothing is resized afterwards.
+    const PLATE_W = 1000, PLATE_H = 661.25; // cream frame: 980×551.25 video (16:9) + borders + 90 px strip
+    const PLATE_YC = 130 + PLATE_H / 2, ORIGIN_Y = 480; // plate centre in the scene; perspective origin (48 % of 1000)
+
     // ── desktop camera ──
     const stageD = q("[data-d-fit]");
     const pinD = q("[data-d-pin]");
@@ -221,17 +231,62 @@ export function ShowreelCorridor({ content, services }: Props) {
     const capD = q("[data-d-cap]");
     const cnD = q("[data-d-cn]");
     const ctD = q("[data-d-ct]");
+    const leadD = q("[data-d-lead]");
+    const kickD = q("[data-d-kicker]");
+    const fadeD = q("[data-d-fade]");
+    const ahD = q("[data-d-ah]");
+    const apD = q("[data-d-ap]");
     let capIdx = -1;
+    let endT = 1250;
+    let endDy = 0;
     const layoutD = () => {
-      if (!pinD || !stageD) return;
+      if (!pinD || !stageD || !ahD || !apD || !pinD.clientWidth) return; // hidden variant
       const w = pinD.clientWidth;
       const h = pinD.clientHeight;
       const s = Math.min(1, w / 1440, h / 1000);
+      const top = Math.max(0, (h - 1000 * s) / 2);
       stageD.style.transform = `scale(${s})`;
-      stageD.style.top = `${Math.max(0, (h - 1000 * s) / 2)}px`;
+      stageD.style.top = `${top}px`;
+      const side = clamp(w * 0.04, 16, 64);
+      const padT = Math.round(clamp(h * 0.03, 12, 28));
+      const padB = Math.round(clamp(h * 0.07, 44, 64)); // keeps the stack clear of the controls row
+      const gap = Math.round(clamp(h * 0.03, 12, 30));
+      ahD.style.fontSize = `${Math.round(clamp(h * 0.085, 28, 76))}px`;
+      ahD.style.width = `${Math.min(1100, w - 2 * side)}px`;
+      apD.style.fontSize = `${Math.round(clamp(h * 0.02, 14, 18))}px`;
+      const hH = ahD.offsetHeight;
+      let Wt = Math.min(w - 2 * side, 1180);
+      let hP = 0;
+      // The red back wall extends ~20 world px beyond the frame; gaps are kept clear of the wall's edge, not just the frame's.
+      const wallM = (w_: number) => (20 * w_) / PLATE_W;
+      for (let i = 0; i < 4; i++) {
+        apD.style.width = `${Math.min(640, Wt)}px`;
+        hP = apD.offsetHeight;
+        const availH = h - padT - padB - hH - hP - 2 * gap - 2 * wallM(Wt);
+        Wt = Math.max(240, Math.min(w - 2 * side, 1180, availH * (PLATE_W / PLATE_H)));
+      }
+      const Ht = (Wt * PLATE_H) / PLATE_W;
+      const wm = wallM(Wt);
+      const top0 = padT + Math.max(0, (h - padT - padB - (hH + gap + Ht + 2 * wm + gap + hP)) / 2);
+      const yt = top0 + hH + gap + wm + Ht / 2;
+      ahD.style.top = `${top0}px`;
+      apD.style.top = `${yt + Ht / 2 + wm + gap}px`;
+      const sc = Wt / (PLATE_W * s); // perspective scale the plate must reach: 1000 / (2499 − T)
+      endT = 2499 - 1000 / sc;
+      endDy = ((yt - top) / s - ORIGIN_Y) / sc + ORIGIN_Y - PLATE_YC;
     };
-    const applyD = (p: number) => {
-      if (sceneD) sceneD.style.transform = `translateZ(${(p * 1250).toFixed(1)}px)`;
+    const reveal = (el: HTMLElement | null, u: number, dist: number) => {
+      if (!el) return;
+      const e = 1 - Math.pow(1 - clamp(u), 3);
+      el.style.opacity = String(e);
+      el.style.transform = `translateY(${((1 - e) * dist).toFixed(1)}px)`;
+    };
+    const applyD = (p: number, r: number) => {
+      if (sceneD) sceneD.style.transform = `translate3d(0,${(endDy * p).toFixed(2)}px,${(endT * p).toFixed(1)}px)`;
+      const out = 1 - smooth((p - 0.55) / 0.3); // corridor headline/kicker/caption leave before arrival
+      if (leadD) leadD.style.opacity = String(out);
+      if (kickD) kickD.style.opacity = String(out);
+      if (fadeD) fadeD.style.opacity = String(1 - smooth((p - 0.6) / 0.4));
       if (capD) {
         const n = content.projects.length;
         const i = clamp(Math.floor(p * n), 0, n - 1);
@@ -243,40 +298,60 @@ export function ShowreelCorridor({ content, services }: Props) {
             ctD.textContent = pr.title;
           }
         }
-        capD.style.opacity = String(clamp((p - 0.06) / 0.12));
+        capD.style.opacity = String(Math.min(clamp((p - 0.06) / 0.12), out));
       }
+      reveal(ahD, r / 0.6, 34);
+      reveal(apD, (r - 0.25) / 0.6, 22);
     };
 
-    // ── mobile camera (canvas Mobile01) ──
+    // ── mobile camera (canvas Mobile01) with the same arrival composition ──
     const fitM = q("[data-m-fit]");
     const pinM = q("[data-m-pin]");
     const trackM = q("[data-m-track]");
     let Hs = 844;
-    const P = 560, D = 580, VW = 308, VH = 384, YOFF = 27;
+    const P = 560, D = 580;
     const m = {
       world: q("[data-m-world]"), stage: q("[data-m-stage]"), wl: q("[data-m-wl]"), wr: q("[data-m-wr]"),
-      cf: qa("[data-m-cf]"), left: q("[data-m-left]"), right: q("[data-m-right]"),
+      cf: qa("[data-m-cf]"), left: q("[data-m-left]"), right: q("[data-m-right]"), fc: q("[data-m-fc]"), back: q("[data-m-back]"),
       hl: q("[data-m-hl]"), kicker: q("[data-m-kicker]"), cue: q("[data-m-cue]"), pct: q("[data-m-pct]"), bar: q("[data-m-bar]"),
-      pl: q("[data-m-pl]"), scrs: qa("[data-m-scr]"), tc: q("[data-m-tc]"), fill: q("[data-m-fill]"), thumb: q("[data-m-thumb]"), seek: q("[data-m-seek]"),
+      pl: q("[data-m-pl]"), tc: q("[data-m-tc]"), fill: q("[data-m-fill]"), thumb: q("[data-m-thumb]"), seek: q("[data-m-seek]"),
+      ah: q("[data-m-ah]"), ap: q("[data-m-ap]"),
     };
+    const FH0 = 470; // portrait frame height at the start of the walk
+    let mEnd = { sc: 1.05, dy: 0, fh: 259.25 };
     const layoutM = () => {
-      if (!pinM || !fitM) return;
+      if (!pinM || !fitM || !m.ah || !m.ap || !pinM.clientWidth) return; // hidden variant
       const k = pinM.clientWidth / 390;
       Hs = pinM.clientHeight / k;
       fitM.style.height = `${Hs}px`;
       fitM.style.transform = `scale(${k})`;
+      const gap = Math.round(clamp(Hs * 0.03, 12, 24));
+      m.ah.style.fontSize = `${Math.round(clamp(Hs * 0.046, 24, 38))}px`;
+      m.ap.style.fontSize = "15px";
+      const hH = m.ah.offsetHeight;
+      const hP = m.ap.offsetHeight;
+      const fh = 86 + (308 * 9) / 16; // 340-wide frame whose inner video is exactly 16:9 (strip 66 + chrome 20)
+      const reserve = hasVideoRef.current ? 92 : 0; // player row
+      const availH = Hs - reserve - hH - hP - 2 * gap - 20;
+      const sc = Math.max(0.7, Math.min((390 - 32) / 340, availH / (fh + 30))); // +30: back-wall margin around the frame
+      const Hf = fh * sc;
+      const wm = 15 * sc;
+      const top0 = Math.max(10, (Hs - reserve - (hH + gap + Hf + 2 * wm + gap + hP)) / 2);
+      const yt = top0 + hH + gap + wm + Hf / 2;
+      m.ah.style.top = `${top0}px`;
+      m.ap.style.top = `${yt + Hf / 2 + wm + gap}px`;
+      mEnd = { sc, fh, dy: (yt - Hs * 0.5) / sc };
     };
-    const applyM = (p: number) => {
+    const applyM = (p: number, r: number) => {
       if (!m.world || !m.stage || !m.wl || !m.wr) return;
       const s0 = P / (P + D);
-      const s1 = Math.max(390 / VW, Hs / VH) * 1.03;
       const e = Math.pow(p, 1.4);
-      const sc = s0 * Math.pow(s1 / s0, e);
+      const sc = s0 * Math.pow(mEnd.sc / s0, e);
       const d = P / sc;
       const travel = P + D - d;
-      const dy = YOFF * smooth((p - 0.45) / 0.55);
-      m.world.style.transform = `translate3d(0,${dy}px,${travel}px)`;
-      const oy = 40 + 10 * smooth((p - 0.45) / 0.55);
+      const mph = smooth((p - 0.45) / 0.55);
+      m.world.style.transform = `translate3d(0,${(mEnd.dy * mph).toFixed(2)}px,${travel}px)`;
+      const oy = 40 + 10 * mph;
       m.stage.style.perspectiveOrigin = `50% ${oy}%`;
       m.world.style.top = `${oy}%`;
       const zs = Math.min(600, P - travel - 250);
@@ -296,6 +371,18 @@ export function ShowreelCorridor({ content, services }: Props) {
       m.cf[1].style.backgroundPosition = `0 0,0 ${off}px,0 0`;
       const gone = p >= 0.5;
       for (const el of [m.wl, m.wr, m.left, m.right, ...m.cf]) if (el) el.style.display = gone ? "none" : "";
+      // frame + back wall morph from the portrait gallery frame to the 16:9 arrival frame as the camera approaches
+      const mo = smooth((p - 0.35) / 0.65);
+      const fh = FH0 + (mEnd.fh - FH0) * mo;
+      if (m.fc) {
+        m.fc.style.height = `${fh}px`;
+        m.fc.style.top = `${-fh / 2}px`;
+      }
+      if (m.back) {
+        const wh = 720 + (mEnd.fh + 30 - 720) * mo;
+        m.back.style.height = `${wh}px`;
+        m.back.style.top = `${-wh / 2}px`;
+      }
       const fo = 1 - smooth(p / 0.22);
       if (m.hl) {
         m.hl.style.opacity = String(fo);
@@ -305,12 +392,13 @@ export function ShowreelCorridor({ content, services }: Props) {
       if (m.cue) m.cue.style.opacity = String(1 - smooth(p / 0.5));
       if (m.pct) m.pct.textContent = `${String(Math.round(p * 100)).padStart(2, "0")}%`;
       if (m.bar) m.bar.style.width = `${p * 100}%`;
-      const vis = hasVideoRef.current ? smooth((p - 0.8) / 0.2) : 0;
-      for (const el of m.scrs) el.style.opacity = String(vis);
+      const vis = hasVideoRef.current ? smooth((p - 0.9) / 0.1) : 0;
       if (m.pl) {
         m.pl.style.opacity = String(vis);
         m.pl.style.pointerEvents = vis > 0.5 ? "auto" : "none";
       }
+      reveal(m.ah, r / 0.6, 30);
+      reveal(m.ap, (r - 0.25) / 0.6, 20);
     };
     const updatePlayer = () => {
       const v = videoRef.current;
@@ -330,24 +418,39 @@ export function ShowreelCorridor({ content, services }: Props) {
       },
     };
 
+    // Timeline (native scroll): approach → stationary reveal → hold → release. Video playback is independent of it.
     let lastP = -1;
+    let lastR = -1;
+    let rr = reduced ? 1 : rrRef.current;
     const tick = () => {
       raf = requestAnimationFrame(tick);
       const mobile = mq.matches;
+      const T = mobile ? MOBILE : DESKTOP;
       let tp = 1;
+      let tr = 1;
       if (!reduced) {
         const track = mobile ? trackM : trackD;
-        if (track) tp = clamp((hh - track.getBoundingClientRect().top) / (mobile ? MOBILE_RANGE : DESKTOP_RANGE));
+        if (track) {
+          const off = Math.max(0, hh - track.getBoundingClientRect().top);
+          tp = clamp(off / T.approach);
+          tr = clamp((off - T.approach) / T.reveal);
+        }
       }
-      if (reduced) cp = tp;
-      else {
+      if (reduced) {
+        cp = tp;
+        rr = tr;
+      } else {
         cp += (tp - cp) * (mobile ? 0.2 : 0.1);
         if (Math.abs(tp - cp) < 0.0004) cp = tp;
+        rr += (tr - rr) * 0.12;
+        if (Math.abs(tr - rr) < 0.0004) rr = tr;
       }
-      if (cp !== lastP || dirty.current) {
-        if (mobile) applyM(cp);
-        else applyD(cp);
+      if (cp !== lastP || rr !== lastR || dirty.current) {
+        const r = rr * smooth((cp - 0.96) / 0.04); // text never starts before the camera has arrived
+        if (mobile) applyM(cp, r);
+        else applyD(cp, r);
         lastP = cp;
+        lastR = rr;
       }
       const v = videoRef.current;
       const t = v ? v.currentTime : -1;
@@ -366,13 +469,18 @@ export function ShowreelCorridor({ content, services }: Props) {
       lastP = -1;
       dirty.current = true;
     };
+    onResizeRef.current = onResize;
     const ro = new ResizeObserver(onResize);
     if (pinD) ro.observe(pinD);
     if (pinM) ro.observe(pinM);
+    // The composition depends on the arrival text's measured height: re-solve when fonts/wrapping change it.
+    for (const el of [ahD, apD, m.ah, m.ap]) if (el) ro.observe(el);
     onResize();
     raf = requestAnimationFrame(tick);
     return () => {
       cpRef.current = cp;
+      rrRef.current = rr;
+      onResizeRef.current = null;
       cancelAnimationFrame(raf);
       ro.disconnect();
       apiRef.current = null;
@@ -450,7 +558,7 @@ export function ShowreelCorridor({ content, services }: Props) {
 
       {/* ─────────── Desktop ─────────── */}
       <div className="cor-d">
-        <div data-d-track="" className="cor-track" style={reduced ? undefined : { height: `calc(max(100svh - var(--header-h), 520px) + ${DESKTOP_RANGE}px)` }}>
+        <div data-d-track="" className="cor-track" style={reduced ? undefined : { height: `calc(max(100svh - var(--header-h), 520px) + ${total(DESKTOP)}px)` }}>
           <div data-d-pin="" className="cor-pin">
             <div data-d-fit="" className="cor-fit" aria-hidden="true">
               <div className="cor-world">
@@ -483,16 +591,22 @@ export function ShowreelCorridor({ content, services }: Props) {
                 </div>
               </div>
             </div>
-            <div className="cor-fade" aria-hidden="true" />
+            <div data-d-fade="" className="cor-fade" aria-hidden="true" />
             <div className="cor-ui">
-              <p className="cor-nm cor-kicker">{content.kicker}</p>
-              <div className="cor-lead">
+              <p data-d-kicker="" className="cor-nm cor-kicker">{content.kicker}</p>
+              <div data-d-lead="" className="cor-lead">
                 <h2 className="cor-nk">
                   {content.headline.lead}
                   <span className="cor-iv">{content.headline.emphasis}</span>
                 </h2>
                 <p className="cor-nl">{content.intro}</p>
               </div>
+              <h3 data-d-ah="" className="cor-nk cor-ah">
+                {content.arrivalHeadline}
+              </h3>
+              <p data-d-ap="" className="cor-nl cor-ap">
+                {content.arrivalDescription}
+              </p>
               <div data-d-cap="" className="cor-cap" aria-hidden="true">
                 <p data-d-cn="" className="cor-nm cor-cn" />
                 <p data-d-ct="" className="cor-nk cor-ct" />
@@ -521,7 +635,7 @@ export function ShowreelCorridor({ content, services }: Props) {
 
       {/* ─────────── Mobile (approved artboard "MOBILE · 01 — VIDEO CORRIDOR") ─────────── */}
       <div className="cor-m">
-        <div data-m-track="" className="cor-track" style={reduced ? undefined : { height: `calc(max(100svh - var(--header-h), 520px) + ${MOBILE_RANGE}px)` }}>
+        <div data-m-track="" className="cor-track" style={reduced ? undefined : { height: `calc(max(100svh - var(--header-h), 520px) + ${total(MOBILE)}px)` }}>
           <div data-m-pin="" className="cm-pin">
             <div data-m-fit="" className="cm-fit">
               <div data-m-stage="" className="cm-stage" aria-hidden="true">
@@ -530,8 +644,8 @@ export function ShowreelCorridor({ content, services }: Props) {
                   <div data-m-cf="" className="cm-cf cm-cf-f" />
                   <div data-m-wl="" className="cm-wall cm-wl" />
                   <div data-m-wr="" className="cm-wall cm-wr" />
-                  <div className="cm-back" />
-                  <div className="cm-frame cm-fc">
+                  <div data-m-back="" className="cm-back" />
+                  <div data-m-fc="" className="cm-frame cm-fc">
                     <div className="cm-galin">
                       <div className="cm-galvid">
                         <canvas data-vs="" width={1280} height={720} />
@@ -558,8 +672,6 @@ export function ShowreelCorridor({ content, services }: Props) {
                 </div>
               </div>
               <div className="cm-ui">
-                <div data-m-scr="" className="cm-scr cm-scr-t" />
-                <div data-m-scr="" className="cm-scr cm-scr-b" />
                 <p data-m-kicker="" className="cm-kicker">
                   {content.kicker}
                 </p>
@@ -570,6 +682,12 @@ export function ShowreelCorridor({ content, services }: Props) {
                   </h2>
                   <p>{content.intro}</p>
                 </div>
+                <h3 data-m-ah="" className="cm-ah">
+                  {content.arrivalHeadline}
+                </h3>
+                <p data-m-ap="" className="cm-ap">
+                  {content.arrivalDescription}
+                </p>
                 <div data-m-cue="" className="cm-cue" aria-hidden="true">
                   <div className="cm-row">
                     <span>
