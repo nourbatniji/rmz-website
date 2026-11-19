@@ -104,9 +104,46 @@ export type ServiceFinsContent = {
   items: ServiceFinItem[];
 };
 
+/** One project card hanging in the showreel corridor. */
+export type CorridorProject = {
+  id: string;
+  /** Two-digit label, e.g. "01". */
+  number: string;
+  title: string;
+  /** References `ServiceTaxonomyItem.id` (category line). */
+  serviceId: string;
+  /** Short suffix after the category, e.g. "Demo project" while projects are placeholders. */
+  tag: string;
+  /** Project page URL. `null` = not linkable yet (project pages are deferred): rendered as a plain card. */
+  href: string | null;
+  /** Static poster for mobile side frames; `null` = labelled placeholder. */
+  poster: ImageRef | null;
+};
+
+/**
+ * Home video section ("HOME - VIDEO SECTION" corridor). One showreel video plays on every screen.
+ * Layout, perspective, scroll mapping and animation live in code; only content and media live here.
+ */
+export type CorridorContent = {
+  kicker: string;
+  headline: { lead: string; emphasis: string };
+  intro: string;
+  /** `null` until the final showreel exists: poster / labelled placeholder is shown and no player controls appear. */
+  video: { src: string } | null;
+  /** Approved poster still. `null` = labelled development placeholder. */
+  poster: ImageRef | null;
+  /** Accessible description of the video (read by screen readers on the main screen). */
+  accessibleDescription: string;
+  /** Strip under the main screen ("All projects / Open the archive"). `href` null until the Work page exists. */
+  archive: { kicker: string; title: string; href: string | null };
+  /** Six projects: wall order left, right, left, right, left, right (1…6). */
+  projects: CorridorProject[];
+};
+
 export type HomepageContent = {
   site: SiteContent;
   hero: HeroContent;
+  corridor: CorridorContent;
   statement: StatementContent;
   services: ServiceTaxonomyItem[];
   serviceFins: ServiceFinsContent;

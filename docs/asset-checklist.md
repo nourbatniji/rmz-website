@@ -48,3 +48,7 @@ Every banner (3 on the wall) needs its own sequence of this kind. Frame counts m
 
 The canvas uses **Figtree** and **Playfair Display (italic 700)** — both free Google Fonts, already self-hosted via `next/font`.
 No substitutes in use. If RMZ has licensed brand fonts, send the files (WOFF2 preferred) and licence.
+
+| Video section | Showreel video | 1 | 16:9, 1280×720 min (1920×1080 preferred), MP4 H.264 (+WebM), muted/loopable, ≤ ~15 MB | one video plays on every screen |
+| Video section | Poster still | 1 | 16:9, ≥ 1600 px | fallback + first frame |
+| Video section | Project posters | 6 | portrait 3:4 for the first two (mobile side frames) | desktop cards show the video |

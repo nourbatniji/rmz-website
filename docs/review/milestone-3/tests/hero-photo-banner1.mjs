@@ -6,7 +6,7 @@ const p=await b.newPage(); await p.setViewport({width:1440,height:1300}); const 
 await p.goto('http://localhost:3113/',{waitUntil:'networkidle0'}); await sleep(1000);
 // load references once (same cover crop as the engine), expose matcher
 await p.evaluate(async()=>{ window.__refs=await Promise.all([1,2,3,4,5,6].map(async n=>{const im=new Image();im.src=`/media/hero/cloche/00${n}.webp`;await im.decode();return im;})); 
- window.__match=(bi)=>{const cs=[...document.querySelectorAll('section canvas')];const ribs=cs.length/3;const c0=cs[bi],rw=c0.width,ch=c0.height,cw=rw*ribs;
+ window.__match=(bi)=>{const cs=[...document.querySelectorAll('section[aria-label="Introduction"] canvas')];const ribs=cs.length/3;const c0=cs[bi],rw=c0.width,ch=c0.height,cw=rw*ribs;
   const refc=window.__refs.map(im=>{const k=Math.max(cw/im.naturalWidth,ch/im.naturalHeight);const cc=document.createElement('canvas');cc.width=cw;cc.height=ch;const g=cc.getContext('2d');g.fillStyle='#0F0F0E';g.fillRect(0,0,cw,ch);const dw=im.naturalWidth*k,dh=im.naturalHeight*k;g.drawImage(im,(cw-dw)/2,(ch-dh)/2,dw,dh);return g.getImageData(0,0,cw,ch).data;});
   const perRib=[],diffs=[];
   for(let i=0;i<ribs;i++){const c=cs[i*3+bi];const d=c.getContext('2d').getImageData(0,0,rw,ch).data;const sc=refc.map(()=>0);let n=0;
@@ -36,7 +36,7 @@ await goto(0,800); m=await match(0); ok('back at top: lid closed again (frame 1)
 // crop/position stability: match diff small for every keyframe (== identical to reference cover-crop)
 const dif=[]; for(const y of [0,144,288,432,576,720]){await goto(y,500); dif.push((await match(0)).diff);} ok('fixed crop: each painted frame matches its reference cover-crop (mean luma diff low, same for all frames)', Math.max(...dif)-Math.min(...dif)<2.5 && Math.max(...dif)<14, 'diffs '+dif.join(', '));
 // other banners untouched (dev sequences)
-await goto(0,500); for(const bi of [1,2]){ await p.click(`[role=group] button:nth-child(${bi+1})`); await sleep(2300); const r=await p.evaluate((bi)=>{const cs=[...document.querySelectorAll('section canvas')];const ribs=cs.length/3;const out=new Set();for(let i=0;i<ribs;i++){const c=cs[i*3+bi];const g=c.getContext('2d');const cw=c.width*ribs,ch=c.height;const k=Math.max(cw/1600,ch/1000);let id=0;for(let q=0;q<7;q++){const y=Math.round((300+q*14+7)*k-(1000*k-ch)/2);const px=g.getImageData(Math.floor(c.width/2),y,1,1).data;if((px[0]+px[1]+px[2])/3>110)id|=1<<q;}out.add(id);}return [...out];},bi); ok(`banner ${bi+1} dev sequence preserved (frame 1 at top)`, r.length===1&&r[0]===1, 'id '+r); }
+await goto(0,500); for(const bi of [1,2]){ await p.click(`[role=group] button:nth-child(${bi+1})`); await sleep(2300); const r=await p.evaluate((bi)=>{const cs=[...document.querySelectorAll('section[aria-label="Introduction"] canvas')];const ribs=cs.length/3;const out=new Set();for(let i=0;i<ribs;i++){const c=cs[i*3+bi];const g=c.getContext('2d');const cw=c.width*ribs,ch=c.height;const k=Math.max(cw/1600,ch/1000);let id=0;for(let q=0;q<7;q++){const y=Math.round((300+q*14+7)*k-(1000*k-ch)/2);const px=g.getImageData(Math.floor(c.width/2),y,1,1).data;if((px[0]+px[1]+px[2])/3>110)id|=1<<q;}out.add(id);}return [...out];},bi); ok(`banner ${bi+1} dev sequence preserved (frame 1 at top)`, r.length===1&&r[0]===1, 'id '+r); }
 await p.click('[role=group] button:nth-child(1)'); await sleep(2300);
 // resume auto: full cycle
 await p.click('button[aria-label$="automatic banner changes"]'); const t0=Date.now(); let last=(await st()).active; const ev=[];

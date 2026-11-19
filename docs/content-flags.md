@@ -37,3 +37,10 @@ Single source: `services` in `src/content/dev/homepage.ts` (`ServiceTaxonomyItem
 - **Footer** (unbuilt): list services from the same taxonomy; the old five-item "What we do" list is superseded.
 - Nav: "Capabilities" → `#capabilities` unchanged (no per-service nav items are implemented).
 - CMS: edit `services` (name/order) once; each section edits only its own description/media keyed by `serviceId`.
+
+## Video section (ShowreelCorridor) — see `docs/video-section.md`
+- Kicker "Work — walk the corridor", headline "Six rooms. / One long wall.", intro (click clause removed) — canvas copy, **provisional**, pending approval. "walk the corridor" reads like a design note.
+- Projects Alpha…Zeta / "Demo project" — **placeholders**; real projects, names and categories pending. Categories shown are the first six approved services (placeholder mapping only).
+- Showreel video, poster, accessible description — **missing** (typed content fields exist).
+- Project links and archive link — `null` until project/Work pages exist.
+- Accessibility decision: "All projects" label colour changed from canvas orange to `#D52518` on cream.

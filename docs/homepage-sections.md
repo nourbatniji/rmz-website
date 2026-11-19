@@ -20,3 +20,5 @@ Mismatches to confirm:
 3. Header nav lists Work / Capabilities / Studio / Contact; no Studio/Capabilities/Work targets are named in the canvas. Placeholder anchors `#work #capabilities #studio #contact` are used (Work page is deferred).
 4. Footer "Explore" links (`#work #selected #capabilities #services #logos`) refer to anchors that need final mapping.
 5. The canvas "Simulated scroll" slider on the hero is a prototype aid; the build uses real page scroll.
+
+> Board 2 (HOME - VIDEO SECTION / MOBILE · 01) is built as `ShowreelCorridor` — see docs/video-section.md.

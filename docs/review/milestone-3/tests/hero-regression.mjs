@@ -11,7 +11,7 @@ const st=()=>p.evaluate(()=>window.__rmzHero());
 // Banner 1 is PHOTOGRAPHIC (six keyframes): identify the painted keyframe per rib by matching against the reference
 // cover-crop of each source image. Banners 2/3 keep the barcode decode (dev frames).
 await p.evaluate(async()=>{ window.__refs=await Promise.all([1,2,3,4,5,6].map(async n=>{const im=new Image();im.src=`/media/hero/cloche/00${n}.webp`;await im.decode();return im;}));
- window.__match=(bi)=>{const cs=[...document.querySelectorAll('section canvas')];const ribs=cs.length/3;const c0=cs[bi],rw=c0.width,ch=c0.height,cw=rw*ribs;
+ window.__match=(bi)=>{const cs=[...document.querySelectorAll('section[aria-label="Introduction"] canvas')];const ribs=cs.length/3;const c0=cs[bi],rw=c0.width,ch=c0.height,cw=rw*ribs;
   const refc=window.__refs.map(im=>{const k=Math.max(cw/im.naturalWidth,ch/im.naturalHeight);const cc=document.createElement('canvas');cc.width=cw;cc.height=ch;const g=cc.getContext('2d');g.fillStyle='#0F0F0E';g.fillRect(0,0,cw,ch);const dw=im.naturalWidth*k,dh=im.naturalHeight*k;g.drawImage(im,(cw-dw)/2,(ch-dh)/2,dw,dh);return g.getImageData(0,0,cw,ch).data;});
   const perRib=[];
   for(let i=0;i<ribs;i++){const c=cs[i*3+bi];const d=c.getContext('2d').getImageData(0,0,rw,ch).data;const sc=refc.map(()=>0);let n=0;
@@ -20,7 +20,7 @@ await p.evaluate(async()=>{ window.__refs=await Promise.all([1,2,3,4,5,6].map(as
   return perRib;};});
 const decode=async(bi)=>{ if(bi===0){ const f=await p.evaluate(()=>window.__match(0)); return {frames:f, bbox:[0,0,0,0], n:f.length}; }
  return p.evaluate((bi)=>{
-  const cs=[...document.querySelectorAll('section canvas')]; const ribs=cs.length/3; const out=[];
+  const cs=[...document.querySelectorAll('section[aria-label="Introduction"] canvas')]; const ribs=cs.length/3; const out=[];
   const comp=document.createElement('canvas'); let cw=0,ch=0; for(let i=0;i<ribs;i++){ const c=cs[i*3+bi]; cw=c.width; ch=c.height; }
   comp.width=cw*ribs; comp.height=ch; const cg=comp.getContext('2d');
   for(let i=0;i<ribs;i++){ const c=cs[i*3+bi]; const g=c.getContext('2d'); cg.drawImage(c,i*cw,0);

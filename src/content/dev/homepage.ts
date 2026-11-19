@@ -68,6 +68,34 @@ export const devHomepageContent: HomepageContent = {
       },
     ],
   },
+  // Video section. Copy from the approved canvas ("HOME - VIDEO SECTION"), minus the click-to-open clause (project
+  // pages are deferred). No footage yet: poster/video are null → labelled placeholder, no player controls.
+  // Projects are DEMO placeholders (canvas: Alpha…Zeta); categories use the approved service taxonomy.
+  corridor: {
+    kicker: "Work — walk the corridor",
+    headline: { lead: "Six rooms.", emphasis: "One long wall." },
+    intro: "Each project hangs on the wall. Scroll to walk forward; a project turns to face you as you pass.",
+    video: null,
+    poster: null,
+    accessibleDescription: "RMZ showreel: a selection of recent work. Showreel footage is not available yet.",
+    archive: { kicker: "All projects", title: "Open the archive", href: null },
+    projects: [
+      ["alpha", "Alpha", "branding"],
+      ["beta", "Beta", "creative-strategy"],
+      ["gamma", "Gamma", "content-production"],
+      ["delta", "Delta", "social-media"],
+      ["epsilon", "Epsilon", "design"],
+      ["zeta", "Zeta", "paid-media"],
+    ].map(([id, title, serviceId], i) => ({
+      id,
+      number: String(i + 1).padStart(2, "0"),
+      title,
+      serviceId,
+      tag: "Demo project",
+      href: null,
+      poster: null,
+    })),
+  },
   // Copy below is taken verbatim from the approved canvas (board "HOME - TEXT SECTION").
   statement: {
     lead: ["RMZ,", "when", "expectations"],
