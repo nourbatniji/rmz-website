@@ -19,7 +19,10 @@ One shared hook, `src/lib/use-entrance.ts`, drives both. It sets a `data-entranc
 - **No JS**: the server markup is the final state; nothing is hidden.
 
 ## Timing
-Lens ≈ 0.9s (ring 0.85s, blades 0.52s, text 0.8s + ≤125ms stagger). Minds ≈ 0.95s desktop (50ms × 8 columns + 0.6s), ≈ 0.7s mobile (35ms × 8 + 0.45s). Curve `cubic-bezier(.25,.85,.3,1)` — fast start, long deceleration, no overshoot.
+Lens ≈ 0.9s (ring 0.85s, blades 0.52s, text 0.8s + ≤125ms stagger). Minds ≈ 0.95s desktop (50ms × 8 slots + 0.6s), ≈ 0.7s mobile (35ms × 8 + 0.45s). Curve `cubic-bezier(.25,.85,.3,1)` — fast start, long deceleration, no overshoot.
 
 ## Tests
 `docs/review/milestone-10/tests/entrance-tests.mjs` (frame-sampled timing/easing, thresholds, interaction during the entrance, once-only, fast scroll, anchors, focus, reduced motion, JS-off, layout stability, mobile) and the updated `minds-tests.mjs` (spacing).
+
+## Minds desktop reveal order (shuffled)
+On desktop the eight columns start in a **shuffled order**: one random permutation per page load (module-level in `Minds.tsx`, Fisher–Yates), applied after hydration as a per-column `--o` custom property (slot 0…7 → `--o × 50ms` start delay). Each column has exactly one slot, so it animates exactly once with no duplicates. Only the reveal order is random — positions (`--l`/`--w`), content order, `--i` and the active column are untouched. The whole column (the `.mind` list item: background and content) is the animated element — nothing inside it animates separately. The server markup, reduced motion, JS-off and the **mobile accordion** (which keeps the top→bottom `--i` order, 35 ms) are unchanged; movement distance (28px), opacity, duration (0.6s) and easing are as before.

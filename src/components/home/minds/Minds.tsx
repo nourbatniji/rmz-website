@@ -1,7 +1,7 @@
 "use client";
 
 import "./minds.css";
-import { useId, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import type { MindsContent } from "@/content/types";
 import { useEntrance } from "@/lib/use-entrance";
 
@@ -20,6 +20,22 @@ import { useEntrance } from "@/lib/use-entrance";
  * reachable without eight narrow columns; same single-open behaviour. Normal vertical scrolling throughout.
  * Until approved names/roles/biographies/portraits exist, entries are labelled temporary placeholders.
  */
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// The desktop entrance reveals the columns in a SHUFFLED order. One permutation per page load (module-level, so remounts/strict mode reuse it):
+// each column gets exactly one slot 0…n−1 (slot × 50 ms = its start delay). Only the reveal order is random — never positions, content or state.
+let revealOrder: number[] | null = null;
+function getRevealOrder(n: number): number[] {
+  if (revealOrder && revealOrder.length === n) return revealOrder;
+  const a = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  revealOrder = a;
+  return a;
+}
+
 export function Minds({ content }: { content: MindsContent }) {
   const { items } = content;
   const uid = useId();
@@ -27,6 +43,12 @@ export function Minds({ content }: { content: MindsContent }) {
   const [sel, setSel] = useState(initial);
   const n = items.length;
   const rootRef = useRef<HTMLElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  // Applied imperatively after hydration (as `--o`, desktop only reads it): the server markup and the mobile accordion keep the index order.
+  useIsoLayoutEffect(() => {
+    const order = getRevealOrder(n);
+    listRef.current?.querySelectorAll<HTMLElement>(":scope > li").forEach((li, i) => li.style.setProperty("--o", String(order[i])));
+  }, [n]);
   useEntrance(rootRef); // one-shot staggered column reveal (opacity + small lift only) — see minds.css
 
   return (
@@ -37,7 +59,7 @@ export function Minds({ content }: { content: MindsContent }) {
           {content.label}
         </h2>
 
-        <ul className="minds-list" style={{ "--n": n } as CSSProperties}>
+        <ul ref={listRef} className="minds-list" style={{ "--n": n } as CSSProperties}>
           {items.map((item, i) => {
             const open = i === sel;
             // Desktop geometry: left = columns before × (closed + gap) + the open column's extra width if it precedes.

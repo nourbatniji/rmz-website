@@ -118,7 +118,11 @@ const sampler = (p, sel, f, ms, kind) => p.evaluate(([sel, f, ms, kind]) => new 
   const diffs = starts.slice(1).map((v, i) => v - starts[i]); const avg = diffs.reduce((a, c) => a + c, 0) / diffs.length;
   const done = out.find((s) => s.t > t0 && s.op.every((o) => o > 0.995) && s.ty.every((v) => v < 0.05)); const total = done ? done.t - t0 : 9999;
   const first = out.find((s) => s.a === 'pre' || s.a === 'playing');
-  ok(`columns reveal left → right (start order monotonic, ≈ ${avg.toFixed(0)} ms apart, target 45–60)`, starts.every((v, i) => v !== null && (i === 0 || v >= starts[i - 1])) && avg >= 40 && avg <= 66, starts.map((v) => Math.round(v)).join());
+  const slots = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((li) => +li.style.getPropertyValue('--o')));
+  const sorted = [...starts].sort((a, c) => a - c); const sd = sorted.slice(1).map((v, i) => v - sorted[i]); const savg = sd.reduce((a, c) => a + c, 0) / sd.length; const rank = starts.map((v) => starts.filter((x) => x < v).length);
+  ok(`each of the eight columns starts exactly once, in a shuffled order: slots ${slots.join(',')} form a permutation of 0–7 and the observed start order matches them`, starts.every((v) => v !== null) && new Set(slots).size === 8 && slots.every((v) => v >= 0 && v <= 7) && rank.join() === slots.join(), `starts ${starts.map((v) => Math.round(v)).join(',')} rank ${rank.join(',')}`);
+  ok(`starts are ≈ 50 ms apart in that order (${savg.toFixed(0)} ms average, every gap 30–75 ms)`, savg >= 42 && savg <= 62 && sd.every((d) => d > 30 && d < 75), sd.map(Math.round).join());
+  ok('every column rises exactly once (offset only ever decreases: no restart, no duplicate animation)', out.every((s2, i) => i === 0 || s2.ty.every((v, k) => v <= out[i - 1].ty[k] + 0.01)));
   ok(`whole sequence in ${Math.round(total)} ms (< ~1 s)`, total <= 1050 && out[out.length - 1].a === 'done', `${Math.round(total)}ms`);
   ok(`small upward reveal: start offset ${first.ty[0]}px (24–32px), opacity 0 → 1, no shadows`, first.ty.every((v) => v >= 24 && v <= 32) && first.op.every((o) => o === 0) && out.every((s) => s.sh.every((x) => x === 'none')));
   const l0 = out[0].l, w0 = out[0].w; const devL = Math.max(...out.map((s) => Math.max(...s.l.map((v, i) => Math.abs(v - l0[i]))))); const devW = Math.max(...out.map((s) => Math.max(...s.w.map((v, i) => Math.abs(v - w0[i])))));
@@ -135,6 +139,21 @@ const sampler = (p, sel, f, ms, kind) => p.evaluate(([sel, f, ms, kind]) => new 
   await q.close();
 }
 
+// ───────── E2. the shuffle: generated once per page load, different between loads ─────────
+{
+  const orders = [];
+  for (let i = 0; i < 6; i++) { const p = await open(D); orders.push(await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((li) => +li.style.getPropertyValue('--o')))); if (i === 0) { const before = orders[0].join(); await reach(p, '#minds', 0.5); await sleep(1600); await p.evaluate(() => scrollTo(0, 0)); await sleep(400); await reach(p, '#minds', 0.5); await sleep(600); const after = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((li) => +li.style.getPropertyValue('--o')).join()); ok('the order is generated once per page load: unchanged after the entrance, after scrolling away and back', before === after, before + ' / ' + after); } await p.close(); }
+  ok('every load gets a valid permutation of the eight columns (no duplicates, no gaps)', orders.every((o) => o.length === 8 && new Set(o).size === 8 && o.every((v) => v >= 0 && v <= 7)), orders.map((o) => o.join('')).join(' | '));
+  ok('the order is genuinely shuffled: it differs between page loads and is not the left-to-right order', new Set(orders.map((o) => o.join())).size >= 3 && orders.some((o) => o.join() !== '0,1,2,3,4,5,6,7'), orders.map((o) => o.join('')).join(' | '));
+  const p = await open(D); const geom = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((e) => { const r = e.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.width), e.querySelector('.mind-title').textContent, e.classList.contains('mind-open')].join(':'); }).join('|'));
+  const idx = await p.evaluate(() => [...document.querySelectorAll('#minds .mind')].map((e) => e.style.getPropertyValue('--i')).join());
+  ok('only the reveal order is random: column positions, content order (Mind 01 → 08), indices and the active (third) column are untouched', idx === '0,1,2,3,4,5,6,7' && /:Mind 01:false\|.*:Mind 03:true\|.*:Mind 08:false$/.test(geom) && geom.split('|').map((g) => g.split(':')[2]).join() === Array.from({ length: 8 }, (_, i) => `Mind 0${i + 1}`).join(), geom);
+  await reach(p, '#minds', 0.45); await sleep(160);
+  const targets = await p.evaluate(() => [...new Set(document.getAnimations().filter((a) => a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('#minds')).map((a) => a.effect.target.className.split(' ')[0]))]);
+  ok('whole-column animation: the only animated elements are the .mind columns themselves (background and content move as one, nothing animates inside them)', targets.length > 0 && targets.every((t) => t === 'mind'), targets.join());
+  await p.close();
+}
+
 // ───────── F. mobile (390) ─────────
 {
   const p = await open(M);
@@ -145,7 +164,7 @@ const sampler = (p, sel, f, ms, kind) => p.evaluate(([sel, f, ms, kind]) => new 
   const mo = await sampler(p, '#minds', 0.45, 1300, 'minds'); const mp = mo.find((s) => s.a === 'playing'); const mt0 = mp.t;
   const starts = Array.from({ length: 8 }, (_, i) => { const s = mo.find((q) => q.t >= mt0 && q.op[i] >= 0.05); return s ? s.t : null; }); const diffs = starts.slice(1).map((v, i) => v - starts[i]); const avg = diffs.reduce((a, c) => a + c, 0) / diffs.length;
   const md = mo.find((s) => s.t > mt0 && s.op.every((o) => o > 0.995) && s.ty.every((v) => v < 0.05));
-  ok(`mobile accordion: shorter stagger (≈ ${avg.toFixed(0)} ms/item), ${mo[0].ty[0]}px lift, whole sequence ${Math.round(md ? md.t - mt0 : 9999)} ms`, avg >= 25 && avg <= 48 && mo[0].ty.every((v) => v === 16) && md && md.t - mt0 <= 850 && avg < 45);
+  ok(`mobile accordion UNCHANGED: still top → bottom in order, shorter stagger (≈ ${avg.toFixed(0)} ms/item), ${mo[0].ty[0]}px lift, whole sequence ${Math.round(md ? md.t - mt0 : 9999)} ms`, starts.every((v, i) => v !== null && (i === 0 || v >= starts[i - 1])) && avg >= 25 && avg <= 48 && mo[0].ty.every((v) => v === 16) && md && md.t - mt0 <= 850 && avg < 45);
   ok('mobile accordion: third item stays open, nothing opens or closes, no horizontal overflow', mo.every((s) => s.open.join() === 'false,false,true,false,false,false,false,false') && !(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)));
   await p.close();
   const q = await open(M); await reach(q, '#minds', 0.5); await sleep(150);
