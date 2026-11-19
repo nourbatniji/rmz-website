@@ -64,40 +64,74 @@ export function Minds({ content }: { content: MindsContent }) {
     list.querySelectorAll<HTMLElement>(":scope > li").forEach((li, i) => li.style.setProperty("--o", String(order[i])));
     const desktop = window.matchMedia(DESKTOP);
     const reduced = window.matchMedia(REDUCED);
+    // One shared progress value, lightly smoothed: `target` is the exact scroll-derived progress; `cur` (what is rendered as --rp) eases toward it with
+    // frame-rate-independent exponential damping (time constant TAU → ≈ 95 % of a change in ≈ 3·TAU ≈ 135 ms, same in both directions). Each column's
+    // shuffled offset is derived from `cur` in CSS. The loop runs only while cur ≠ target: it snaps to the exact target within a tiny tolerance (so the
+    // hidden and fully revealed endpoints are exact) and then stops. Big jumps (anchors, fast flicks, a stalled frame) snap immediately.
+    const TAU = 45;
+    const SNAP = 0.002; // ≈ 1.4 px of scroll
+    const JUMP = 0.3; // ≈ 210 px of scroll within one frame → no trailing, show the position at once
     let raf = 0;
-    const apply = () => {
-      raf = 0;
-      if (!desktop.matches || reduced.matches) {
-        root.removeAttribute("data-reveal");
-        list.style.removeProperty("--rp");
-        return;
-      }
-      root.dataset.reveal = "on";
+    let last = 0;
+    let cur = -1; // -1 = not yet rendered
+    const write = (v: number) => {
+      cur = v;
+      list.style.setProperty("--rp", v === 0 ? "0" : v === 1 ? "1" : v.toFixed(4));
+    };
+    const target = (): number => {
       const vh = window.innerHeight;
       const hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;
       const start = hh + 0.8 * (vh - hh); // section top at 80 % of the usable viewport (below the header) → reveal begins
       const above = parseFloat(getComputedStyle(root).paddingTop) || 0; // the flat red space above the columns
       const end = vh - list.offsetHeight - 20 - above; // section top at which the complete list (final height) is on screen
       const D = clamp(start - end, 380, 760);
-      const rp = clamp((start - root.getBoundingClientRect().top) / D, 0, 1);
-      list.style.setProperty("--rp", rp.toFixed(4));
+      return clamp((start - root.getBoundingClientRect().top) / D, 0, 1);
     };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(apply);
-    };
-    apply();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    desktop.addEventListener("change", schedule);
-    reduced.addEventListener("change", schedule);
-    return () => {
+    const enabled = () => desktop.matches && !reduced.matches;
+    const off = () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      desktop.removeEventListener("change", schedule);
-      reduced.removeEventListener("change", schedule);
+      raf = 0;
+      cur = -1;
       root.removeAttribute("data-reveal");
       list.style.removeProperty("--rp");
+    };
+    const tick = (now: number) => {
+      raf = 0;
+      if (!enabled()) return off();
+      root.dataset.reveal = "on";
+      const t = target();
+      const dt = last ? now - last : 16;
+      last = now;
+      if (cur < 0 || dt > 100 || Math.abs(t - cur) > JUMP) return write(t); // first paint, stalled frame or large jump: immediate
+      const d = t - cur;
+      if (Math.abs(d) <= SNAP) return write(t); // settled: exact endpoint, loop stops
+      write(cur + d * (1 - Math.exp(-dt / TAU)));
+      raf = requestAnimationFrame(tick);
+    };
+    const kick = () => {
+      if (!raf) {
+        last = 0;
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    const resnap = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      if (!enabled()) return off();
+      root.dataset.reveal = "on";
+      write(target());
+    };
+    resnap();
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", resnap);
+    desktop.addEventListener("change", resnap);
+    reduced.addEventListener("change", resnap);
+    return () => {
+      window.removeEventListener("scroll", kick);
+      window.removeEventListener("resize", resnap);
+      desktop.removeEventListener("change", resnap);
+      reduced.removeEventListener("change", resnap);
+      off();
     };
   }, [n]);
   useEntrance(rootRef, { mediaQuery: "(max-width: 1023.98px)" }); // mobile accordion only: unchanged one-shot staggered lift (see minds.css)
