@@ -33,7 +33,7 @@
 /* ── Archive: pinned, scaled artboard + perspective stage ─────────────────
    Same model as the featured-work focus: a 1440×900 (mobile 390×672) artboard is scaled uniformly to fit the sticky stage;
    native scroll through the reserved track (stage + (n−1) × step) moves the position. */
-.wk-pin { position: relative; height: calc(100svh - var(--header-h)); overflow: hidden; background: var(--color-ink); }
+.wk-pin { position: relative; height: calc(100svh - var(--wk-hh, var(--header-h))); overflow: hidden; background: var(--color-ink); }
 .wk-box { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
 .wk-head { position: absolute; left: 64px; right: 64px; top: 49px; }
 .wk-headrow { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
@@ -56,6 +56,13 @@
 .wk-ctl { position: absolute; left: 0; right: 0; bottom: 36px; z-index: 30; display: flex; align-items: center; justify-content: center; gap: 16px; }
 .wk-arr:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
 .wk-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Mouse / trackpad desktop: a SHORT dwell seats the stage below the header (sticky) so the aligned state lasts long enough to be used — a fraction of
+   one screen, not a pinned scroll track. Nothing is captured or snapped: the page scrolls through it normally; card stepping is gated in JS (WorkArchive). */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .wk-track { height: calc(100svh - var(--wk-hh, var(--header-h)) + min(26svh, 240px)); } /* a sticky element can only travel inside its container's content box, so the dwell is height, not padding */
+  .wk-pin { position: sticky; top: var(--wk-hh, var(--header-h)); }
+}
 
 /* ── Project page ─────────────────────────────────────────────────────── */
 @keyframes wk-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }

@@ -22,6 +22,9 @@ type Opts = {
   over: (e: WheelEvent) => boolean;
   canStep: (dir: number) => boolean;
   step: (dir: number) => void;
+  /** Opt-in: a wheel gesture that started while `over` was false (page approach, momentum tail) stays native until it ends (SIL of silence);
+   *  the cards never start stepping on the tail of the scroll that brought the section into place. */
+  settle?: boolean;
 };
 
 export function useWheelSteps(opts: Opts) {
@@ -32,10 +35,12 @@ export function useWheelSteps(opts: Opts) {
     if (!active) return;
     let g: { last: number; lastAbs: number; mode: "native" | "handled"; fired: boolean; sum: number; dec: boolean; inc: number } | null = null;
     let busy = 0;
+    let offAt = -1e9; // last wheel event seen while the cards were NOT in control (settle option)
     const onWheel = (e: WheelEvent) => {
       const o = ref.current;
       if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-      if (!o.over(e)) { g = null; return; } // pointer off the cards: ordinary page scrolling, untouched
+      if (!o.over(e)) { g = null; offAt = performance.now(); return; } // pointer off the cards / stage not in place: ordinary page scrolling, untouched
+      if (o.settle && performance.now() - offAt < SIL) { offAt = performance.now(); return; } // same gesture as an approach scroll: stays native
       let dy = e.deltaY;
       if (e.deltaMode === 1) dy *= 16;
       else if (e.deltaMode === 2) dy *= window.innerHeight;
