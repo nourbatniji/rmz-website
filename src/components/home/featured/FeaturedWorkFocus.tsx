@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { FeaturedWorkContent, FeaturedWorkItem } from "@/content/types";
+import { LiquidImageFx } from "./liquid-image";
 import { DESKTOP_BOX, MOBILE_BOX, clamp, deskPose, mobPose } from "./featured-pose";
 import "./featured.css";
 
@@ -96,6 +97,8 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
     }));
     const desktop = window.matchMedia(DESKTOP);
     const reduced = window.matchMedia(REDUCED);
+    const hoverQ = window.matchMedia("(hover: hover) and (pointer: fine)");
+    let fx: LiquidImageFx | null = null; // one shared WebGL renderer, created on first use (desktop, fine pointer, motion allowed)
     let hh = 92;
     let raf = 0;
     let lastT = 0;
@@ -136,6 +139,13 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
         }
       });
       mode = m;
+      // Liquid image effect: only on the centred, front-facing, settled card (both its 3D angle and the wall position are at rest) — otherwise off + reset.
+      const rs = Math.round(s);
+      const act = !mob && hoverQ.matches && !reduced.matches && rs % 2 === 0 && Math.abs(s - rs) < 0.02 ? rs / 2 : -1;
+      if (act >= 0 && cards[act].img.querySelector("img")) {
+        fx ??= new LiquidImageFx();
+        fx.setActive(cards[act].img);
+      } else fx?.setActive(null);
       if (barRef.current) barRef.current.style.width = `${((s / last) * 100).toFixed(2)}%`;
       const r = Math.round(s);
       if (r !== shown) {
@@ -149,6 +159,7 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
       paint(v);
     };
     const off = () => {
+      fx?.setActive(null);
       cancelAnimationFrame(raf);
       raf = 0;
       cur = -1;
@@ -195,6 +206,8 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
       reduced.removeEventListener("change", resnap);
       ro.disconnect();
       off();
+      fx?.destroy();
+      fx = null;
     };
   }, [n, last]);
 
@@ -308,7 +321,7 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
                 {item.number} {item.name}
               </h3>
               <p>{item.category}.</p>
-              <p>{item.image ? "" : "Project image pending."}</p>
+              <p>{item.image ? `Image: ${item.image.alt}` : "Project image pending."}</p>
               <p>{item.description}</p>
               {item.copyStatus === "placeholder" && <p>Placeholder copy, not final.</p>}
             </li>
