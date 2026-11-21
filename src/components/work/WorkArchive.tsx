@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent } from "react";
 import type { WorkContent, WorkProject } from "@/content/work-types";
@@ -42,6 +42,7 @@ const two = (v: number) => String(v).padStart(2, "0");
 
 export function WorkArchive({ label, headingLead, headingEmphasis, intro, categories, emptyTitle, emptyBody, contact, projects: all }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [filter, setFilter] = useState<"all" | WorkProject["category"]>("all");
   const projects = filter === "all" ? all : all.filter((p) => p.category === filter);
   const n = projects.length;
@@ -61,6 +62,16 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
   const boxRef = useRef<HTMLDivElement>(null); // the scaled artboard
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  // Coming back to the home page (browser Back, router cache / bfcache restore) must show the whole collection again:
+  // the "opening a project" state (focused card pushed forward, the others faded out) never outlives the navigation.
+  useEffect(() => {
+    const reset = () => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } setOpening(false); };
+    reset();
+    const onShow = () => reset();
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, [pathname]);
 
   // The cards take the wheel only while (a) the pointer is on them and (b) the stage is ALIGNED: its top sits on the bottom edge of the fixed header,
   // and the heading, filters, focused card with its caption and the controls are all fully inside the usable viewport (measured live, every time).
