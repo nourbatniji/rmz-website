@@ -34,5 +34,5 @@ Desktop with a mouse / trackpad (`(hover: hover) and (pointer: fine)`, ≥1024 p
 distance (`.fw-root[data-nav]`), and one wheel gesture over the cards = one step (`src/lib/use-wheel-steps.ts`); elsewhere and at the first / last step the
 page scrolls normally. Touch / small screens keep the scroll-linked pinned stage described above.
 
-## Update — wheel drives the cards from anywhere on the aligned section
-Mouse / trackpad desktop: once the stage is aligned (top on the fixed header's bottom edge ±2 px, bottom inside the viewport) one wheel gesture steps the cards wherever the pointer is on the section — no longer only over the cards. Before alignment the page scrolls normally; a scroll that began before alignment (approach, momentum tail) stays native until it ends (`settle`); at the first / last state the wheel passes through to the page. A short sticky dwell (`min(26svh, 240px)`) keeps the aligned state usable; header height is measured (`--fw-hh`) and re-fitted on resize / font load. Touch, < 1024 px and reduced motion unchanged. Scripted test: `docs/review/milestone-17/tests/about-activation-tests.mjs` (51/51 at 1440×900, 1280×600, 1920×1080; real Chrome wheel input, no physical trackpad).
+## Update — back to scroll-linked pinned stage (requested)
+The wheel-step / pointer-over-cards mode was removed from the About section: page scroll itself drives the flip again, the stage stays pinned under the header through all states, then releases. Same code as 3a7edfe; `docs/review/milestone-16` tests pass 41/41 (scripted Chrome).
