@@ -1,8 +1,10 @@
 /**
  * LiquidImageFx — a subtle "liquid" displacement of the photograph inside the About cards.
  *
- * - ONE WebGL context for the whole section. Its <canvas> is moved into the `.fw-img` of the single card that is currently centred and
- *   showing its front; because it lives inside the card, the card's own 3D transform / scale maps pointer and pixels for free.
+ * - ONE WebGL context for the whole section. Its <canvas> is moved into the `.fw-img` of the card image the pointer is over; because it lives
+ *   inside the card, the card's own 3D transform / scale maps the pixels for free, and the pointer position comes from the browser's own
+ *   hit-test (`offsetX/Y` relative to the <img>, which is transform-aware), so it stays correct while the card is rotated in 3D.
+ * - Only while enabled (scroll at rest, desktop fine pointer, motion allowed) and only on faces that are showing their front.
  * - The canvas is only visible while the effect is alive. At rest the original <img> is shown, untouched and perfectly sharp.
  * - Pointer movement leaves a short trail of "blobs" (position + velocity + age). The fragment shader sums their localized, decaying
  *   displacement. Strength follows pointer speed, capped. No idle animation: the rAF loop runs only while blobs are alive.
@@ -11,10 +13,10 @@
  */
 
 const MAX_BLOBS = 14;
-const LIFE = 900; // ms a blob keeps influencing the image
-const RADIUS = 0.16; // blob radius, in units of the image's shorter side
-const MAX_STRENGTH = 0.022; // max uv displacement (≈ 2 % of the image) — restrained
-const SPEED_FOR_MAX = 2.4; // image-widths per second that count as "fast"
+const LIFE = 1000; // ms a blob keeps influencing the image
+const RADIUS = 0.18; // blob radius, in units of the image's shorter side
+const MAX_STRENGTH = 0.03; // max uv displacement (≈ 3 % of the image) — restrained but clearly visible
+const SPEED_FOR_MAX = 1.5; // image-widths per second that count as "fast"
 
 const VERT = `attribute vec2 p; varying vec2 v; void main(){ v = p * .5 + .5; gl_Position = vec4(p, 0., 1.); }`;
 const FRAG = `precision mediump float;
@@ -58,6 +60,7 @@ export class LiquidImageFx {
   private lastT = 0;
   private hasLast = false;
   private visible = false;
+  private enabled = false;
   private px = 1; // device pixel ratio actually used
   private ro: ResizeObserver | null = null;
 
@@ -69,38 +72,51 @@ export class LiquidImageFx {
     window.addEventListener("pointermove", this.onMove, { passive: true });
   }
 
-  /** The card whose front face is centred and at rest (its `.fw-img`), or null: the effect is off. Changing it resets everything. */
-  setActive(host: HTMLElement | null) {
-    if (this.dead) return;
-    if (host === this.host) return;
+  /** Enabled = the page is at rest on a desktop with a fine pointer and motion allowed. Turning it off (or scrolling) resets everything. */
+  setEnabled(on: boolean) {
+    if (this.dead || on === this.enabled) return;
+    this.enabled = on;
+    if (!on) this.release();
+  }
+
+  private release() {
+    this.reset();
+    this.ro?.disconnect();
+    this.host = null;
+    this.img = null;
+  }
+
+  private attach(img: HTMLImageElement, host: HTMLElement) {
     this.reset();
     this.host = host;
-    this.img = host ? host.querySelector<HTMLImageElement>("img") : null;
-    this.hasLast = false;
+    this.img = img;
     this.ro?.disconnect();
-    if (host && this.img) {
-      this.ro = new ResizeObserver(() => this.size());
-      this.ro.observe(host);
-    }
+    this.ro = new ResizeObserver(() => this.size());
+    this.ro.observe(host);
   }
 
   private onMove = (e: PointerEvent) => {
-    if (this.dead || !this.host || !this.img || e.pointerType === "touch" || e.buttons) { this.hasLast = false; return; }
-    const r = this.host.getBoundingClientRect();
-    // the card is flat and unscaled-by-3D while active, so the on-screen rect maps linearly to the image
-    const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom && r.width > 0 && r.height > 0;
+    if (this.dead || !this.enabled || e.pointerType === "touch" || e.buttons) { this.hasLast = false; return; }
+    const t = e.target;
+    // the browser's hit-test says which image is under the pointer (3D-correct); anything else (text, controls, other sections) is ignored
+    const img = t instanceof HTMLImageElement && t.closest(".fw-flip") ? t : null;
+    const host = img?.parentElement;
+    const front = img?.closest<HTMLElement>(".fw-front");
+    if (!img || !host || !host.classList.contains("fw-img") || !front || getComputedStyle(front).visibility === "hidden") { this.hasLast = false; return; }
+    if (img !== this.img) this.attach(img, host);
+    const w = img.clientWidth, h = img.clientHeight;
+    if (!w || !h) return;
     const now = performance.now();
-    if (!inside) { this.hasLast = false; return; }
     if (this.hasLast && now > this.lastT) {
       const dt = Math.max(8, now - this.lastT) / 1000;
-      const vx = (e.clientX - this.lastX) / r.width / dt; // image-widths per second
-      const vy = (e.clientY - this.lastY) / r.width / dt;
+      const vx = (e.clientX - this.lastX) / w / dt; // image-widths per second (screen motion over local width — fine for a restrained effect)
+      const vy = (e.clientY - this.lastY) / w / dt;
       const sp = Math.hypot(vx, vy);
       if (sp > 0.02) {
         const k = Math.min(1, sp / SPEED_FOR_MAX);
-        const mag = MAX_STRENGTH * k * k * (2 - k); // eases in, saturates: restrained maximum
+        const mag = MAX_STRENGTH * k * (2 - k); // eases in, saturates: restrained maximum
         const n = sp || 1;
-        this.blobs.push({ x: (e.clientX - r.left) / r.width, y: 1 - (e.clientY - r.top) / r.height, vx: (vx / n) * mag, vy: (-vy / n) * mag, t: now });
+        this.blobs.push({ x: e.offsetX / w, y: 1 - e.offsetY / h, vx: (vx / n) * mag, vy: (-vy / n) * mag, t: now });
         if (this.blobs.length > MAX_BLOBS) this.blobs.shift();
         this.start();
       }

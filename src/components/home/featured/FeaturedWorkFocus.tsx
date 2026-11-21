@@ -121,7 +121,7 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
     const stepPx = () => (track.offsetHeight - stage.offsetHeight) / last;
     const target = () => clamp((hh - track.getBoundingClientRect().top) / stepPx(), 0, last);
 
-    const paint = (s: number) => {
+    const paint = (s: number, final: boolean) => {
       const mob = mobileRef.current;
       const m = mob ? "mob" : "desk";
       cards.forEach((c, j) => {
@@ -139,13 +139,12 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
         }
       });
       mode = m;
-      // Liquid image effect: only on the centred, front-facing, settled card (both its 3D angle and the wall position are at rest) — otherwise off + reset.
-      const rs = Math.round(s);
-      const act = !mob && hoverQ.matches && !reduced.matches && rs % 2 === 0 && Math.abs(s - rs) < 0.02 ? rs / 2 : -1;
-      if (act >= 0 && cards[act].img.querySelector("img")) {
+      // Liquid image effect: only once the scroll has come to rest (final write), on desktop with a fine pointer and motion allowed. The pointer's own
+      // hit-test picks the image, so it also works on a card caught mid-turn (front still showing); scrolling or a changing wall switches it off + resets it.
+      if (final && !mob && hoverQ.matches && !reduced.matches) {
         fx ??= new LiquidImageFx();
-        fx.setActive(cards[act].img);
-      } else fx?.setActive(null);
+        fx.setEnabled(true);
+      } else fx?.setEnabled(false);
       if (barRef.current) barRef.current.style.width = `${((s / last) * 100).toFixed(2)}%`;
       const r = Math.round(s);
       if (r !== shown) {
@@ -154,12 +153,12 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
         setStep(r);
       }
     };
-    const write = (v: number) => {
+    const write = (v: number, final = false) => {
       cur = v;
-      paint(v);
+      paint(v, final);
     };
     const off = () => {
-      fx?.setActive(null);
+      fx?.setEnabled(false);
       cancelAnimationFrame(raf);
       raf = 0;
       cur = -1;
@@ -171,9 +170,9 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
       const t = target();
       const dt = lastT ? now - lastT : 16;
       lastT = now;
-      if (cur < 0 || dt > 100 || Math.abs(t - cur) > JUMP) return write(t); // first paint, stalled frame or large jump: immediate
+      if (cur < 0 || dt > 100 || Math.abs(t - cur) > JUMP) return write(t, true); // first paint, stalled frame or large jump: immediate
       const d = t - cur;
-      if (Math.abs(d) <= SNAP) return write(t); // settled: exact position, loop stops
+      if (Math.abs(d) <= SNAP) return write(t, true); // settled: exact position, loop stops
       write(cur + d * (1 - Math.exp(-dt / TAU)));
       raf = requestAnimationFrame(tick);
     };
@@ -190,7 +189,7 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
       fit();
       mode = null;
       root.dataset.ready = "1";
-      write(target());
+      write(target(), true);
     };
     resnap();
     window.addEventListener("scroll", kick, { passive: true });

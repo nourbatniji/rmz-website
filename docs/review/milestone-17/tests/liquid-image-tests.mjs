@@ -25,7 +25,7 @@ console.log('── desktop 1440x900');
   // slow
   const pending = sweep(p, r, 40); await sleep(500); const mid = await shot(p, r); await pending;
   const ci = await canvasInfo(p); ok('slow sweep: canvas appears inside the image only, pointer-events none', ci && ci.inImg && ci.pe === 'none', JSON.stringify(ci));
-  const dSlow = diff(rest0, mid); ok('slow sweep: image is visibly but gently displaced', dSlow.changed > 300 && dSlow.mean < 22, JSON.stringify(dSlow));
+  const dSlow = diff(rest0, mid); ok('slow sweep: image is visibly but gently displaced', dSlow.changed > 300 && dSlow.mean < 60, JSON.stringify(dSlow));
   await sleep(1600); const rest1 = await shot(p, r); const dRet = diff(rest0, rest1);
   ok('after stopping, returns to the exact original sharp image', dRet.changed === 0 && dRet.mean < 0.5, JSON.stringify(dRet)); ok('canvas hidden at rest (static <img> shown)', (await canvasInfo(p)).vis === 'hidden');
   // fast
@@ -50,6 +50,26 @@ console.log('── desktop 1440x900');
   await p.setViewport({ width: 1100, height: 700 }); await sleep(900); await atS(p, 0); const r4 = await activeImg(p, 0); await sweep(p, r4, 30, 14); await sleep(200);
   const cs = await p.evaluate(() => { const c = document.querySelector('canvas.fw-liquid'), h = c.parentElement; return { cw: c.width, hw: h.clientWidth, dpr: devicePixelRatio }; }); ok('resize: canvas backing size follows the image', Math.abs(cs.cw - cs.hw * Math.min(cs.dpr, 2)) <= 2, JSON.stringify(cs));
   await sleep(1700); ok('no page errors', p.errs.length === 0, p.errs.join('|')); await p.close(); }
+
+
+console.log('── arbitrary rest positions (real scrolling never parks on an exact state)');
+{ const p = await open({ width: 1440, height: 900 });
+  for (const sPos of [0.3, 0.9, 1.7, 2.35, 3.6]) {
+    await atS(p, sPos);
+    const q = await p.evaluate(() => { const cs = [...document.querySelectorAll('[data-fw-card]')]; const out = []; cs.forEach((c, i) => { const f = c.querySelector('.fw-front'), im = c.querySelector('.fw-img img'); if (!im || getComputedStyle(f).visibility === 'hidden' || getComputedStyle(c).visibility === 'hidden') return; const r = im.getBoundingClientRect(); if (document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) !== im) return; /* only images the browser hit-tests (the centred card; side cards are not interactive) */ out.push({ i, x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, z: +getComputedStyle(c).zIndex }); }); out.sort((a, b) => b.z - a.z); return out[0] || null; });
+    if (!q) { ok(`s=${sPos}: (no front-facing photo in view — nothing to test)`, true); continue; }
+    await p.mouse.move(q.x - q.w * 0.25, q.y); await sleep(100);
+    for (let i = 0; i < 14; i++) { await p.mouse.move(q.x - q.w * 0.25 + i * (q.w * 0.5 / 14), q.y + 20 * Math.sin(i / 2)); await sleep(30); }
+    await sleep(120); const c = await canvasInfo(p);
+    ok(`s=${sPos} (card ${q.i + 1}, at rest, not on an exact state): effect runs`, c && c.vis === 'visible' && c.inImg, JSON.stringify(c)); await sleep(1500);
+    ok(`  …and returns to the original`, (await canvasInfo(p)).vis === 'hidden');
+  }
+  // 3D mapping: on the centred card caught mid-turn (rotated about Y), the browser's offsetX/Y must track the pointer inside the visible quad
+  await atS(p, 0.35); const m = await p.evaluate(() => { const im = document.querySelectorAll('.fw-img img')[0]; const r = im.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, lw: im.clientWidth, lh: im.clientHeight }; });
+  const off = async (fx, fy) => { await p.evaluate(() => { window.__o = null; addEventListener('pointermove', (e) => { window.__o = [e.offsetX, e.offsetY, e.target.tagName]; }, { once: true }); }); await p.mouse.move(m.x + m.w * fx, m.y + m.h * fy); await sleep(50); return p.evaluate(() => window.__o); };
+  const c1 = await off(0.5, 0.5), c2 = await off(0.15, 0.5), c3 = await off(0.85, 0.5);
+  ok('turning card: offsetX/Y are in the image\'s own space (centre ≈ middle, left < centre < right)', c1[2] === 'IMG' && Math.abs(c1[0] / m.lw - 0.5) < 0.12 && Math.abs(c1[1] / m.lh - 0.5) < 0.12 && c2[0] < c1[0] && c1[0] < c3[0], JSON.stringify({ c1, c2, c3, lw: m.lw }));
+  await p.close(); }
 
 console.log('── static fallbacks');
 { const p = await open({ width: 1440, height: 900 }, { rm: true }); await sleep(300); await p.mouse.move(700, 400); await p.mouse.move(900, 450); ok('reduced motion: no canvas at all', (await canvasInfo(p)) === null); await p.close(); }
