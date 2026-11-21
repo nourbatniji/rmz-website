@@ -118,4 +118,6 @@
 }
 
 /* Mouse mode: the step is state, not scroll — no reserved scroll distance (see FeaturedWorkFocus). */
-.fw-root[data-nav] .fw-track { height: calc(100svh - var(--header-h)); }
+.fw-root[data-nav] .fw-stage { top: var(--fw-hh, var(--header-h)); height: calc(100svh - var(--fw-hh, var(--header-h))); }
+/* a short dwell (a fraction of one screen, not a track) keeps the stage seated under the header long enough to use; it can only travel inside the track's height */
+.fw-root[data-nav] .fw-track { height: calc(100svh - var(--fw-hh, var(--header-h)) + min(26svh, 240px)); }

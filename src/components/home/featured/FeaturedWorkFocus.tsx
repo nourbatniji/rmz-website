@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { FeaturedWorkContent, FeaturedWorkItem } from "@/content/types";
-import { pointerOverCards } from "@/lib/use-pinned-skip";
-import { mostlyVisible, useWheelSteps } from "@/lib/use-wheel-steps";
+import { useWheelSteps } from "@/lib/use-wheel-steps";
 import { DESKTOP_BOX, MOBILE_BOX, clamp, deskPose, mobPose } from "./featured-pose";
 import "./featured.css";
 
@@ -93,11 +92,18 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
     stepRef.current = clamp(v, 0, last);
     kickRef.current();
   }, [last]);
+  // Mouse / trackpad: once the stage is ALIGNED (its top on the fixed header's bottom edge, bottom inside the viewport) the wheel drives the cards
+  // from anywhere over the section — not only over the cards. Before that the page just scrolls; a scroll that began before alignment stays native
+  // until it ends (`settle`), so the approach never steps a card. At the first / last step the wheel passes through to the page.
+  const navHhRef = useRef(92);
   useWheelSteps({
     active: true,
-    over: (e) => {
-      const root = rootRef.current;
-      return !!root && navRef.current && mostlyVisible(stageRef.current) && pointerOverCards(e, root.querySelectorAll<HTMLElement>("[data-fw-card]"), null, 24, stageRef.current);
+    settle: true,
+    over: () => {
+      const stage = stageRef.current;
+      if (!stage || !navRef.current) return false;
+      const r = stage.getBoundingClientRect();
+      return Math.abs(r.top - navHhRef.current) <= 2 && r.bottom <= window.innerHeight + 2;
     },
     canStep: (dir) => (dir > 0 ? stepRef.current < last : stepRef.current > 0),
     step: (dir) => stepTo(stepRef.current + dir),
@@ -130,6 +136,9 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
     const enabled = () => !reduced.matches;
     const fit = () => {
       hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;
+      const hdr = document.querySelector("header");
+      navHhRef.current = Math.max(hh, hdr ? hdr.getBoundingClientRect().bottom : 0); // never seat the stage under a taller-than-expected header
+      root.style.setProperty("--fw-hh", `${navHhRef.current}px`);
       const mob = !desktop.matches;
       navRef.current = navQ.matches && !reduced.matches;
       if (navRef.current) root.dataset.nav = "1";
@@ -217,7 +226,13 @@ export function FeaturedWorkFocus({ content }: { content: FeaturedWorkContent })
     reduced.addEventListener("change", resnap);
     const ro = new ResizeObserver(resnap);
     ro.observe(stage);
+    const hdrEl = document.querySelector("header");
+    if (hdrEl) ro.observe(hdrEl);
+    const fonts = document.fonts;
+    fonts?.ready.then(resnap);
+    fonts?.addEventListener?.("loadingdone", resnap);
     return () => {
+      fonts?.removeEventListener?.("loadingdone", resnap);
       window.removeEventListener("scroll", kick);
       window.removeEventListener("resize", resnap);
       desktop.removeEventListener("change", resnap);
