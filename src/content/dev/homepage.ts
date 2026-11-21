@@ -15,6 +15,12 @@ const identityPoster = "/media/hero/identity/frame-01.webp";
  * To swap in real media, replace a `media: null` with a `sequence` / `still` ref.
  * Nothing in components needs to change. Copy is taken from the approved canvas.
  */
+const FEATURED_PHOTOS: { src: string; alt: string; pos: string }[] = [
+  { src: "/media/featured/work-01-arid.webp", alt: "Portrait of a woman in red lipstick and red bead earrings among prickly-pear cactus pads", pos: "50% 28%" },
+  { src: "/media/featured/work-02-drift.webp", alt: "A woman in a black feather collar looking through a magnifying glass against a red gradient", pos: "50% 36%" },
+  { src: "/media/featured/work-03-tidepool.webp", alt: "A woman in a red coat surfing a wave while carrying a green suitcase", pos: "50% 38%" },
+];
+
 export const devHomepageContent: HomepageContent = {
   site: {
     brand: {
@@ -159,6 +165,7 @@ export const devHomepageContent: HomepageContent = {
   },
   // Featured work focus (canvas board "HOME - ABOUT SECTION" — titled About, designed as selected work). The six project names, categories
   // and colours are the canvas's DEMO entries, and every description is a placeholder: no verified case summaries or images exist yet.
+  // Cards 01–03 now carry delivered photographs (public/media/featured, 900×1200 WebP); 04–06 still show the labelled placeholder.
   // See docs/featured-work-section.md.
   featured: {
     label: "Selected work",
@@ -173,6 +180,7 @@ export const devHomepageContent: HomepageContent = {
       ] as const
     ).map(([name, category, color], i) => {
       const n = String(i + 1).padStart(2, "0");
+      const photo = FEATURED_PHOTOS[i] ?? null;
       return {
         id: `work-${n}`,
         number: n,
@@ -180,8 +188,8 @@ export const devHomepageContent: HomepageContent = {
         category,
         description: `Placeholder for ${name}: two or three sentences on the brief, the idea and the result will go here once the verified case summary is supplied.`,
         copyStatus: "placeholder" as const,
-        image: null,
-        imagePosition: "50% 50%",
+        image: photo ? { src: photo.src, alt: photo.alt, width: 900, height: 1200 } : null,
+        imagePosition: photo?.pos ?? "50% 50%",
         placeholderColor: color,
       };
     }),

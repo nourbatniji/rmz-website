@@ -36,3 +36,6 @@ page scrolls normally. Touch / small screens keep the scroll-linked pinned stage
 
 ## Update — back to scroll-linked pinned stage (requested)
 The wheel-step / pointer-over-cards mode was removed from the About section: page scroll itself drives the flip again, the stage stays pinned under the header through all states, then releases. Same code as 3a7edfe; `docs/review/milestone-16` tests pass 41/41 (scripted Chrome).
+
+## Update — first three cards have photographs
+Cards 01–03 (Arid, Drift, Tidepool) use the delivered portraits: `public/media/featured/work-0{1,2,3}-*.webp` (900×1200 WebP, cover-cropped with per-image `imagePosition`), wired in `src/content/dev/homepage.ts` (`FEATURED_PHOTOS`). Cards 04–06 still show the labelled placeholder. Names, categories and copy remain placeholders ("Demo"); alt text describes each photo. If featured content is edited in the admin database it overrides this dev default.
