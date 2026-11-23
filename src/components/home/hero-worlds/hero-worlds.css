@@ -1,0 +1,42 @@
+/* Hero concept 04 "Three Worlds" — prototype styles. Everything is scoped under .hw-root. */
+.hw-root { --hw-rot: 1100ms; --hw-out: 380ms; --hw-in: 700ms; --hw-in-delay: 600ms; }
+
+/* Reserved text area: the three phrases share one grid cell, so the block is always as tall as the tallest phrase. */
+.hw-phrases { display: grid; }
+.hw-phrase { grid-area: 1 / 1; visibility: hidden; }
+.hw-phrase[data-state="active"], .hw-phrase[data-state="out"] { visibility: visible; }
+.hw-line { display: block; overflow: hidden; padding-block: 0.06em; margin-block: -0.06em; } /* the mask */
+.hw-line > span { display: block; will-change: transform; }
+
+/* Entrance / exit follow the prism turn (the ribs rotate over --hw-rot with a left→right stagger, so the left side where the text sits
+   turns away first): the old phrase leaves while the left ribs are still turning away, the new phrase enters as the new face arrives. */
+.hw-phrase[data-state="active"] .hw-line > span { animation: hw-in var(--hw-in) cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--hw-in-delay) + var(--l) * 90ms); }
+.hw-phrase[data-state="out"] .hw-line > span { animation: hw-out var(--hw-out) cubic-bezier(.55,0,.8,.3) both; animation-delay: calc(var(--l) * 40ms); }
+/* the very first paint: no prism turn to wait for */
+.hw-root[data-boot="1"] .hw-phrase[data-state="active"] .hw-line > span { animation-delay: calc(250ms + var(--l) * 90ms); }
+@keyframes hw-in { from { transform: translateY(108%); } to { transform: none; } }
+@keyframes hw-out { from { transform: none; } to { transform: translateY(-108%); } }
+/* a phrase that is the active one but not yet entered stays hidden under its mask (animation fill 'both' holds the 'from' keyframe during the delay) */
+
+.hw-fade-in { animation: hw-fade 700ms ease both; animation-delay: 300ms; }
+@keyframes hw-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Restrained local contrast: a soft shade behind the copy only, fading out before the middle of the picture. */
+.hw-shade { background: radial-gradient(ellipse 62% 78% at 0% 54%, rgba(15,15,14,.62), rgba(15,15,14,.28) 52%, rgba(15,15,14,0) 78%); }
+.hw-shade-b { background: linear-gradient(to top, rgba(15,15,14,.66), rgba(15,15,14,0)); }
+.hw-text-shadow { text-shadow: 0 1px 18px rgba(15,15,14,.35); }
+
+.hw-root a.hw-link .hw-link-t { background-image: linear-gradient(currentColor, currentColor); background-size: 100% 1px; background-position: 0 100%; background-repeat: no-repeat; padding-bottom: 3px; transition: color .2s, background-size .3s; }
+.hw-root a.hw-link { transition: color .2s; }
+.hw-root a.hw-link:hover { color: var(--color-yellow); }
+
+@media (max-width: 767px) {
+  .hw-shade { background: linear-gradient(to top, rgba(15,15,14,.72) 0%, rgba(15,15,14,.46) 34%, rgba(15,15,14,0) 62%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* no motion: the phrase simply swaps with the (also instant) prism turn */
+  .hw-phrase .hw-line > span { animation: none !important; transform: none !important; }
+  .hw-fade-in { animation: none; }
+  .hw-phrase[data-state="out"] { visibility: hidden; }
+}
