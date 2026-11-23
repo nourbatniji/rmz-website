@@ -40,14 +40,25 @@ const CHIP: Record<string, string> = {
 export function Fields({ fields, value, onChange, path, errors }: { fields: Field[]; value: Obj; onChange: (v: Obj) => void; path: string; errors: Errors }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
-      {fields.map((f, i) => (
+      {fields.filter((f) => !(f.kind === "text" && f.readOnly)).map((f, i) => (
         <FieldView key={`${f.kind}-${"name" in f ? f.name : ""}-${i}`} field={f} value={value} onChange={onChange} path={path} errors={errors} />
       ))}
     </div>
   );
 }
 
-function FieldView({ field, value, onChange, path, errors }: { field: Field; value: Obj; onChange: (v: Obj) => void; path: string; errors: Errors }) {
+/** Every named field carries its data path, so the live preview can point at it (hover/focus a field → outlined in the preview; click in the preview → jumps here). */
+function FieldView(props: { field: Field; value: Obj; onChange: (v: Obj) => void; path: string; errors: Errors }) {
+  const name = "name" in props.field ? props.field.name : undefined;
+  const p = name ? (props.path ? `${props.path}.${name}` : name) : undefined;
+  return (
+    <div data-path={p} className="min-w-0 rounded-xl transition-shadow">
+      <FieldBody {...props} />
+    </div>
+  );
+}
+
+function FieldBody({ field, value, onChange, path, errors }: { field: Field; value: Obj; onChange: (v: Obj) => void; path: string; errors: Errors }) {
   const id = useId();
   const name = "name" in field ? field.name : undefined;
   const p = name ? (path ? `${path}.${name}` : name) : path;
@@ -110,11 +121,6 @@ function FieldView({ field, value, onChange, path, errors }: { field: Field; val
       const canAdd = !field.fixed && items.length < (field.max ?? 99);
       const canRemove = !field.fixed && items.length > (field.min ?? 0);
       const update = (i: number, t: string) => set(items.map((x, j) => (j === i ? t : x)));
-      const move = (i: number, d: number) => {
-        const next = [...items];
-        [next[i], next[i + d]] = [next[i + d], next[i]];
-        set(next);
-      };
       const nested = Object.keys(errors).filter((k) => k.startsWith(`${p}.`));
       return (
         <FieldShell label={field.label} help={field.help} error={error ?? (nested.length ? errors[nested[0]] : undefined)}>
@@ -123,18 +129,12 @@ function FieldView({ field, value, onChange, path, errors }: { field: Field; val
               {items.map((t, i) => (
                 <SortableItem key={i} id={String(i)} label={`${field.label} ${i + 1}`}>
                   {({ setNodeRef, style, handle }) => (
-                    <div ref={setNodeRef as React.Ref<HTMLDivElement>} style={style} className="flex items-center gap-1.5 rounded-md bg-white">
+                    <div ref={setNodeRef as React.Ref<HTMLDivElement>} style={style} data-path={`${p}.${i}`} className="flex items-center gap-1.5 rounded-md bg-white">
                       {!field.fixed && handle}
                       {field.color && <span aria-hidden className="h-6 w-6 shrink-0 rounded border border-fg/30" style={{ background: t }} />}
                       <input type="text" aria-label={`${field.label} ${i + 1}`} value={t} placeholder={field.placeholder} onChange={(e) => update(i, e.target.value)} className={inputCls} />
                       {!field.fixed && (
                         <>
-                          <button type="button" className={iconBtnCls} aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)}>
-                            ↑
-                          </button>
-                          <button type="button" className={iconBtnCls} aria-label="Move down" disabled={i === items.length - 1} onClick={() => move(i, 1)}>
-                            ↓
-                          </button>
                           <button type="button" className={iconBtnCls} aria-label="Remove" disabled={!canRemove} onClick={() => set(items.filter((_, j) => j !== i))}>
                             ✕
                           </button>
@@ -169,11 +169,6 @@ function FieldView({ field, value, onChange, path, errors }: { field: Field; val
       const items = Array.isArray(v) ? (v as Obj[]) : [];
       const canAdd = !field.fixed && !!field.blank && items.length < (field.max ?? 99);
       const canRemove = !field.fixed && items.length > (field.min ?? 0);
-      const move = (i: number, d: number) => {
-        const next = [...items];
-        [next[i], next[i + d]] = [next[i + d], next[i]];
-        set(next);
-      };
       return (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
           <div className="flex items-baseline justify-between">
@@ -197,7 +192,7 @@ function FieldView({ field, value, onChange, path, errors }: { field: Field; val
                 return (
                   <SortableItem key={i} id={String(i)} label={field.title(it, i)}>
                     {({ setNodeRef, style, handle }) => (
-                      <details ref={setNodeRef as React.Ref<HTMLDetailsElement>} style={style} open={hasErr || undefined} className={`rounded-lg border ${hasErr ? "border-bad/70" : "border-fg/15"} bg-white`}>
+                      <details ref={setNodeRef as React.Ref<HTMLDetailsElement>} style={style} open={hasErr || undefined} data-item={typeof it.serviceId === "string" ? it.serviceId : typeof it.id === "string" ? it.id : undefined} className={`rounded-lg border ${hasErr ? "border-bad/70" : "border-fg/15"} bg-white`}>
                         <summary className="flex cursor-pointer list-none items-center gap-2 px-2 py-2 text-sm">
                           {!field.fixedOrder && handle}
                           <span aria-hidden className="text-fg/40">
@@ -206,16 +201,6 @@ function FieldView({ field, value, onChange, path, errors }: { field: Field; val
                           <span className="font-semibold">{field.title(it, i)}</span>
                           {status && <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${CHIP[status] ?? ""}`}>{status}</span>}
                           <span className="ml-auto flex gap-1" onClick={(e) => e.stopPropagation()}>
-                            {!field.fixedOrder && (
-                              <>
-                                <button type="button" className={iconBtnCls} aria-label="Move up" disabled={i === 0} onClick={(e) => { e.preventDefault(); move(i, -1); }}>
-                                  ↑
-                                </button>
-                                <button type="button" className={iconBtnCls} aria-label="Move down" disabled={i === items.length - 1} onClick={(e) => { e.preventDefault(); move(i, 1); }}>
-                                  ↓
-                                </button>
-                              </>
-                            )}
                             {!field.fixed && (
                               <button type="button" className={iconBtnCls} aria-label="Remove" disabled={!canRemove} onClick={(e) => { e.preventDefault(); set(items.filter((_, j) => j !== i)); }}>
                                 ✕
