@@ -24,16 +24,33 @@
 .hw-rise { animation: hw-rise 560ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(300ms + var(--rd, 0) * 80ms); }
 @keyframes hw-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* ── Opening: "the world comes alive" (see HeroThreeWorlds). The picture is the banner's own frame sequence playing (driven from JS); only the copy is
-   animated here. Held hidden while data-open is "pending" (before the decision / server render) or "armed" (waiting for the segment to be decoded);
-   the animations run when it becomes "running". data-intro stays set, so nothing restarts when the phase becomes "done". ── */
-.hw-root[data-open="pending"] .hw-rise, .hw-root[data-open="armed"] .hw-rise { animation: none; opacity: 0; }
-.hw-root[data-open="pending"] .hw-phrase[data-state="active"] .hw-line > span,
-.hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line > span { animation: none; transform: translateY(190%); }
-/* headline: ONE composition — both lines rise through their masks with a small offset (90 ms) between them, while the scene moves */
-.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line > span { animation-duration: 840ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: calc(260ms + var(--l) * 90ms); }
-/* description · link · bottom controls follow shortly after */
-.hw-root[data-intro="1"] .hw-rise { animation-duration: 740ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: calc(880ms + var(--rd, 0) * 100ms); }
+/* ── Opening: the typography-led reveal (see HeroThreeWorlds). Held while data-open is pending / measure / armed; the animations run when it becomes "running".
+   data-intro stays set, so nothing restarts when the phase becomes "done". Everything is a transform/opacity/mask: the picture never moves or scales. ── */
+@property --hw-k { syntax: "<number>"; inherits: false; initial-value: 0; }
+/* the world: a broad, softly feathered mask growing outward from the word's region (the hero centre) */
+.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"], [data-open="running"]) .hw-image {
+  -webkit-mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 calc(var(--hw-k) * 135% - 35%), transparent calc(var(--hw-k) * 135%));
+  mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 calc(var(--hw-k) * 135% - 35%), transparent calc(var(--hw-k) * 135%));
+}
+.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-image { --hw-k: 0; }
+.hw-root[data-open="running"] .hw-image { animation: hw-reveal 1100ms cubic-bezier(.3,.55,.2,1) 90ms both; }
+@keyframes hw-reveal { from { --hw-k: 0; } to { --hw-k: 1; } }
+
+/* the word: the real "perspective." line, FLIP-animated from its measured start pose (--fx/--fy/--fs/--ox/--oy) to its natural place (transform: none) */
+.hw-root[data-intro="1"][data-boot="1"] .hw-phrase[data-state="active"] .hw-line.t-italic > span { animation: none; transform: none; }
+.hw-root:is([data-open="pending"], [data-open="measure"]) .hw-phrase[data-state="active"] .hw-line.t-italic { visibility: hidden; }
+.hw-root:is([data-open="armed"], [data-open="running"]) .hw-phrase[data-state="active"] .hw-line.t-italic { overflow: visible; transform-origin: var(--ox, 0px) var(--oy, 0px); }
+.hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line.t-italic { transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(var(--fs, 1)); }
+.hw-root[data-open="running"] .hw-phrase[data-state="active"] .hw-line.t-italic { animation: hw-word 1150ms cubic-bezier(.22,.7,.2,1) 110ms both; }
+@keyframes hw-word { from { transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(var(--fs, 1)); } to { transform: none; } }
+
+/* "A DIFFERENT" completes the headline: a restrained upward mask as the word settles */
+.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation: none; transform: translateY(190%); }
+.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation-duration: 700ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: 620ms; }
+
+/* description · link · bottom controls near the end */
+.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-rise { animation: none; opacity: 0; }
+.hw-root[data-intro="1"] .hw-rise { animation-duration: 580ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: calc(900ms + var(--rd, 0) * 80ms); }
 
 /* Scrim behind the headline, concentrated on the red italic line (the 2nd line, ≈ 62 % down the block). Elliptical radial gradient with a long
    smooth tail (many stops, eased) → no box, no edge. Sized in em of the headline so it follows any copy length/size. */
