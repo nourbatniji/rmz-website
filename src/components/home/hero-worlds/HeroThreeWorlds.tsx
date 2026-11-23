@@ -28,20 +28,29 @@ const STAGGER = 0.6;
 const TRANSITION_MS = Math.round(ROTATE_MS * (1 + STAGGER));
 const AUTO_MS = 5000;
 
-// Opening ("image through typography"; once per tab session, on entry at the top). Three beats, all real CSS animation states (see hero-worlds.css):
-//   WORD   0–400 ms   the final red word "perspective." large and centred on the hero's near-black; the banner shows ONLY through restrained portions of
-//                     the letterforms (a ghost copy of the word clipped to the very same image, aligned to the full-size picture below).
-//   WORLD  400–950    the full-size banner is revealed behind it by a controlled left→right wipe (minimal feathering); the letters go to solid red.
-//   SETTLE 950–1900   only then the SAME word moves/shrinks (FLIP from its measured final bounds) into the headline; "A DIFFERENT" rises during the latter
-//                     part; description/controls follow. The picture never moves or scales; the frame sequence and scroll mapping are untouched.
+// Opening ("image through typography"; once per tab session, on entry at the top). One coordinated ≈2 s timeline of live text and masks (see hero-worlds.css):
+//   01 WORD       0–350 ms     the final red word "perspective." large and centred on the hero's near-black; the banner shows ONLY through portions of the
+//                              letterforms (a ghost copy of the word, clipped to the very same picture, aligned to the full-size image below).
+//   02 IMAGE      350–650      more of the photograph becomes visible inside the strokes (same word, same size/position).
+//   03 WORLD      650–1100     the letters return to solid red while the full-size photograph is revealed behind them left → right (slightly feathered vertical edge).
+//   04 TRAVEL     1000–1600    the SAME word (FLIP from its measured final bounds) moves/shrinks to its headline position; the picture stays still.
+//   05 HEADLINE   1450–1800    "A DIFFERENT" rises above it.   06 LIVE   1700–2050   description, CTA, controls → the exact normal hero.
+// The picture never moves or scales; frame-on-scroll and the prism are untouched.
 const READY_WAIT_MS = 900; // first image not painted by then → show the normal hero instead (no waiting)
-const OPEN_DONE_MS = 1950; // everything finished → hand over to the normal behaviour (countdown starts)
-const WORD_T = 250; // review poses (preview-only): the actual animations paused at these times
-const WORLD_T = 940;
+const OPEN_DONE_MS = 2100; // everything finished → hand over to the normal behaviour (countdown starts)
+/** Preview-only review stages: the REAL animations are paused at these times (06 = finished). */
+const STAGES = [
+  { id: 1, label: "Word", t: 300 },
+  { id: 2, label: "Image", t: 600 },
+  { id: 3, label: "World", t: 860 },
+  { id: 4, label: "Travel", t: 1300 },
+  { id: 5, label: "Headline", t: 1620 },
+  { id: 6, label: "Live", t: null },
+] as const;
 const OPEN_KEY = "rmz-hero-three-worlds-opening";
 type Phase = "pending" | "measure" | "armed" | "running" | "done"; // pending: server render / before the decision · measure: reading the headline's final bounds · armed: start pose, waiting for the first image · running · done
 type Pose = { fx: number; fy: number; fs: number; ox: number; oy: number; gw: number; gh: number; gx: number; gy: number };
-type View = "word" | "world" | "final" | null;
+type View = number | null;
 
 /** PROVISIONAL copy. Keyed by banner id; falls back to the content headline. */
 const PHRASES: Record<string, { lead: string; emphasis: string }> = {
@@ -264,15 +273,16 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     setView(null);
     restart();
   };
-  const review = (v: Exclude<View, null>) => {
-    setView(v);
-    if (v === "final") {
+  const review = (id: number) => {
+    setView(id);
+    const t = STAGES.find((x) => x.id === id)?.t ?? null;
+    if (t === null) {
       heldRef.current = null;
       finishOpening();
       return;
     }
-    heldRef.current = v === "word" ? WORD_T : WORLD_T;
-    if (phaseRef.current === "running") sectionRef.current?.getAnimations({ subtree: true }).forEach((a) => { a.pause(); a.currentTime = heldRef.current!; });
+    heldRef.current = t;
+    if (phaseRef.current === "running") sectionRef.current?.getAnimations({ subtree: true }).forEach((a) => { a.pause(); a.currentTime = t; });
     else if (phaseRef.current === "done" || phaseRef.current === "pending") restart();
   };
 
@@ -491,10 +501,10 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
       </div>
 
       {/* prototype-only review controls (not part of the hero composition) */}
-      <div data-hw-preview="" className="t-meta absolute right-(--gutter) top-[84px] z-10 flex items-center gap-px text-[10px] md:top-[116px]" role="group" aria-label="Opening review (preview only)">
-        {(["word", "world", "final"] as const).map((v) => (
-          <button key={v} type="button" aria-pressed={view === v} onClick={() => review(v)} className={`min-h-9 border border-cream/25 bg-ink/50 px-2.5 uppercase backdrop-blur-sm transition-colors md:px-3 ${view === v ? "text-cream" : "text-cream/60 hover:text-cream"}`}>
-            {v}
+      <div data-hw-preview="" className="t-meta absolute right-(--gutter) top-[84px] z-10 flex items-center gap-px text-[10px] md:top-[116px]" role="group" aria-label="Opening stages 01–06 (preview only)">
+        {STAGES.map((st) => (
+          <button key={st.id} type="button" aria-pressed={view === st.id} title={st.label} onClick={() => review(st.id)} className={`min-h-9 border border-cream/25 bg-ink/50 px-2 backdrop-blur-sm transition-colors md:px-2.5 ${view === st.id ? "text-cream" : "text-cream/60 hover:text-cream"}`}>
+            0{st.id}<span className="hidden lg:inline"> {st.label}</span>
           </button>
         ))}
         <button type="button" onClick={replay} className="min-h-9 border border-cream/25 bg-ink/50 px-2.5 text-cream/70 backdrop-blur-sm transition-colors hover:text-cream md:px-3">
