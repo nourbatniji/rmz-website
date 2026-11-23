@@ -1,0 +1,98 @@
+/* Hero concept 04 "Three Worlds" — prototype styles. Everything is scoped under .hw-root. */
+.hw-root { --hw-rot: 1100ms; --hw-out: 380ms; --hw-in: 700ms; --hw-in-delay: 600ms; }
+
+/* Reserved text area: the three phrases share one grid cell, so the block is always as tall as the tallest phrase. */
+.hw-phrases { display: grid; }
+.hw-phrase { grid-area: 1 / 1; visibility: hidden; }
+.hw-phrase[data-state="active"], .hw-phrase[data-state="out"] { visibility: visible; }
+.hw-line { display: block; overflow: hidden; padding: 0.08em 0.35em 0.1em; margin: -0.08em -0.35em -0.1em; } /* the mask: room on every side for overhanging glyphs (any copy) */
+.hw-line > span { display: block; }
+/* the italic line has descenders (p, g, y) that fall below its 0.9 line box: give its mask room so nothing is cut */
+.hw-line.t-italic { padding: 0.14em 0.35em 0.42em; margin: -0.14em -0.35em -0.42em; }
+
+/* Entrance / exit follow the prism turn (the ribs rotate over --hw-rot with a left→right stagger, so the left side where the text sits
+   turns away first): the old phrase leaves while the left ribs are still turning away, the new phrase enters as the new face arrives. */
+.hw-phrase[data-state="active"] .hw-line > span { animation: hw-in var(--hw-in) cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--hw-in-delay) + var(--l) * 90ms); }
+.hw-phrase[data-state="out"] .hw-line > span { animation: hw-out var(--hw-out) cubic-bezier(.55,0,.8,.3) both; animation-delay: calc(var(--l) * 40ms); }
+/* the very first paint: no prism turn to wait for */
+.hw-root[data-boot="1"] .hw-phrase[data-state="active"] .hw-line > span:not(.hw-ghost) { animation-delay: calc(250ms + var(--l) * 90ms); }
+@keyframes hw-in { from { transform: translateY(190%); } to { transform: none; } }
+@keyframes hw-out { from { transform: none; } to { transform: translateY(-190%); } }
+/* a phrase that is the active one but not yet entered stays hidden under its mask (animation fill 'both' holds the 'from' keyframe during the delay) */
+
+/* description · link · bottom controls: a subtle fade with at most 8px of movement (--rd = order) */
+.hw-rise { animation: hw-rise 560ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(300ms + var(--rd, 0) * 80ms); }
+@keyframes hw-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ── Opening: image through typography (see HeroThreeWorlds). Held while data-open is pending / measure / armed; the animations run when it becomes "running".
+   data-intro stays set, so nothing restarts when the phase becomes "done". Timeline (ms): word 0–100 · photo sweep 100–400, hold to 850 · red returns 850–1150 · prism 850–2610 · travel 1700–2300 · headline 2150–2500 · copy 2400–2780 ── */
+
+/* 03 WORLD — no mask, no fade: the picture is the REAL prism. Before the decision/measure the wall is hidden (it would show the poster); from "armed" on the prism is
+   present but its front face is empty, so only the near-black hero is visible; the ribs' own transition (inline style: 1100 ms + stagger, delayed by OPEN_HOLD_MS, 650 ms)
+   then turns the upright first banner into view. */
+.hw-root:is([data-open="pending"], [data-open="measure"]) .hw-image { opacity: 0; }
+
+/* the word: the real "perspective." line is the animated element: FLIP from its measured start pose (--fx/--fy/--fs/--ox/--oy) to its natural place (transform: none) */
+.hw-root[data-intro="1"][data-boot="1"] .hw-phrase[data-state="active"] .hw-line.t-italic > span:not(.hw-ghost) { animation: none; transform: none; }
+.hw-root:is([data-open="pending"], [data-open="measure"]) .hw-phrase[data-state="active"] .hw-line.t-italic { visibility: hidden; }
+.hw-line.t-italic { position: relative; }
+.hw-root:is([data-open="armed"], [data-open="running"]) .hw-phrase[data-state="active"] .hw-line.t-italic { overflow: visible; transform-origin: var(--ox, 0px) var(--oy, 0px); }
+.hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line.t-italic { transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(var(--fs, 1)); }
+/* 04 TRAVEL — continuous, smooth, during the prism's final portion (1500 ms) */
+.hw-root[data-open="running"] .hw-phrase[data-state="active"] .hw-line.t-italic { animation: hw-word 600ms cubic-bezier(.45,.05,.2,1) 1700ms both; }
+@keyframes hw-word { from { transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(var(--fs, 1)); } to { transform: none; } }
+
+/* 02 PHOTO — image through the letters: a ghost copy of the word with a transparent fill, clipped to the text, over ONE image plane (--gsize/--gx/--gy: cover-fitted into the
+   word's own box by JS). A sweep mask (--hw-p, left → right) fills the whole word with the photograph, it holds with a very subtle horizontal drift (--hw-d), then a second
+   sweep (--hw-q) brings the red back — only the x-sweep is soft; the letter edges stay sharp. The padding keeps ascenders/descenders inside the painted box. */
+@property --hw-p { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --hw-q { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --hw-d { syntax: "<number>"; inherits: false; initial-value: 0; }
+.hw-line > span.hw-ghost { display: none; animation: none; position: absolute; left: 0.15em; top: -0.16em; padding: 0.3em 0.2em 0.5em; white-space: nowrap; pointer-events: none; text-shadow: none;
+  color: transparent; -webkit-text-fill-color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-image: var(--gimg); background-repeat: no-repeat; background-origin: content-box; background-size: var(--gsize);
+  background-position: calc(var(--gx) + var(--hw-d) * var(--gdrift)) var(--gy);
+  --hw-mask: linear-gradient(90deg, transparent calc(var(--hw-q) * 108% - 8%), #000 calc(var(--hw-q) * 108%), #000 calc(var(--hw-p) * 108% - 8%), transparent calc(var(--hw-p) * 108%));
+  -webkit-mask-image: var(--hw-mask); mask-image: var(--hw-mask); }
+.hw-root:is([data-open="armed"], [data-open="running"]) .hw-phrase[data-state="active"] .hw-ghost { display: block; }
+.hw-root[data-open="running"] .hw-phrase[data-state="active"] .hw-ghost { animation: hw-pin 300ms cubic-bezier(.4,0,.25,1) 100ms both, hw-drift 1050ms linear 100ms both, hw-qin 300ms cubic-bezier(.4,0,.25,1) 850ms both; }
+@keyframes hw-pin { from { --hw-p: 0; } to { --hw-p: 1; } }
+@keyframes hw-qin { from { --hw-q: 0; } to { --hw-q: 1; } }
+@keyframes hw-drift { from { --hw-d: 0; } to { --hw-d: 1; } }
+
+/* 05 HEADLINE — "A DIFFERENT" rises above the word with a short upward mask */
+.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation: none; transform: translateY(190%); }
+.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation-duration: 350ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: 2150ms; }
+
+/* 06 LIVE — description · link · bottom controls arrive (1700–2050 ms) */
+.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-rise { animation: none; opacity: 0; }
+.hw-root[data-intro="1"] .hw-rise { animation-duration: 300ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: calc(2400ms + var(--rd, 0) * 40ms); }
+
+/* Scrim behind the headline, concentrated on the red italic line (the 2nd line, ≈ 62 % down the block). Elliptical radial gradient with a long
+   smooth tail (many stops, eased) → no box, no edge. Sized in em of the headline so it follows any copy length/size. */
+.hw-scrim { inset: -0.55em -1.1em -0.7em -0.9em; font-size: clamp(46px, 5.3vw, 84px); z-index: 0;
+  background: radial-gradient(ellipse 58% 50% at 40% 64%, rgba(10,9,8,.66) 0%, rgba(10,9,8,.56) 22%, rgba(10,9,8,.40) 42%, rgba(10,9,8,.22) 62%, rgba(10,9,8,.09) 80%, rgba(10,9,8,0) 100%); }
+@media (max-width: 767px) { .hw-scrim { font-size: clamp(38px, 11.4vw, 50px); inset: -0.7em -0.8em -0.9em -0.8em; background: radial-gradient(ellipse 66% 50% at 42% 64%, rgba(10,9,8,.66) 0%, rgba(10,9,8,.56) 24%, rgba(10,9,8,.38) 46%, rgba(10,9,8,.18) 68%, rgba(10,9,8,0) 100%); } }
+/* near-black edge separation for the red letters: tight, no glow, no outline */
+.hw-line.t-italic { text-shadow: 0 1px 1px rgba(8,7,6,.55), 0 2px 7px rgba(8,7,6,.5); }
+.hw-line.t-display { text-shadow: 0 1px 12px rgba(8,7,6,.3); }
+
+/* Restrained local contrast: a soft shade behind the copy only, fading out before the middle of the picture. */
+.hw-shade { background: radial-gradient(ellipse 62% 78% at 0% 54%, rgba(15,15,14,.4), rgba(15,15,14,.18) 52%, rgba(15,15,14,0) 78%); }
+.hw-shade-b { background: linear-gradient(to top, rgba(15,15,14,.66), rgba(15,15,14,0)); }
+.hw-text-shadow { text-shadow: 0 1px 18px rgba(15,15,14,.35); }
+
+.hw-root a.hw-link .hw-link-t { background-image: linear-gradient(currentColor, currentColor); background-size: 100% 1px; background-position: 0 100%; background-repeat: no-repeat; padding-bottom: 3px; transition: color .2s, background-size .3s; }
+.hw-root a.hw-link { transition: color .2s; }
+.hw-root a.hw-link:hover { color: var(--color-yellow); }
+
+@media (max-width: 767px) {
+  .hw-shade { background: linear-gradient(to top, rgba(15,15,14,.72) 0%, rgba(15,15,14,.46) 34%, rgba(15,15,14,0) 62%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* no motion: the phrase simply swaps with the (also instant) prism turn */
+  .hw-phrase .hw-line > span { animation: none !important; transform: none !important; }
+  .hw-rise { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .hw-phrase[data-state="out"] { visibility: hidden; }
+}

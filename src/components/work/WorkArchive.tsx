@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent } from "react";
 import type { WorkContent, WorkProject } from "@/content/work-types";
 import { pointerOverCards } from "@/lib/use-pinned-skip";
-import { mostlyVisible, useWheelSteps } from "@/lib/use-wheel-steps";
+import { useWheelSteps } from "@/lib/use-wheel-steps";
 import { useMedia } from "@/lib/use-media";
 import { artBackground } from "./art";
 import "./work.css";
@@ -35,12 +35,14 @@ type Props = {
 };
 
 const OPEN_MS = 520;
+const ALIGN_TOL = 2; // px of slack when judging alignment (sub-pixel scroll positions, rounding)
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const two = (v: number) => String(v).padStart(2, "0");
 
 export function WorkArchive({ label, headingLead, headingEmphasis, intro, categories, emptyTitle, emptyBody, contact, projects: all }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [filter, setFilter] = useState<"all" | WorkProject["category"]>("all");
   const projects = filter === "all" ? all : all.filter((p) => p.category === filter);
   const n = projects.length;
@@ -54,27 +56,61 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
   const swiped = useRef(false);
   const reduced = useMedia("(prefers-reduced-motion: reduce)", true); // server / no-JS = unpinned
   const live = !reduced && n > 1;
+  const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null); // the stage
   const boxRef = useRef<HTMLDivElement>(null); // the scaled artboard
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  // The cards take the wheel only while the pointer is on them (and the section is on screen); everywhere else the page scrolls normally.
+  // Coming back to the home page (browser Back, router cache / bfcache restore) must show the whole collection again:
+  // the "opening a project" state (focused card pushed forward, the others faded out) never outlives the navigation.
+  useEffect(() => {
+    const reset = () => { if (timer.current) { clearTimeout(timer.current); timer.current = null; } setOpening(false); };
+    reset();
+    const onShow = () => reset();
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, [pathname]);
+
+  // The cards take the wheel only while (a) the pointer is on them and (b) the stage is ALIGNED: its top sits on the bottom edge of the fixed header,
+  // and the heading, filters, focused card with its caption and the controls are all fully inside the usable viewport (measured live, every time).
+  // Before that — approaching from above or below — the wheel is never touched and the page simply scrolls.
+  const hhRef = useRef(92); // measured bottom edge of the fixed header
+  const aligned = useCallback(() => {
+    const tr = trackRef.current, pin = pinRef.current;
+    if (!tr || !pin) return false;
+    const hh = hhRef.current;
+    const vh = window.innerHeight;
+    const r = pin.getBoundingClientRect();
+    if (Math.abs(r.top - hh) > ALIGN_TOL || r.bottom > vh + ALIGN_TOL) return false; // stage not seated below the header yet (previous section still in view)
+    const parts = [tr.querySelector(".wk-head"), tr.querySelector(".wk-bs:not([aria-hidden])"), tr.querySelector(".wk-ctl")];
+    return parts.every((el) => {
+      if (!el) return true;
+      const q = el.getBoundingClientRect();
+      return q.top >= hh - ALIGN_TOL && q.bottom <= vh + ALIGN_TOL;
+    });
+  }, []);
   const overCards = useCallback(
     (e: WheelEvent) => {
       const tr = trackRef.current;
-      if (!tr) return false;
-      return mostlyVisible(pinRef.current) && pointerOverCards(e, tr.querySelectorAll<HTMLElement>(".wk-bs"), tr.querySelector<HTMLElement>(".wk-ctl"), 24, tr.querySelector<HTMLElement>(".wk-stage"));
+      if (!tr || !aligned()) return false;
+      return pointerOverCards(e, tr.querySelectorAll<HTMLElement>(".wk-bs"), tr.querySelector<HTMLElement>(".wk-ctl"), 24, tr.querySelector<HTMLElement>(".wk-stage"));
     },
-    [],
+    [aligned],
   );
 
-  // Fit the artboard to the stage (uniform scale, never stretched).
+  // Fit the artboard to the stage (uniform scale, never stretched) and keep the stage's seat in step with the real header height.
+  // Re-measured on resize, when the header changes size and when web fonts finish loading.
   useEffect(() => {
-    const pin = pinRef.current, box = boxRef.current;
-    if (!pin || !box) return;
+    const pin = pinRef.current, box = boxRef.current, root = rootRef.current;
+    if (!pin || !box || !root) return;
+    const header = document.querySelector("header");
     const fit = () => {
+      const css = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;
+      const hh = Math.max(css, header ? header.getBoundingClientRect().bottom : 0); // never let the stage sit under a taller-than-expected header
+      hhRef.current = hh;
+      root.style.setProperty("--wk-hh", `${hh}px`);
       const sc = Math.min(pin.clientWidth / box.offsetWidth, pin.clientHeight / box.offsetHeight, 1.25);
       const x = (pin.clientWidth - box.offsetWidth * sc) / 2;
       const y = (pin.clientHeight - box.offsetHeight * sc) / 2;
@@ -83,8 +119,12 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(pin);
+    if (header) ro.observe(header);
     window.addEventListener("resize", fit);
-    return () => { ro.disconnect(); window.removeEventListener("resize", fit); };
+    const fonts = document.fonts;
+    fonts?.ready.then(fit);
+    fonts?.addEventListener?.("loadingdone", fit);
+    return () => { ro.disconnect(); window.removeEventListener("resize", fit); fonts?.removeEventListener?.("loadingdone", fit); };
   }, [n]);
 
   // Position animation: one eased glide (≈0.65 s per project) from the current position to the target project.
@@ -118,6 +158,7 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
   useWheelSteps({
     active: live && !opening,
     over: overCards,
+    settle: true,
     canStep: (dir) => (dir > 0 ? targetRef.current < n - 1 : targetRef.current > 0),
     step: (dir) => goTo(targetRef.current + dir),
   });
@@ -157,7 +198,7 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
   const fo = projects[focus];
 
   return (
-    <div className="wk">
+    <div ref={rootRef} className="wk">
       <section id="work-archive" className="wk-in" aria-label="Selected work">
         <div ref={trackRef} className="wk-track">
           <div ref={pinRef} className="wk-pin">

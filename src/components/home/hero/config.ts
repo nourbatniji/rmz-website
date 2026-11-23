@@ -1,5 +1,5 @@
 /**
- * HeroWall tuning. Change values here only.
+ * Hero (HeroThreeWorlds) tuning. Change values here only.
  *
  * sequenceScrollDistancePx — how many pixels of page scroll play ONE complete image sequence
  * (first frame → last frame). Scrolling further plays it back (last → first), then forward again:

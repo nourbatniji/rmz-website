@@ -24,7 +24,7 @@ function Play({ label }: { label: string }) {
   return (
     <>
       <span className="wk-play" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 14 14"><path d="M2 1 L13 7 L2 13 Z" fill="#0F0F0E" /></svg>
+        <svg width="26" height="26" viewBox="0 0 14 14"><path d="M2 1 L13 7 L2 13 Z" fill="#F3E8CC" /></svg>
       </span>
       <span className="t-meta wk-nm s">{label}</span>
     </>

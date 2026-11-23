@@ -1,0 +1,48 @@
+/* About — scrubber layout (Homepage Journey V2, "Selected work" stage) telling the studio's story. See AboutScrubber.tsx. */
+
+.ab-root { position: relative; background: var(--color-ink); color: var(--color-cream); font-family: var(--font-sans); }
+.ab-label { margin: 0; font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; }
+.ab-kicker { margin: 0 0 14px; font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; color: var(--color-coral); }
+.ab-prov { display: inline-block; margin-left: 10px; border: 1px dashed currentColor; padding: 2px 6px; font-size: 9px; font-weight: 700; letter-spacing: 0.12em; opacity: 0.85; vertical-align: 1px; }
+.ab-title { margin: 0; font-weight: 900; letter-spacing: -0.045em; text-transform: uppercase; line-height: 0.88; overflow-wrap: anywhere; }
+.ab-body { margin: 22px 0 0; font-weight: 400; font-size: 17px; line-height: 1.55; max-width: 36ch; }
+.ab-cta { display: inline-flex; align-items: center; height: 52px; margin-top: 28px; padding: 0 26px; background: var(--color-red); color: var(--color-cream); font-weight: 800; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none; transition: background 0.2s; }
+.ab-cta:hover { background: var(--color-coral); }
+.ab-pend { position: absolute; left: 12px; bottom: 12px; z-index: 2; background: var(--color-cream); color: var(--color-ink); font-weight: 600; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 7px; }
+.ab-liquid { position: absolute; inset: 0; width: 100%; height: 100%; display: block; visibility: hidden; pointer-events: none; }
+
+/* ── Plain list (default: mobile, reduced motion, no JS) ── */
+.ab-flip { display: none; }
+.ab-static { display: block; padding: calc(var(--header-h) + 24px) var(--gutter) 72px; }
+.ab-list { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 56px; }
+.ab-simg { position: relative; overflow: hidden; aspect-ratio: 4 / 5; max-height: 72svh; width: 100%; background: linear-gradient(150deg, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.34)), var(--c); }
+.ab-simg img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ab-item .ab-kicker { margin-top: 18px; }
+.ab-item .ab-title { font-size: clamp(44px, 12vw, 72px); }
+@media (min-width: 640px) {
+  .ab-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+}
+
+/* ── Scroll-linked stage: desktop, motion allowed ── */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .ab-static { display: none; }
+  .ab-flip { display: block; --ab-step: clamp(320px, 46svh, 460px); }
+  .ab-track { position: relative; height: calc(100svh - var(--header-h) + var(--ab-n) * var(--ab-step)); }
+  .ab-stage { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); overflow: hidden; background: var(--color-ink); padding: 0 var(--gutter); box-sizing: border-box; }
+  .ab-top { position: absolute; left: var(--gutter); right: var(--gutter); top: clamp(20px, 5svh, 56px); display: flex; justify-content: space-between; }
+  .ab-bar { position: absolute; left: 0; right: 0; top: 28px; height: 3px; background: #262624; }
+  .ab-bar i { display: block; height: 3px; width: 0; background: var(--color-red); }
+  .ab-grid { position: absolute; left: var(--gutter); right: var(--gutter); top: clamp(60px, 12svh, 112px); bottom: clamp(16px, 4svh, 40px); display: grid; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr) minmax(300px, 400px); column-gap: clamp(24px, 3vw, 56px); align-items: center; }
+  .ab-index { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid #3a3a38; }
+  .ab-idx { display: flex; gap: 14px; align-items: baseline; width: 100%; padding: 14px 0; border: 0; border-top: 1px solid #3a3a38; background: none; color: var(--color-cream); cursor: pointer; text-align: left; font: inherit; transition: opacity 0.25s; }
+  .ab-idx span { font-weight: 600; font-size: 12px; letter-spacing: 0.16em; color: var(--color-coral); }
+  .ab-idx b { font-weight: 900; font-size: clamp(18px, 1.9vw, 26px); letter-spacing: -0.02em; text-transform: uppercase; }
+  .ab-idx:hover { opacity: 1 !important; }
+  .ab-imgcol { position: relative; height: 100%; max-height: 700px; justify-self: center; aspect-ratio: 3 / 4; width: auto; }
+  .ab-img { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(150deg, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.34)), var(--c); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45); will-change: opacity, transform; }
+  .ab-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .ab-txtcol { position: relative; align-self: stretch; }
+  .ab-txt { position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; will-change: opacity, transform; }
+  .ab-title { font-size: clamp(52px, min(6.4vw, 11svh), 96px); }
+  .ab-txt:focus-within { outline: none; }
+}

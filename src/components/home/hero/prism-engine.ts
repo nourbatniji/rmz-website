@@ -33,6 +33,7 @@ export class PrismEngine {
   private disposed = false;
   private painted = false;
   private shown: (HTMLImageElement | null)[];
+  private blank = -1; // opening only: this face is drawn empty (transparent) so the wall shows nothing until the prism turns the real faces into view
   private font = "sans-serif";
 
   constructor(
@@ -84,6 +85,17 @@ export class PrismEngine {
   setProgress(p: number) {
     this.progress = Math.min(1, Math.max(0, p));
     this.syncFrames();
+  }
+
+  /** Opening only: face `face` is left empty (transparent) until cleared with null. Nothing else about rendering changes. */
+  setBlankFace(face: number | null) {
+    const prev = this.blank;
+    this.blank = face ?? -1;
+    for (const f of [prev, this.blank]) {
+      if (f < 0) continue;
+      this.shown[f] = null;
+      this.mark(f);
+    }
   }
 
   /** Which banner faces the viewer. Does not touch progress. */
@@ -171,6 +183,10 @@ export class PrismEngine {
     for (const bi of todo) {
       const row = this.grid[bi];
       if (!row) continue;
+      if (bi === this.blank) {
+        row.forEach((c) => c.getContext("2d")?.clearRect(0, 0, c.width, c.height));
+        continue;
+      }
       this.compose(bi);
       const n = row.length;
       const sw = this.off.width / n;

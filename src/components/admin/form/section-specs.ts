@@ -47,6 +47,9 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
     headline(),
     { kind: "text", name: "intro", label: "Intro paragraph", multiline: true, rows: 3 },
     { kind: "text", name: "scrollHint", label: "Scroll hint" },
+    { kind: "text", name: "tagline", label: "Description under the headline", help: "Shown inside the picture, under the banner headline." },
+    { kind: "text", name: "ctaLabel", label: "Link text" },
+    { kind: "text", name: "ctaHref", label: "Link target", help: "#work for a section, /path for a page, https://… for another site." },
     {
       kind: "list",
       name: "banners",
@@ -57,6 +60,8 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       title: (it, i) => `${str(it, "number", String(i + 1))} · ${str(it, "label", "Banner")}`,
       item: [
         { kind: "text", name: "label", label: "Chip label" },
+        { kind: "text", name: "phraseLead", label: "Headline — bold cream line", help: "e.g. A DIFFERENT" },
+        { kind: "text", name: "phraseEmphasis", label: "Headline — red italic line", help: "e.g. perspective." },
         { kind: "color", name: "accent", label: "Chip colour" },
         { kind: "text", name: "description", label: "Description for screen readers", multiline: true, rows: 2 },
         { kind: "image", name: "poster", label: "Poster (first frame)", help: "Shown immediately and as the fallback." },
