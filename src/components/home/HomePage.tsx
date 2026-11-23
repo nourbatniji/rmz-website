@@ -2,10 +2,10 @@ import { Collective } from "@/components/home/collective/Collective";
 import { SiteHeader } from "@/components/shell/SiteHeader";
 import type { SectionKey } from "@/lib/admin/section-meta";
 import { Footer } from "@/components/home/footer/Footer";
-import { FeaturedWorkFocus } from "@/components/home/featured/FeaturedWorkFocus";
+import { AboutScrubber } from "@/components/home/about/AboutScrubber";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
-import { HeroWall } from "@/components/home/hero/HeroWall";
-import { ServicesLens } from "@/components/home/lens/ServicesLens";
+import { HeroThreeWorlds } from "@/components/home/hero/HeroThreeWorlds";
+import { ServicesOrbit } from "@/components/home/services-orbit/ServicesOrbit";
 import { Minds } from "@/components/home/minds/Minds";
 import { StatementRotator } from "@/components/home/statement/StatementRotator";
 import { WorkArchive } from "@/components/work/WorkArchive";
@@ -15,7 +15,7 @@ import { getWorkContent } from "@/lib/content/work";
 
 /**
  * Homepage in the approved canvas order:
- * hero → showreel corridor → statement → featured work (canvas "About": pinned flipping cards) → services lens → Minds → work archive (links to /work/[slug]) → collaborations → footer.
+ * hero → showreel corridor → statement → About (scroll-linked scrubber, Journey V2 layout) → services (orbital lens) → Minds → work archive (links to /work/[slug]) → collaborations → footer.
  * Sections not built yet are compact dev markers (DevSectionPlaceholder, currently none).
  *
  * `draft` = admin preview: reads the unpublished draft content instead of the published content.
@@ -36,12 +36,12 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
     const header = <SiteHeader brand={site.brand} nav={site.nav} />;
     const one = {
       site: <div className="h-[130px] bg-black"><SiteHeader brand={site.brand} nav={site.nav} /></div>,
-      hero: <HeroWall hero={hero} />,
+      hero: <HeroThreeWorlds hero={hero} />,
       corridor: <>{header}<ShowreelCorridor content={corridor} /></>,
       statement: <StatementRotator statement={statement} />,
-      featured: <>{header}<FeaturedWorkFocus content={featured} /></>,
-      services: <ServicesLens content={lens} services={services} />,
-      lens: <ServicesLens content={lens} services={services} />,
+      featured: <>{header}<AboutScrubber content={featured} /></>,
+      services: <>{header}<ServicesOrbit content={lens} services={services} /></>,
+      lens: <>{header}<ServicesOrbit content={lens} services={services} /></>,
       minds: <Minds content={minds} />,
       workIntro: <>{header}{archive}</>,
     }[only];
@@ -49,11 +49,11 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
   }
   return (
     <main id="top">
-      <HeroWall hero={hero} />
+      <HeroThreeWorlds hero={hero} />
       <ShowreelCorridor content={corridor} />
       <StatementRotator statement={statement} />
-      <FeaturedWorkFocus content={featured} />
-      <ServicesLens content={lens} services={services} />
+      <AboutScrubber content={featured} />
+      <ServicesOrbit content={lens} services={services} />
       <Minds content={minds} />
       {archive}
       <Collective content={collective} />

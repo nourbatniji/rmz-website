@@ -66,6 +66,9 @@ export const heroSchema: z.ZodType<HeroContent> = z.object({
   headline,
   intro: required("Intro"),
   scrollHint: text,
+  tagline: text.optional(),
+  ctaLabel: text.optional(),
+  ctaHref: linkSchema.optional(),
   banners: z
     .array(
       z.object({
@@ -76,6 +79,8 @@ export const heroSchema: z.ZodType<HeroContent> = z.object({
         description: required("Description"),
         poster: imageRefSchema.nullable(),
         sequence: sequenceRefSchema.nullable(),
+        phraseLead: text.optional(),
+        phraseEmphasis: text.optional(),
       }),
     )
     .min(1)

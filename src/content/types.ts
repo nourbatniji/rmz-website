@@ -45,12 +45,20 @@ export type HeroBanner = {
   poster: ImageRef | null;
   /** `null` = no sequence yet (poster, then a labelled placeholder, is shown). */
   sequence: SequenceRef | null;
+  /** The headline shown with this banner: a bold cream lead line and a red italic emphasis line (e.g. "A DIFFERENT" / "perspective."). */
+  phraseLead?: string;
+  phraseEmphasis?: string;
 };
 
 export type HeroContent = {
   headline: { lead: string; emphasis: string };
   intro: string;
   scrollHint: string;
+  /** Short description under the headline. */
+  tagline?: string;
+  /** Link under the description (label + target: #section, /path or https://…). */
+  ctaLabel?: string;
+  ctaHref?: string;
   banners: HeroBanner[];
 };
 

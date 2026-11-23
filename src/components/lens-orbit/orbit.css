@@ -1,0 +1,82 @@
+/* Orbital services exploration (preview only). Uses the existing lens' own stylesheet for the dial. Scoped with .orb-. */
+.orb-root { position: relative; background: #d52518; color: #f3e8cc; overflow-x: clip; font-family: var(--font-sans); }
+.orb-root *, .orb-root *::before, .orb-root *::after { box-sizing: border-box; }
+.orb-static { display: none; padding: calc(var(--header-h) + 24px) var(--gutter) 56px; }
+.orb-static ul { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 28px; max-width: 720px; }
+.orb-static h3 { margin: 0; font-weight: 900; font-size: 30px; letter-spacing: -0.03em; text-transform: uppercase; }
+.orb-static p { margin: 6px 0 0; font-size: 16px; line-height: 1.5; }
+.orb-static a { color: #f3e8cc; }
+
+.orb-k { margin: 0; font-weight: 700; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; }
+.orb-h { margin: 6px 0 0; font-weight: 900; font-size: 34px; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; }
+.orb-h i { font-family: var(--font-serif); font-style: italic; font-weight: 700; text-transform: none; letter-spacing: -0.04em; color: #f3e8cc; }
+.orb-count { font-weight: 700; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+.orb-skip { font-weight: 700; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #f3e8cc; border-bottom: 2px solid currentColor; padding-bottom: 3px; text-decoration: none; }
+.orb-skip:hover { border-color: #f3e8cc; }
+.orb-root a:focus-visible, .orb-root button:focus-visible { outline: 3px solid #f3e8cc; outline-offset: 3px; }
+
+.orb-stage { position: relative; width: 100%; height: calc(100svh - var(--header-h)); min-height: 540px; overflow: hidden; background: #d52518; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.orb-root[data-variant="A"] .orb-stage[data-pinned="1"] { position: sticky; top: var(--header-h); min-height: 0; }
+.orb-track { --orb-extra: clamp(1780px, 260svh, 2460px); position: relative; height: calc(100svh - var(--header-h) + var(--orb-extra)); }
+.orb-after { display: block; height: 1px; }
+.orb-head { position: absolute; left: var(--gutter); top: 18px; z-index: 3; pointer-events: none; }
+.orb-meta { position: absolute; right: var(--gutter); top: 20px; z-index: 3; display: flex; gap: 28px; align-items: center; }
+.orb-box { position: absolute; transform-origin: 0 0; }
+.orb-lbl { position: absolute; padding: 6px 6px; border: 0; background: none; font-family: inherit; font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 1; white-space: nowrap; cursor: pointer; transition: color 0.25s ease; }
+.orb-lbl:hover { color: #f3e8cc !important; }
+.orb-mark { position: absolute; z-index: 2; pointer-events: none; }
+.orb-dwrap { position: absolute; left: 0; right: 0; bottom: 10px; display: flex; align-items: flex-start; justify-content: center; gap: 28px; padding: 0 var(--gutter); }
+.orb-dc { width: 100%; max-width: 640px; text-align: center; }
+.orb-ctl { margin-top: 38px; }
+.orb-ctl:disabled { opacity: 0.35; cursor: default; }
+
+.orb-desc { display: grid; }
+.orb-d { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0s 0.2s; }
+.orb-d[data-on="1"] { opacity: 1; visibility: visible; transition: opacity 0.22s ease 0.08s, visibility 0s 0s; }
+.orb-cap { margin: 0; font-weight: 700; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #f3e8cc; }
+.orb-body { margin: 8px 0 0; font-size: 17px; line-height: 1.5; }
+.orb-det { margin: 8px 0 0; font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9; }
+.orb-link { margin: 8px 0 0; min-height: 20px; font-weight: 700; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+.orb-link a { color: #f3e8cc; border-bottom: 2px solid currentColor; padding-bottom: 3px; text-decoration: none; }
+
+/* mobile */
+.orb-m { padding: 28px 20px 40px; max-width: 540px; margin: 0 auto; }
+.orb-m .orb-head { position: static; pointer-events: auto; }
+.orb-mstage { position: relative; margin-top: 18px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.orb-msel { position: relative; height: 150px; overflow: hidden; }
+.orb-msel .orb-mark { left: 50%; top: 0; margin-left: -8px; }
+.orb-msel .orb-lbl { max-width: none; }
+.orb-mlens { position: relative; margin: 0 auto; pointer-events: none; }
+.orb-mctl { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 18px 0 14px; }
+.orb-mctl .orb-ctl { margin-top: 0; }
+.orb-m .orb-desc { text-align: center; min-height: 190px; }
+
+@media (prefers-reduced-motion: reduce) { .orb-root *, .orb-root *::before, .orb-root *::after { transition: none !important; animation: none !important; } }
+
+/* variant A: names along the lens circumference (SVG text, weight 400), selected one rises into a straight title */
+.orb-arc { font-family: inherit; letter-spacing: 0; } /* weight is set per frame: 400 on the ring → 700 when lifted */
+.orb-hit { position: absolute; padding: 0; border: 0; background: transparent; color: transparent; font-size: 1px; cursor: pointer; transform-origin: 50% 72%; }
+.orb-hit:focus-visible { outline: 2px solid #f3e8cc; outline-offset: 2px; }
+.orb-root[data-variant="A"] .orb-head { top: 6px; }
+.orb-stage[data-short="1"] .orb-k, .orb-stage[data-short="1"] .orb-det { display: none; }
+.orb-stage[data-short="1"] .orb-h { font-size: 26px; }
+.orb-stage[data-short="1"] .orb-body { font-size: 15px; margin-top: 6px; }
+
+/* variant A, wide desktop: heading upper left, lens + orbit centred, description lower right (stationary blocks) */
+.orb-stage[data-wide="1"] .orb-side { position: absolute; z-index: 3; }
+.orb-stage[data-wide="1"] .orb-headblk { left: 64px; top: 26px; }
+.orb-stage[data-wide="1"] .orb-descblk { right: 64px; bottom: 30px; }
+.orb-stage[data-wide="1"] .orb-head { position: static; pointer-events: auto; }
+.orb-stage[data-wide="1"] .orb-h { font-size: 44px; line-height: 0.92; }
+.orb-stage[data-wide="1"] .orb-k { margin-bottom: 8px; }
+.orb-dl { text-align: left; max-width: none; }
+.orb-dl .orb-body { font-size: 18px; max-width: 34ch; }
+.orb-ctls { display: flex; gap: 12px; margin-top: 18px; }
+.orb-ctls .orb-ctl { margin-top: 0; }
+
+/* no yellow in this section: the lens ring's selected mark (homepage stylesheet) uses cream here */
+.orb-root .lens-mk.on span { background: #f3e8cc; color: #0f0f0e; }
+.orb-root ::selection { background: #f3e8cc; color: #0f0f0e; }
+
+/* Anchor jumps (#services): the page already reserves header-h + 16 px above targets (scroll-padding-top); this scene must seat exactly under the header, so cancel the extra 16 px. */
+.orb-root { scroll-margin-top: -16px; }

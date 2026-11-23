@@ -6,7 +6,7 @@
 .wk-top { padding-top: calc(var(--header-h) + 20px); }
 .wk-px { padding-left: var(--gutter); padding-right: var(--gutter); }
 .wk-g12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; }
-.wk-y { color: var(--color-yellow); }
+.wk-y { color: var(--color-red); }
 .wk-sec { padding-top: 120px; }
 .wk-nm { font-size: 12px; margin: 0; }
 .wk-nm.s { font-size: 10px; }
@@ -23,19 +23,19 @@
 .wk-ph.flat { background: rgb(243 232 204 / 0.07); box-shadow: inset 0 0 0 1px rgb(243 232 204 / 0.14); }
 .wk-ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
-.wk-cta { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 22px; background: var(--color-yellow); color: var(--color-ink) !important; font-weight: 800; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; border: 0; cursor: pointer; transition: background 0.2s; }
-.wk-cta:hover { background: var(--color-orange); }
+.wk-cta { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 22px; background: var(--color-red); color: var(--color-cream) !important; font-weight: 800; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; border: 0; cursor: pointer; transition: background 0.2s; }
+.wk-cta:hover { background: var(--color-coral); }
 .wk-chip { height: 44px; padding: 0 18px; border: 1px solid rgb(243 232 204 / 0.5); background: transparent; color: var(--color-cream); font: 600 12px var(--font-sans); letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
-.wk-chip:hover { border-color: var(--color-yellow); color: var(--color-yellow); }
+.wk-chip:hover { border-color: var(--color-red); color: var(--color-red); }
 .wk-chip[aria-pressed="true"] { background: var(--color-cream); color: var(--color-ink); border-color: var(--color-cream); }
 .wk-chip i { font-style: normal; opacity: 0.7; font-size: 11px; }
 .wk-arr { width: 64px; height: 64px; flex: none; border: 1px solid var(--color-cream); background: transparent; color: var(--color-cream); font-size: 24px; cursor: pointer; transition: background 0.2s, color 0.2s; }
-.wk-arr:hover { background: var(--color-yellow); color: var(--color-ink); border-color: var(--color-yellow); }
+.wk-arr:hover { background: var(--color-red); color: var(--color-cream); border-color: var(--color-red); }
 
 /* ── Archive: pinned, scaled artboard + perspective stage ─────────────────
    Same model as the featured-work focus: a 1440×900 (mobile 390×672) artboard is scaled uniformly to fit the sticky stage;
    native scroll through the reserved track (stage + (n−1) × step) moves the position. */
-.wk-pin { position: relative; height: calc(100svh - var(--header-h)); overflow: hidden; background: var(--color-ink); }
+.wk-pin { position: relative; height: calc(100svh - var(--wk-hh, var(--header-h))); overflow: hidden; background: var(--color-ink); }
 .wk-box { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
 .wk-head { position: absolute; left: 64px; right: 64px; top: 49px; }
 .wk-headrow { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
@@ -59,6 +59,13 @@
 .wk-arr:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
 .wk-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
+/* Mouse / trackpad desktop: a SHORT dwell seats the stage below the header (sticky) so the aligned state lasts long enough to be used — a fraction of
+   one screen, not a pinned scroll track. Nothing is captured or snapped: the page scrolls through it normally; card stepping is gated in JS (WorkArchive). */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .wk-track { height: calc(100svh - var(--wk-hh, var(--header-h)) + min(26svh, 240px)); } /* a sticky element can only travel inside its container's content box, so the dwell is height, not padding */
+  .wk-pin { position: sticky; top: var(--wk-hh, var(--header-h)); }
+}
+
 /* ── Project page ─────────────────────────────────────────────────────── */
 @keyframes wk-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 @keyframes wk-clip { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
@@ -70,15 +77,19 @@
     .wk-rv { animation: wk-rise linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
   }
 }
-.wk-back { display: inline-flex; align-items: center; min-height: 44px; border-bottom: 2px solid var(--color-yellow); }
+.wk-back { display: inline-flex; align-items: center; min-height: 44px; border-bottom: 2px solid var(--color-red); }
 .wk-meta { border-top: 1px solid rgb(243 232 204 / 0.3); padding-top: 12px; }
 .wk-list > div { display: flex; gap: 20px; align-items: baseline; border-top: 1px solid rgb(243 232 204 / 0.25); padding: 16px 0; }
 .wk-list > div > span:first-child { color: var(--color-orange); width: 40px; flex: none; }
 .wk-list > div > span:last-child { font-weight: 300; font-size: 18px; line-height: 1.5; }
 .wk-sw { padding: 12px; min-height: 180px; display: flex; flex-direction: column; justify-content: flex-end; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
 .wk-film { position: relative; aspect-ratio: 16 / 9; background: #0b0b0a; border: 1px solid rgb(243 232 204 / 0.4); display: flex; align-items: center; justify-content: center; }
+<<<<<<< HEAD
 .wk-play { width: 88px; height: 88px; border-radius: 50%; background: var(--color-yellow); display: flex; align-items: center; justify-content: center; }
 .wk-film > .wk-vid { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
+=======
+.wk-play { width: 88px; height: 88px; border-radius: 50%; background: var(--color-red); display: flex; align-items: center; justify-content: center; }
+>>>>>>> origin/main
 .wk-film > .wk-nm { position: absolute; left: 14px; bottom: 12px; }
 .wk-next { background: var(--color-cream); color: var(--color-ink) !important; padding: 32px; align-items: center; row-gap: 24px; display: grid; }
 .wk-next:hover .wk-ph { transform: scale(1.02); }
