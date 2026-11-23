@@ -84,12 +84,8 @@
 .wk-list > div > span:last-child { font-weight: 300; font-size: 18px; line-height: 1.5; }
 .wk-sw { padding: 12px; min-height: 180px; display: flex; flex-direction: column; justify-content: flex-end; font-weight: 600; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
 .wk-film { position: relative; aspect-ratio: 16 / 9; background: #0b0b0a; border: 1px solid rgb(243 232 204 / 0.4); display: flex; align-items: center; justify-content: center; }
-<<<<<<< HEAD
-.wk-play { width: 88px; height: 88px; border-radius: 50%; background: var(--color-yellow); display: flex; align-items: center; justify-content: center; }
-.wk-film > .wk-vid { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
-=======
 .wk-play { width: 88px; height: 88px; border-radius: 50%; background: var(--color-red); display: flex; align-items: center; justify-content: center; }
->>>>>>> origin/main
+.wk-film > .wk-vid { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
 .wk-film > .wk-nm { position: absolute; left: 14px; bottom: 12px; }
 .wk-next { background: var(--color-cream); color: var(--color-ink) !important; padding: 32px; align-items: center; row-gap: 24px; display: grid; }
 .wk-next:hover .wk-ph { transform: scale(1.02); }
