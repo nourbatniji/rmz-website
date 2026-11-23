@@ -12,7 +12,6 @@ const ITEMS = [
   { href: "/admin", label: "Overview", exact: true, icon: "M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" },
   { href: "/admin/website", label: "Website", icon: "M3 5h18v14H3zM3 9h18" },
   { href: "/admin/work", label: "Projects", icon: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" },
-  { href: "/admin/media", label: "Media", icon: "M4 5h16v14H4zM8 11a2 2 0 100-4 2 2 0 000 4zM4 17l5-5 4 4 3-3 4 4" },
   { href: "/admin/messages", label: "Messages", icon: "M4 6h16v12H4zM4 7l8 6 8-6" },
 ] as const;
 

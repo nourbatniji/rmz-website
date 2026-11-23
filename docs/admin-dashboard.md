@@ -15,7 +15,7 @@ Custom CMS at `/admin`. Edits the homepage sections and work projects; the publi
 - **Sections** (`SiteSection` table): `draft` and `published` JSON per section, validated by `src/content/schemas.ts` (each schema is type-checked against `src/content/types.ts`). Save draft = admin preview only; Publish = live (`updateTag("content")`).
 - **Preview**: `/admin/preview` renders the real homepage with draft content (admin session required), shown in an iframe next to each editor.
 - **Projects** (`Project` table): `draft` / `published`; display order = table order; the `01…` number is assigned automatically. An empty table = the site shows the built-in demo projects.
-- **Media**: files upload from the browser straight to Vercel Blob (`/api/media/upload` only issues tokens to signed-in admins) and are listed in the library. Image fields also accept a `/media/…` path or any https URL.
+- **Media**: files upload from the browser straight to Vercel Blob (`/api/media/upload` only issues tokens to signed-in admins) and are placed straight into the field they were dropped on. Image and video fields accept a dragged file (or the Upload button), and also accept a `/media/…` path or any https URL.
 - **Adding a section editor**: add the schema (`schemas.ts`), register it in `src/lib/content/sections.ts` and `src/lib/admin/section-meta.ts`, describe its form in `src/components/admin/form/section-specs.ts`, and read it in `src/lib/content/homepage.ts`.
 
 ## Security notes
@@ -45,13 +45,13 @@ Minds = 8 columns, Services lens = the 7 taxonomy services (names editable, ids 
 
 ## Studio manager interface
 
-- Sidebar: Overview, Website, Projects, Media, Messages (unread badge). Under Website the sections appear as a sub-list with status dots (green published, amber unpublished changes, red needs fixing, grey original content), so any section is one click away. Account menu (view site, sign out) at the bottom; tablet and mobile use a top bar with a menu.
+- Sidebar: Overview, Website, Projects, Messages (unread badge). Under Website the sections appear as a sub-list with status dots (green published, amber unpublished changes, red needs fixing, grey original content), so any section is one click away. Account menu (view site, sign out) at the bottom; tablet and mobile use a top bar with a menu.
 - Overview: a "Needs attention" list (unpublished sections, broken content, unread messages, draft projects, text/media still to supply), the website sections with status and last edit, recent projects, recent messages, and a merged "Recently edited" list.
 - Website (`/admin/website`): one dense row per section in homepage order (thumbnail only when the section really has an image, status, what is still to supply, last saved and by whom). Each section opens `/admin/website/<section>`; old `/admin/homepage/...` addresses redirect. Section order is fixed on purpose (the scroll animations depend on it).
 - Section editor: form first. Picture-heavy sections show the live preview beside the form; word-list sections (statement, service names) default to a roomy full-width form. Either can be toggled. Previous/next section links at the bottom.
 - Every editor shares one action bar: Save Draft, Preview, Publish Changes, a status pill, the last saved time, and a "⋯" menu for Discard and Reset (with confirmation). Saving never publishes. Concurrency protection and the unsaved-changes warning are unchanged.
 - Projects: a table with image, name, category, status, last edited (and by whom), search, status and category filters, sort (website order, recently edited, name), and drag-and-drop ordering (only in "Website order" with no filters, always with Move earlier/later in the menu). Order is saved by `reorderProjects`, which rejects a stale or incomplete list. Four-section project editor.
-- Media: grid or list view, search, type filter, "unused only", sort, multi-select delete, a details panel (large preview, type, size, dimensions, description, where it is used), and "Replace this file": upload a new version and `replaceMedia` swaps every reference (draft and published sections, project bodies, image sizes) in one all-or-nothing transaction, then deletes the old file. The swap logic is `lib/admin/media-swap.ts`.
+- There is no Media page: every picture and video is uploaded by dragging a file onto its field (or with its Upload button).
 - Light theme uses admin-only tokens (`bg-paper`, `text-fg`, `bg-accent`, `text-ok/warn/bad`) at the end of `globals.css`; the public site's tokens and components are untouched.
 
 ## Private sign-in address
@@ -68,3 +68,58 @@ Hidden blocks are left off the public page but keep their content; numbered head
 The top (back link, name, summary) and the bottom (previous/next, contact) are fixed.
 
 The project editor shows a live preview: it sends the form's current values to a same-origin frame (`/admin/preview/project`, admin only) with `postMessage`, so the page updates as you type, saved or not. Nothing is written until you save.
+
+## Keep, delete or change single images and paragraphs
+
+Besides showing, hiding and reordering whole blocks, every project page can now be trimmed part by part.
+In the project editor, open **Page layout**, then **Edit parts** on a block (or the **Summary paragraph** line at the top).
+
+- **Kept / Deleted** per part. A deleted picture or paragraph is left off the page completely.
+- **Pictures** are handled in their own **Page content** section (above Project details): one card per picture on the page, main image included.
+  Each card has **Upload** (or drag a file onto the card), **Clear** (empty it; the site shows its placeholder) and **On the page · Delete** (take it off the page completely; **Restore** brings it back).
+- A block whose parts were all deleted disappears with its heading, and the numbered headings (01, 02, …) close the gap.
+- Deleted parts keep their content, so **Deleted → Kept** brings them back exactly as they were.
+- A picture that has not been added yet is a plain flat frame (no generated colour art, no "Demo" tag). The archive cards show the project's main image once it has one. The Palette still drives the brand swatches in the logo-system block.
+
+Parts per block: top summary; main image; facts (client, services, year, status); brief paragraph; idea (concept image, statement, key points, caption);
+execution (3 pictures); category showcase (differs per category); image strip (3 pictures); outcome (heading line, deliverables, footnote); credits.
+
+Stored inside the project's JSON `body` (no database migration): `hidden` is a list of deleted part ids, `images` maps a part id to its replacement picture.
+Old projects have neither and render exactly as before. The list of parts lives in `src/lib/work-layout.ts` (`elementsOf`); the page reads it in `ProjectCase.tsx`.
+
+## Undo and redo
+
+Website section editors and the project editor have **↶ Undo / ↷ Redo** buttons in the top bar, plus keyboard shortcuts:
+
+- **Undo:** Ctrl+Z (⌘Z on Mac)
+- **Redo:** Ctrl+Shift+Z or Ctrl+Y (⇧⌘Z on Mac)
+
+What counts as one step: a burst of typing in one field (a pause of about 0.8 s, or switching field, starts a new step), and every other change on its own
+(a toggle, a reorder, deleting a part, picking or clearing a picture, adding or removing a list item).
+
+- The shortcuts work while typing in a field too: the browser's own undo is replaced so it can't fight the editor. They are off while a dialog (confirm box) is open.
+- Undo changes the form only. In website sections the draft auto-saves a moment later, as with any edit; in projects, press Save.
+- History is per page visit (up to 100 steps). It is cleared when the server hands back new content: Discard changes, Reset to original, and publishing or unpublishing a project.
+- Not covered: the new-project form and the sign-in page.
+
+Code: pure rules in `src/components/admin/history.ts`, the hook in `useHistory.ts`, buttons in `UndoRedo.tsx`.
+
+## Matching pictures to uploaders (Page content)
+
+Every picture on a project page has a number. The same number appears in two places:
+
+- on the card in **Page content** (hover the card for where the picture sits and the best shape, e.g. 21:9 or 9:16), and
+- as a red tag on that picture in the live preview.
+
+Hover a card and its picture is outlined in the preview (the preview scrolls to it). Click a picture in the preview and the editor scrolls to its card and rings it for a moment.
+Numbers follow page order, so reordering blocks in Page layout renumbers them on both sides. A deleted picture keeps its card (struck through) but has no tag, since it is not on the page.
+
+Code: `imageSlots()` and the `where` / `ratio` text live in `src/lib/work-layout.ts`; the tags and click handling are in `ProjectLivePreview.tsx`
+(pictures get `data-slot` only when `ProjectCase` is rendered with `editing`, so the public page is unchanged); the cards are `PageImages.tsx`.
+
+
+### Preview highlighting
+- Project editor: pictures and texts in the live preview have a dashed border; hovering one (or focusing its field on the left) outlines it in yellow and scrolls the preview to it.
+- Website sections: focusing a field outlines the matching text or picture in the preview (found by its current saved text or file), and opening a service in Lens selects it.
+- Lens pictures: one picture per service (slots a–g, in service order; h and i are unused), filling the whole lens. Each field is named after its service; the preview tags the picture, and hovering a field selects that service. The old multi-picture "scene" layouts were removed.
+- Reordering blocks and list items is done with the dots handle (mouse, touch, or Space then the arrow keys); there are no separate up/down buttons.

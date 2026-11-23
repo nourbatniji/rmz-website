@@ -203,6 +203,14 @@ export const projectBodySchema = z.object({
   copyStatus: z.enum(["placeholder", "approved"]),
   /** Which page blocks are shown, and in what order. Missing = the original page. */
   layout: z.array(z.object({ id: z.enum(["meta", "hero", "brief", "idea", "execution", "showcase", "strip", "outcome", "credits"]), show: z.boolean() })).max(20).optional(),
+  /** Single images / paragraphs deleted from the page, by element id. */
+  hidden: z.array(z.string().regex(/^[a-z]+\.[a-z0-9]+$/)).max(60).optional(),
+  /** Replacement pictures for the demo art, by element id. */
+  images: z.record(z.string().regex(/^[a-z]+\.[a-z0-9]+$/), imageRefSchema).optional(),
+  /** The film shown in the showcase of campaign and content projects (uploaded in the dashboard). Missing = the labelled placeholder. */
+  video: z.object({ src: mediaUrl }).nullable().optional(),
+  /** Editor-written replacements for the page's fixed wording (captions, headings, labels), by id. Missing = the built-in wording. */
+  texts: z.record(z.string().regex(/^[a-z]+\.[a-zA-Z0-9]+$/), z.string().max(600)).optional(),
 });
 export type ProjectBody = z.infer<typeof projectBodySchema>;
 

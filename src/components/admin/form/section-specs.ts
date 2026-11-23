@@ -1,3 +1,4 @@
+import { SERVICE_NAME, SERVICE_SLOT } from "@/components/home/lens/scene-slots";
 import { COPY_STATUS_FULL, type Field, type Obj } from "./spec";
 import type { SectionKey } from "@/lib/admin/section-meta";
 
@@ -157,20 +158,6 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         { kind: "text", name: "ringMark", label: "Ring mark", placeholder: "24" },
         { kind: "text", name: "description", label: "Description", multiline: true, rows: 3 },
         { kind: "strings", name: "details", label: "Three bullet points", fixed: true },
-        {
-          kind: "select",
-          name: "scene",
-          label: "Scene drawn in the lens",
-          options: [
-            { value: "detail", label: "Detail" },
-            { value: "triptych", label: "Triptych" },
-            { value: "contactsheet", label: "Contact sheet" },
-            { value: "collage", label: "Collage" },
-            { value: "fullframe", label: "Full frame" },
-            { value: "reach", label: "Reach" },
-            { value: "devices", label: "Devices" },
-          ],
-        },
         { kind: "text", name: "href", label: "Service page link", nullable: true, help: "Leave empty until a service page exists; the “Explore service” link is then hidden." },
         { kind: "select", name: "copyStatus", label: "Copy status", options: cs(["approved", "provisional"]) },
       ],
@@ -178,9 +165,9 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
     {
       kind: "group",
       name: "images",
-      label: "Scene images",
-      help: "Nine image slots used by the lens scenes. Empty slots show a labelled placeholder.",
-      fields: "abcdefghi".split("").map((k) => ({ kind: "image", name: k, label: `Slot ${k.toUpperCase()}` }) as Field),
+      label: "Lens pictures",
+      help: "One picture per service, shown in the lens when that service is selected. Hover a picture here to see it in the preview.",
+      fields: Object.entries(SERVICE_SLOT).map(([id, k]) => ({ kind: "image", name: k, label: `${SERVICE_NAME[id]} picture`, help: "Fills the whole lens when this service is selected." }) as Field),
     },
   ],
   minds: [
@@ -216,8 +203,6 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       title: (it) => str(it, "label", "Filter"),
       item: [{ kind: "text", name: "label", label: "Label" }],
     },
-    { kind: "text", name: "emptyTitle", label: "Empty-state title" },
-    { kind: "text", name: "emptyBody", label: "Empty-state text", multiline: true, rows: 2 },
     {
       kind: "group",
       name: "contact",
