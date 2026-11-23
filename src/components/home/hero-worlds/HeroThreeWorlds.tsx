@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { HeroContent } from "@/content/types";
 import { pingPongProgress } from "../hero/config";
 import { PrismEngine } from "../hero/prism-engine";
@@ -28,14 +28,25 @@ const STAGGER = 0.6;
 const TRANSITION_MS = Math.round(ROTATE_MS * (1 + STAGGER));
 const AUTO_MS = 5000;
 
-// Opening (plays once per tab session, on entry at the top). The ribs start narrowly turned and rotate into place with a left→right stagger;
-// the copy and controls reveal as the picture settles. Durations here must match the --hw-* / hw-rise timings in hero-worlds.css.
-const OPEN_ANGLE = 64; // deg the ribs start turned away from the viewer
-const OPEN_ROTATE_MS = 950;
-const OPEN_STAGGER_MS = 450; // → every rib has settled after 1.4 s
-const OPEN_DONE_MS = 2000; // last reveal (bottom controls) has finished → hand over to the normal behaviour
+// Opening ("a world coming into alignment"; once per tab session, on entry at the top). The first banner is on screen from its first painted frame with
+// its vertical slices (the existing ribs) slightly out of alignment — a smooth wave, calmer near the face, resolved from the centre outward — while the
+// whole picture eases from a small overscan to 1:1 so no slice ever exposes the background. Timings live in hero-worlds.css (--hw-*) and match OPEN_DONE_MS.
+const OPEN_DONE_MS = 1700; // image 1.1 s + copy/controls reveal finished at ≈1.6 s → hand over to the normal behaviour
 const OPEN_KEY = "rmz-hero-three-worlds-opening";
-type Phase = "pending" | "armed" | "running" | "done"; // pending: server render / before the decision · armed: start pose, waiting for the first image · running · done
+const FACE_X = 0.49; // horizontal position of the subject's face (fraction of the width) — offsets are damped around it
+/** Per-slice opening offset: a coherent wave, 12–30 px (at 900 px tall) at the edges/centre-left, calm near the face; delay grows from the centre outward. */
+function sliceOffsets(n: number) {
+  const out = Array.from({ length: n }, (_, i) => {
+    const x = n > 1 ? i / (n - 1) : 0.5;
+    const edge = Math.abs(2 * x - 1);
+    const narrow = n <= 12; // phones: fewer, wider slices → smaller offsets and a wider calm zone around the face
+    const amp = (12 + 18 * Math.pow(edge, 1.3)) * (narrow ? 0.55 : 1);
+    const face = 1 - (narrow ? 0.92 : 0.78) * Math.exp(-Math.pow((x - FACE_X) / (narrow ? 0.17 : 0.11), 2));
+    return { dy: amp * Math.sin(2 * Math.PI * 1.35 * x + 0.5) * face, dl: Math.round(edge * 280) };
+  });
+  return { slices: out, max: Math.max(...out.map((o) => Math.abs(o.dy))) };
+}
+type Phase = "pending" | "armed" | "running" | "done"; // pending: server render / before the decision · armed: offset pose, waiting for the first image paint · running · done
 
 /** PROVISIONAL copy. Keyed by banner id; falls back to the content headline. */
 const PHRASES: Record<string, { lead: string; emphasis: string }> = {
@@ -128,7 +139,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
   }, [face]);
 
   // Decide whether to play: once per tab session, only on entry at the top (not reload/back-forward, not restored scroll, not an anchor entry, not reduced motion).
-  useEffect(() => {
+  useLayoutEffect(() => {
     let skip = false;
     try {
       skip = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -138,16 +149,19 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
       if (window.scrollY > 8) skip = true;
       if (sessionStorage.getItem(OPEN_KEY)) skip = true;
     } catch { /* storage blocked etc.: play (still harmless) */ }
-    const id = window.setTimeout(() => {
-      if (phaseRef.current !== "pending") return;
-      if (skip) { setPhase("done"); return; }
-      try { sessionStorage.setItem(OPEN_KEY, "1"); } catch { /* ignore */ }
-      setIntro(true);
-      setPhase("armed");
-    }, 0);
+    // Synchronous on purpose (layout effect, before the first paint): the offset pose must be in place before the image can paint.
+    if (phaseRef.current === "pending") {
+      if (skip) {
+        setPhase("done"); // eslint-disable-line react-hooks/set-state-in-effect
+      } else {
+        try { sessionStorage.setItem(OPEN_KEY, "1"); } catch { /* ignore */ }
+        setIntro(true);
+        setPhase("armed");
+      }
+    }
     // Static fallback: if anything stalls before the decision, show the normal hero.
     const wd = window.setTimeout(() => { if (phaseRef.current === "pending") setPhase("done"); }, 2500);
-    return () => { window.clearTimeout(id); window.clearTimeout(wd); };
+    return () => { window.clearTimeout(wd); };
   }, []);
 
   // Armed → running as soon as the first image has painted (the engine's existing readiness); no page-wide gate: after 1.5 s without it, skip the opening.
@@ -245,6 +259,8 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     if (e.key === "ArrowLeft") { e.preventDefault(); turn(-1, true); }
   };
 
+  const wave = useMemo(() => sliceOffsets(ribCount), [ribCount]);
+  const overscan = 1 + (2 * wave.max) / 900 + 0.006; // enough that the largest offset never exposes the background
   const rib = `calc(100cqw / ${ribCount})`;
   const radius = `calc(${rib} * ${RADIUS_PER_RIB})`;
   const current = banners[face];
@@ -266,9 +282,11 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
       <div ref={wallRef} className="relative min-h-0 flex-1 [container-type:inline-size]">
         <div
           aria-hidden="true"
+          data-hw-poster=""
           className="absolute inset-0 bg-cover bg-center transition-opacity duration-500"
           style={{
-            opacity: phase === "armed" || phase === "running" ? 0 : ready ? 0 : 1,
+            // the picture is never a separate layer during the opening: the poster stays out of the way until/unless the opening is skipped
+            opacity: phase === "pending" || phase === "armed" || phase === "running" ? 0 : ready ? 0 : 1,
             transition: phase === "armed" ? "none" : undefined,
             backgroundColor: "#1a1a18",
             backgroundImage: poster ? `url(${poster.src})` : undefined,
@@ -294,20 +312,18 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
             }
           }}
         >
-          <div className="absolute inset-0 [transform-style:preserve-3d]" style={{ transform: `translateZ(calc(${radius} * -1))` }}>
+          <div className="hw-ribs absolute inset-0 [transform-style:preserve-3d]" style={{ transform: `translateZ(calc(${radius} * -1))`, ["--hw-s" as string]: overscan.toFixed(4) }}>
             {Array.from({ length: ribCount }, (_, i) => (
               <div
                 key={i}
-                className="absolute top-0 h-full [transform-style:preserve-3d]"
+                className="hw-rib absolute top-0 h-full [transform-style:preserve-3d]"
                 style={{
+                  ["--dy" as string]: `${(wave.slices[i].dy / 9).toFixed(3)}svh`,
+                  ["--dl" as string]: `${wave.slices[i].dl}ms`,
                   left: `calc(${rib} * ${i})`,
                   width: rib,
-                  transform: `rotateY(${-120 * turns + (phase === "armed" ? OPEN_ANGLE : 0)}deg)`,
-                  transition: reduced || phase === "armed"
-                    ? "none"
-                    : phase === "running"
-                      ? `transform ${OPEN_ROTATE_MS}ms cubic-bezier(.16,.84,.3,1) ${Math.round((i / (ribCount - 1)) * OPEN_STAGGER_MS)}ms`
-                      : `transform ${ROTATE_MS}ms cubic-bezier(.65,0,.35,1) ${Math.round((i / (ribCount - 1)) * STAGGER * ROTATE_MS)}ms`,
+                  transform: `rotateY(${-120 * turns}deg)`,
+                  transition: reduced ? "none" : `transform ${ROTATE_MS}ms cubic-bezier(.65,0,.35,1) ${Math.round((i / (ribCount - 1)) * STAGGER * ROTATE_MS)}ms`,
                 }}
               >
                 {banners.map((b, bi) => (
@@ -326,9 +342,6 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
             ))}
           </div>
         </button>
-
-        {/* opening curtain: covers the start pose until the first image has painted, then fades (no flash) */}
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-ink" style={{ opacity: phase === "armed" ? 1 : 0, transition: phase === "running" ? "opacity 320ms ease-out" : "none" }} />
 
         {/* restrained local contrast (copy side + bottom controls only) */}
         <div aria-hidden="true" className="hw-shade pointer-events-none absolute inset-0" />
@@ -416,12 +429,12 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
       <button
         type="button"
         onClick={replay}
-        className="t-meta absolute right-(--gutter) top-[100px] z-10 min-h-9 border border-cream/25 bg-ink/40 px-3 text-[10px] text-cream/70 backdrop-blur-sm transition-colors hover:text-cream md:top-[116px]"
+        className="t-meta absolute bottom-[72px] right-(--gutter) z-10 min-h-9 md:bottom-auto md:top-[116px] border border-cream/25 bg-ink/40 px-3 text-[10px] text-cream/70 backdrop-blur-sm transition-colors hover:text-cream"
       >
-        ↻ Replay opening <span className="opacity-60">· preview only</span>
+        ↻ Replay<span className="hidden sm:inline"> opening</span> <span className="hidden opacity-60 sm:inline">· preview only</span>
       </button>
       <noscript>
-        <style>{`.hw-root .hw-rise{animation:none!important;opacity:1!important}.hw-root .hw-phrase[data-state="active"] .hw-line>span{animation:none!important;transform:none!important}`}</style>
+        <style>{`.hw-root [data-hw-poster]{opacity:1!important}.hw-root .hw-rise{animation:none!important;opacity:1!important}.hw-root .hw-phrase[data-state="active"] .hw-line>span{animation:none!important;transform:none!important}.hw-root .hw-line{clip-path:none!important}`}</style>
       </noscript>
 
       <p className="sr-only" aria-live="polite">{announce}</p>
