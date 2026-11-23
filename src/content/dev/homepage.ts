@@ -40,6 +40,9 @@ export const devHomepageContent: HomepageContent = {
     intro:
       "Rebel Mind Zone builds brand identities, campaigns and digital experiences. Scroll to move the picture. Turn the wall to see each face.",
     scrollHint: "Scroll to move the picture",
+    tagline: "Strategy, identity, campaigns & digital experiences.",
+    ctaLabel: "Explore our work",
+    ctaHref: "#work",
     // DEV SEQUENCES (public/media/dev/hero) — labelled, not final art. Each banner has its own
     // frame count on purpose (50 / 36 / 64) to prove per-banner mapping. Replace with delivered frames.
     banners: [
@@ -47,6 +50,8 @@ export const devHomepageContent: HomepageContent = {
         id: "identity",
         number: "01",
         label: "Identity",
+        phraseLead: "A DIFFERENT",
+        phraseEmphasis: "perspective.",
         accent: "#FFCA26",
         description:
           "Banner 1, Identity: a woman in a cream dress stands among golden fish and red grass; the scene moves as you scroll.",
@@ -57,6 +62,8 @@ export const devHomepageContent: HomepageContent = {
         id: "campaign",
         number: "02",
         label: "Campaign",
+        phraseLead: "IMPOSSIBLE",
+        phraseEmphasis: "to ignore.",
         accent: "#F86015",
         description: "Banner 2, Campaign: a scene that plays forward and backward as you scroll the page.",
         poster: { src: "/media/dev/hero/banner-2/poster.webp", alt: "", width: 1600, height: 1000 },
@@ -66,6 +73,8 @@ export const devHomepageContent: HomepageContent = {
         id: "digital",
         number: "03",
         label: "Digital",
+        phraseLead: "BEYOND THE",
+        phraseEmphasis: "expected.",
         accent: "#9ACC42",
         description: "Banner 3, Digital: a scene that plays forward and backward as you scroll the page.",
         poster: { src: "/media/dev/hero/banner-3/poster.webp", alt: "", width: 1600, height: 1000 },

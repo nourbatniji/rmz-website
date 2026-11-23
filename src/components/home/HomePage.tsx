@@ -4,7 +4,7 @@ import type { SectionKey } from "@/lib/admin/section-meta";
 import { Footer } from "@/components/home/footer/Footer";
 import { FeaturedWorkFocus } from "@/components/home/featured/FeaturedWorkFocus";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
-import { HeroWall } from "@/components/home/hero/HeroWall";
+import { HeroThreeWorlds } from "@/components/home/hero/HeroThreeWorlds";
 import { ServicesOrbit } from "@/components/home/services-orbit/ServicesOrbit";
 import { Minds } from "@/components/home/minds/Minds";
 import { StatementRotator } from "@/components/home/statement/StatementRotator";
@@ -36,7 +36,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
     const header = <SiteHeader brand={site.brand} nav={site.nav} />;
     const one = {
       site: <div className="h-[130px] bg-black"><SiteHeader brand={site.brand} nav={site.nav} /></div>,
-      hero: <HeroWall hero={hero} />,
+      hero: <HeroThreeWorlds hero={hero} />,
       corridor: <>{header}<ShowreelCorridor content={corridor} /></>,
       statement: <StatementRotator statement={statement} />,
       featured: <>{header}<FeaturedWorkFocus content={featured} /></>,
@@ -49,7 +49,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
   }
   return (
     <main id="top">
-      <HeroWall hero={hero} />
+      <HeroThreeWorlds hero={hero} />
       <ShowreelCorridor content={corridor} />
       <StatementRotator statement={statement} />
       <FeaturedWorkFocus content={featured} />

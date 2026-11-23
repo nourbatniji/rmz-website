@@ -2,23 +2,18 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { HeroContent } from "@/content/types";
-import { pingPongProgress } from "../hero/config";
-import { PrismEngine } from "../hero/prism-engine";
+import { pingPongProgress } from "./config";
+import { PrismEngine } from "./prism-engine";
 import "./hero-worlds.css";
 
 /**
- * HeroThreeWorlds — PROTOTYPE of hero concept 04 "THREE WORLDS" (preview route /lab/hero-three-worlds only; the homepage hero is untouched).
+ * HeroThreeWorlds — the homepage hero ("Three Worlds"): a full-bleed, ribbed 3-sided prism of three banners with the headline INSIDE the picture,
+ * selectors bottom-left and the counter bottom-right. One component, shared by the homepage and the lab route (/lab/hero-three-worlds, which turns
+ * on `preview` for the review controls and may pass `ghostBanner`).
  *
- * The picture engine is the live one: it reuses ../hero/prism-engine (offscreen cover-crop, per-banner FrameStore, ribs), ../hero/config
- * (scroll → ping-pong progress) and the same prism rotation constants and controls as ../hero/HeroWall (auto-change, chips, arrow keys,
- * swipe, click-to-turn, pause, reduced motion). What changes is the composition: full-bleed image, no copy strip, headline INSIDE the
- * picture, selectors bottom-left, counter bottom-right.
- *
- * Text ↔ banner synchronisation: there is NO text timer. Each phrase is a layer whose state (active / out / idle) is derived from the same
- * `face` state that rotates the prism; the exit and entrance are CSS animations offset to the prism's own duration (--hw-* in the css), so
- * a phrase only ever changes when the banner changes. Scrolling through image frames never touches it. Rapid selections: exactly one layer is
- * active; a layer that is still leaving finishes its exit (animationend) and cannot be seen alongside a second entrance for long because
- * entrances wait for the prism's midpoint.
+ * Picture engine = ./prism-engine (offscreen cover-crop, per-banner FrameStore, ribs) + ./config (page scroll → ping-pong frame progress); the prism rotation
+ * constants and controls (auto-change, chips, arrow keys, swipe, click-to-turn, pause, reduced motion) are the long-standing hero behaviour.
+ * Copy and imagery come from the homepage content (HeroContent: banner phrases, tagline, CTA, posters, sequences).
  */
 
 const FACES = 3;
@@ -50,18 +45,20 @@ const STAGES = [
   { id: 5, label: "Travel", t: 2050 },
   { id: 6, label: "Live", t: null },
 ] as const;
-const OPEN_KEY = "rmz-hero-three-worlds-opening";
+const OPEN_KEY = "rmz-home-hero-opening-v1"; // once per tab session; the lab route passes its own key
 type Phase = "pending" | "measure" | "armed" | "running" | "done"; // pending: server render / before the decision · measure: reading the headline's final bounds · armed: start pose, waiting for the first image · running · done
 type Pose = { fx: number; fy: number; fs: number; ox: number; oy: number; gw: number; gh: number; gx: number; gy: number; gd: number };
 type View = number | null;
 
-/** PROVISIONAL copy. Keyed by banner id; falls back to the content headline. */
+/** Fallback copy when the content has no phrase/tagline/CTA for a banner (older saved content). Normally these come from HeroContent. */
 const PHRASES: Record<string, { lead: string; emphasis: string }> = {
   identity: { lead: "A DIFFERENT", emphasis: "perspective." },
   campaign: { lead: "IMPOSSIBLE", emphasis: "to ignore." },
   digital: { lead: "BEYOND THE", emphasis: "expected." },
 };
 const DESCRIPTION = "Strategy, identity, campaigns & digital experiences.";
+const CTA_LABEL = "Explore our work";
+const CTA_HREF = "#work";
 
 function useMedia(query: string, server: boolean) {
   return useSyncExternalStore(
@@ -85,8 +82,17 @@ function useTabHidden() {
   );
 }
 
-/** `ghostBanner` is a preview-only review aid: it picks which existing banner's image fills the word (default: the first banner, i.e. the current banner image). */
-export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; ghostBanner?: number }) {
+type HeroProps = {
+  hero: HeroContent;
+  /** Lab only: show the Replay / stage review controls. Never set on the homepage. */
+  preview?: boolean;
+  /** Lab only: which existing banner's image fills the word (default 0 = the first banner, i.e. the current banner image). */
+  ghostBanner?: number;
+  /** sessionStorage key for "play the opening once per tab session". */
+  sessionKey?: string;
+};
+
+export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessionKey = OPEN_KEY }: HeroProps) {
   const { banners } = hero;
   const wide = useMedia("(min-width: 1024px)", true);
   const mid = useMedia("(min-width: 640px)", true);
@@ -158,14 +164,14 @@ export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; 
       if (nav && nav.type !== "navigate") skip = true;
       if (window.location.hash) skip = true;
       if (window.scrollY > 8) skip = true;
-      if (sessionStorage.getItem(OPEN_KEY)) skip = true;
+      if (sessionStorage.getItem(sessionKey)) skip = true;
     } catch { /* storage blocked etc.: play (still harmless) */ }
     const fontsOk = () => !document.fonts || document.fonts.status === "loaded";
     if (phaseRef.current === "pending") {
       if (skip) {
         setPhase("done"); // eslint-disable-line react-hooks/set-state-in-effect
       } else {
-        try { sessionStorage.setItem(OPEN_KEY, "1"); } catch { /* ignore */ }
+        try { sessionStorage.setItem(sessionKey, "1"); } catch { /* ignore */ }
         setIntro(true);
         if (fontsOk()) setPhase("measure");
         else {
@@ -180,6 +186,7 @@ export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; 
     // Static fallback: if anything stalls before the decision, show the normal hero (poster).
     const wd = window.setTimeout(() => { if (phaseRef.current === "pending" || phaseRef.current === "measure") setPhase("done"); }, 2500);
     return () => { window.clearTimeout(wd); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- decided once on mount; sessionKey is a constant for a given page
   }, []);
 
   // Measure the REAL final bounds of "perspective." (fonts are ready) and derive the start pose of the very same element: large and centred in the hero.
@@ -350,7 +357,8 @@ export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; 
   const radius = `calc(${rib} * ${RADIUS_PER_RIB})`;
   const current = banners[face];
   const poster = banners[0].poster;
-  const phraseOf = (id: string) => PHRASES[id] ?? hero.headline;
+  const phraseOf = (b: HeroContent["banners"][number]) =>
+    b.phraseLead && b.phraseEmphasis ? { lead: b.phraseLead, emphasis: b.phraseEmphasis } : (PHRASES[b.id] ?? hero.headline);
 
   return (
     <section
@@ -442,7 +450,7 @@ export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; 
             <div aria-hidden="true" className="hw-scrim pointer-events-none absolute" />
             <h1 className="hw-phrases relative">
               {banners.map((b, i) => {
-                const p = phraseOf(b.id);
+                const p = phraseOf(b);
                 const state = i === face ? "active" : leaving.includes(i) ? "out" : "idle";
                 return (
                   <span
@@ -466,13 +474,13 @@ export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; 
               })}
             </h1>
             </div>
-            <p style={{ ["--rd" as string]: 0 }} className="t-body hw-rise mt-5 max-w-[420px] text-[15px] text-cream md:mt-7 md:text-[18px]">{DESCRIPTION}</p>
+            <p style={{ ["--rd" as string]: 0 }} className="t-body hw-rise mt-5 max-w-[420px] text-[15px] text-cream md:mt-7 md:text-[18px]">{hero.tagline || DESCRIPTION}</p>
             <a
-              href="#work"
+              href={hero.ctaHref || CTA_HREF}
               style={{ ["--rd" as string]: 1 }}
               className="hw-link hw-rise pointer-events-auto t-meta mt-4 inline-flex min-h-11 items-center gap-1.5 text-[11px] text-cream md:mt-5 md:min-h-8 md:text-[12px]"
             >
-              <span className="hw-link-t">Explore our work <span aria-hidden="true">↗</span></span>
+              <span className="hw-link-t">{hero.ctaLabel || CTA_LABEL} <span aria-hidden="true">↗</span></span>
             </a>
           </div>
         </div>
@@ -513,7 +521,8 @@ export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; 
         </div>
       </div>
 
-      {/* prototype-only review controls (not part of the hero composition) */}
+      {/* lab-only review controls (never rendered on the homepage) */}
+      {preview && (
       <div data-hw-preview="" className="t-meta absolute right-(--gutter) top-[84px] z-10 flex items-center gap-px text-[10px] md:top-[116px]" role="group" aria-label="Opening stages 01–06 (preview only)">
         {STAGES.map((st) => (
           <button key={st.id} type="button" aria-pressed={view === st.id} title={st.label} onClick={() => review(st.id)} className={`min-h-9 border border-cream/25 bg-ink/50 px-2 backdrop-blur-sm transition-colors md:px-2.5 ${view === st.id ? "text-cream" : "text-cream/60 hover:text-cream"}`}>
@@ -524,6 +533,7 @@ export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; 
           ↻ Replay<span className="hidden opacity-60 md:inline"> · preview only</span>
         </button>
       </div>
+      )}
       <noscript>
         <style>{`.hw-root [data-hw-poster]{opacity:1!important}.hw-root .hw-image{opacity:1!important}.hw-root .hw-rise{animation:none!important;opacity:1!important}.hw-root .hw-line.t-italic{visibility:visible!important}.hw-root .hw-phrase[data-state="active"] .hw-line>span{animation:none!important;transform:none!important}`}</style>
       </noscript>
