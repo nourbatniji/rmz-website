@@ -16,8 +16,8 @@ let A, B;
   await p.goto(URL, { waitUntil: 'domcontentloaded' }); const t0 = Date.now(); while (Date.now() - t0 < 3600) { await fr(p); await sleep(30); }
   const PH = await p.evaluate(() => window.__ph); const seq = PH.map((x) => x[1]).join('>');
   ok('phases … → armed (start pose, set before the first hydrated paint) → running → done', /armed>running>done$/.test(seq) && !/^done/.test(seq), seq);
-  const pr = PH.find((x) => x[1] === 'running'), pd = PH.find((x) => x[1] === 'done'); ok('opening ≈1.4–1.9 s from start to handoff', pd[0] - pr[0] >= 1400 && pd[0] - pr[0] <= 1900, `${pd[0] - pr[0]} ms`);
-  const s0 = start[0]; ok('start pose: whole word inside the viewport and centred', s0 && s0[0] >= 0 && s0[2] <= s0[4] && s0[1] >= 0 && s0[3] <= s0[5] && Math.abs((s0[0] + s0[2]) / 2 - s0[4] / 2) < 6 && Math.abs((s0[1] + s0[3]) / 2 - s0[5] / 2) < 6, JSON.stringify(s0));
+  const pr = PH.find((x) => x[1] === 'running'), pd = PH.find((x) => x[1] === 'done'); ok('opening ≈1.95 s from start to handoff', pd[0] - pr[0] >= 1800 && pd[0] - pr[0] <= 2300, `${pd[0] - pr[0]} ms`);
+  const s0 = start[0]; ok('start pose: word ≈85 % of the usable width, whole word inside the viewport, centred', s0 && (s0[2] - s0[0]) / (s0[4] - 128) > 0.8 && (s0[2] - s0[0]) / (s0[4] - 128) < 0.9 && s0[0] >= 0 && s0[2] <= s0[4] && s0[1] >= 0 && s0[3] <= s0[5] && Math.abs((s0[0] + s0[2]) / 2 - s0[4] / 2) < 6 && Math.abs((s0[1] + s0[3]) / 2 - s0[5] / 2) < 6, JSON.stringify(s0));
   A = await geo(p); ok('finished: done, no transform on the word, picture unmasked', A.open === 'done' && A.tf === 'none' && A.mask === 'none', JSON.stringify(A));
   await p.goto(URL, { waitUntil: 'networkidle0' }); await sleep(1500); await fr(p); B = await geo(p); // second visit in the tab: skipped = the normal hero
   const same = (x, y) => x.every((v, i) => Math.abs(v - y[i]) <= 0.6);
@@ -48,6 +48,25 @@ let A, B;
   const n0 = (await p.evaluate(() => window.__ph.length)); await p.evaluate(() => [...document.querySelectorAll('button')].find((x) => /Replay/.test(x.textContent)).click()); const t1 = Date.now(); while (Date.now() - t1 < 3000) { await fr(p); await sleep(40); }
   const R = (await p.evaluate((n) => window.__ph.slice(n).map((x) => x[1]).join('>'), n0)); const f = await geo(p);
   ok('Replay: back to top + first banner, armed → running → done, final = normal hero', /armed>running>done$/.test(R) && f.y === 0 && f.c === '01 / 03' && same(f.it, B.it), `${R} ${JSON.stringify([f.y, f.c, f.it, B.it])}`);
+  await p.close();
+}
+{ // review poses (preview-only controls drive the REAL animations) + image-through-type alignment + nothing visible outside the letters in the WORD pose
+  const w0 = await b.newPage(); await w0.goto(URL, { waitUntil: 'networkidle0' }); await w0.close();
+  const p = await b.newPage(); await p.setViewport({ width: 1440, height: 900 }); await p.goto(URL, { waitUntil: 'networkidle0' }); await sleep(2600);
+  const click = (n) => p.evaluate((n) => [...document.querySelectorAll('[data-hw-preview] button')].find((x) => x.textContent.trim().toLowerCase().startsWith(n)).click(), n);
+  const st = () => p.evaluate(() => { const r = document.querySelector('.hw-root'); const img = document.querySelector('.hw-image'); const g = document.querySelector('.hw-phrase[data-state=active] .hw-ghost'); const it = document.querySelector('.hw-phrase[data-state=active] .hw-line.t-italic'); return { open: r.dataset.open, k: getComputedStyle(img).getPropertyValue('--hw-k'), ghost: getComputedStyle(g).display + '/' + (+getComputedStyle(g).opacity).toFixed(2), tf: getComputedStyle(it).transform, rise: +getComputedStyle(document.querySelector('.hw-root p.hw-rise')).opacity, lead: new DOMMatrix(getComputedStyle(document.querySelector('.hw-phrase[data-state=active] .hw-line.t-display > span')).transform).m42 }; });
+  await click('word'); for (let i = 0; i < 6; i++) { await fr(p); await sleep(80); } const w = await st();
+  ok('WORD pose = real animation state: world mask closed (k=0), ghost image-in-letters shown, word still at start pose, headline/copy hidden', w.open === 'running' && +w.k === 0 && w.ghost.startsWith('block/1') && w.tf !== 'none' && w.rise === 0 && w.lead > 10, JSON.stringify(w));
+    await click('world'); for (let i = 0; i < 6; i++) { await fr(p); await sleep(80); } const wd = await st();
+  ok('WORLD pose: world fully revealed, letters solid red (ghost faded), word still large & centred', +wd.k > 0.97 && wd.ghost.endsWith('/0.00') && wd.tf !== 'none' && wd.rise === 0, JSON.stringify(wd));
+  await click('final'); for (let i = 0; i < 6; i++) { await fr(p); await sleep(80); } const fn = await st();
+  ok('FINAL = the finished normal hero (done, word in place, copy visible)', fn.open === 'done' && fn.tf === 'none' && fn.rise === 1, JSON.stringify(fn));
+  // alignment (numeric): in the WORD pose the ghost word's background picture must sit exactly where the engine's full-size "cover" picture sits (compared in viewport px)
+  await click('word'); for (let i = 0; i < 6; i++) { await fr(p); await sleep(80); }
+  const al = await p.evaluate(() => { const g = document.querySelector('.hw-phrase[data-state=active] .hw-ghost'); const gr = g.getBoundingClientRect(); const cs = getComputedStyle(g); const m = new DOMMatrix(getComputedStyle(g.parentElement).transform); const fs = m.a;
+    const [bx, by] = cs.backgroundPosition.split(' ').map(parseFloat); const [bw, bh] = cs.backgroundSize.split(' ').map(parseFloat); const W = innerWidth, H = document.querySelector('.hw-root').clientHeight; const iw = 1478, ih = 622; const k = Math.max(W / iw, H / ih);
+    return { got: [gr.left + bx * fs, gr.top + by * fs, bw * fs, bh * fs].map((v) => Math.round(v * 10) / 10), want: [(W - iw * k) / 2, (H - ih * k) / 2, iw * k, ih * k].map((v) => Math.round(v * 10) / 10) }; });
+  ok('image inside the letters is aligned with the full-size picture (position & size within 1 px)', al.got.every((v, i) => Math.abs(v - al.want[i]) <= 1), JSON.stringify(al));
   await p.close();
 }
 { // reduced motion, no-JS fallback

@@ -28,15 +28,20 @@ const STAGGER = 0.6;
 const TRANSITION_MS = Math.round(ROTATE_MS * (1 + STAGGER));
 const AUTO_MS = 5000;
 
-// Opening ("the typography-led reveal"; once per tab session, on entry at the top). The final red word "perspective." starts large and centred on the hero's
-// near-black; the first banner's world is revealed behind it by a feathered mask growing from the word (the picture itself never moves or scales); the SAME word
-// then shrinks/moves into its real headline position (FLIP from its measured final bounds), "A DIFFERENT" rises above it, and the copy and controls follow.
-// All motion is CSS (see hero-worlds.css); nothing drives the frame sequence — that stays on the normal scroll mapping.
+// Opening ("image through typography"; once per tab session, on entry at the top). Three beats, all real CSS animation states (see hero-worlds.css):
+//   WORD   0–400 ms   the final red word "perspective." large and centred on the hero's near-black; the banner shows ONLY through restrained portions of
+//                     the letterforms (a ghost copy of the word clipped to the very same image, aligned to the full-size picture below).
+//   WORLD  400–950    the full-size banner is revealed behind it by a controlled left→right wipe (minimal feathering); the letters go to solid red.
+//   SETTLE 950–1900   only then the SAME word moves/shrinks (FLIP from its measured final bounds) into the headline; "A DIFFERENT" rises during the latter
+//                     part; description/controls follow. The picture never moves or scales; the frame sequence and scroll mapping are untouched.
 const READY_WAIT_MS = 900; // first image not painted by then → show the normal hero instead (no waiting)
-const OPEN_DONE_MS = 1650; // everything finished → hand over to the normal behaviour (countdown starts)
+const OPEN_DONE_MS = 1950; // everything finished → hand over to the normal behaviour (countdown starts)
+const WORD_T = 250; // review poses (preview-only): the actual animations paused at these times
+const WORLD_T = 940;
 const OPEN_KEY = "rmz-hero-three-worlds-opening";
 type Phase = "pending" | "measure" | "armed" | "running" | "done"; // pending: server render / before the decision · measure: reading the headline's final bounds · armed: start pose, waiting for the first image · running · done
-type Pose = { fx: number; fy: number; fs: number; ox: number; oy: number };
+type Pose = { fx: number; fy: number; fs: number; ox: number; oy: number; gw: number; gh: number; gx: number; gy: number };
+type View = "word" | "world" | "final" | null;
 
 /** PROVISIONAL copy. Keyed by banner id; falls back to the content headline. */
 const PHRASES: Record<string, { lead: string; emphasis: string }> = {
@@ -85,6 +90,8 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
   const [phase, setPhaseState] = useState<Phase>("pending");
   const [intro, setIntro] = useState(false);
   const [pose, setPose] = useState<Pose | null>(null);
+  const [view, setView] = useState<View>(null); // preview-only: which review pose is held
+  const heldRef = useRef<number | null>(null); // preview-only: animation time being held (null = play normally)
   const phaseRef = useRef<Phase>("pending");
   const setPhase = (p: Phase) => {
     phaseRef.current = p;
@@ -176,11 +183,24 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     const wb = wr.getBoundingClientRect();
     const sb = sec.getBoundingClientRect();
     if (!tr.width || !tr.height) { setPhase("done"); return; }
-    const fs = Math.min((sb.width * (sb.width < 640 ? 0.88 : 0.84)) / tr.width, (sb.height * 0.46) / tr.height, 4); // whole word inside the viewport
+    const usable = sb.width - 2 * tr.left; // tr.left is the page gutter: the headline's left edge
+    const fs = Math.min((usable * (sb.width < 640 ? 0.92 : 0.85)) / tr.width, (sb.height * 0.5) / tr.height, 4); // ~85 % of the usable width, whole word inside the viewport
     const cx = sb.left + sb.width / 2, cy = sb.top + sb.height / 2;
-    setPose({ fs, fx: cx - (fs * tr.width) / 2 - tr.left, fy: cy - (fs * tr.height) / 2 - tr.top, ox: tr.left - wb.left, oy: tr.top - wb.top });
+    const fx = cx - (fs * tr.width) / 2 - tr.left, fy = cy - (fs * tr.height) / 2 - tr.top;
+    // Where the full-size picture (the engine's centred "cover" of frame 1) sits, expressed in the word's own un-transformed layout space, so the ghost word's
+    // background is pixel-aligned with the picture revealed behind it: V = O + (P − O − t) / s, with O = the transform origin.
+    const poster = banners[0].poster;
+    let g = { gw: 0, gh: 0, gx: 0, gy: 0 };
+    if (poster && poster.width && poster.height) {
+      const k = Math.max(sb.width / poster.width, sb.height / poster.height);
+      const dw = poster.width * k, dh = poster.height * k;
+      const px = sb.left + (sb.width - dw) / 2, py = sb.top + (sb.height - dh) / 2;
+      const spb = sp.getBoundingClientRect();
+      g = { gw: dw / fs, gh: dh / fs, gx: tr.left + (px - tr.left - fx) / fs - spb.left, gy: tr.top + (py - tr.top - fy) / fs - spb.top };
+    }
+    setPose({ fs, fx, fy, ox: tr.left - wb.left, oy: tr.top - wb.top, ...g });
     setPhase("armed");
-  }, [phase]);
+  }, [phase, banners]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // Armed → running once the first image has painted (the engine's existing readiness). Two frames are allowed to paint the start pose first. If the image is not
@@ -198,6 +218,12 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
 
   useEffect(() => {
     if (phase !== "running") return;
+    if (heldRef.current !== null) {
+      // preview-only review pose: pause the REAL animations at the chosen time (no auto-completion while held)
+      const t = heldRef.current;
+      const id = requestAnimationFrame(() => sectionRef.current?.getAnimations({ subtree: true }).forEach((a) => { a.pause(); a.currentTime = t; }));
+      return () => cancelAnimationFrame(id);
+    }
     const t = window.setTimeout(() => { if (phaseRef.current === "running") setPhase("done"); }, OPEN_DONE_MS);
     return () => window.clearTimeout(t);
   }, [phase]);
@@ -205,7 +231,10 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
   // Any scroll / wheel / touch / key / pointer input finishes the opening immediately. Nothing is prevented, scroll is never locked or reset.
   useEffect(() => {
     if (phase !== "armed" && phase !== "running") return;
-    const fin = () => finishOpening();
+    const fin = (e: Event) => {
+      if ((e.target as Element | null)?.closest?.("[data-hw-preview]")) return; // the preview-only controls are not user input to the page
+      finishOpening();
+    };
     const onScroll = () => { if (window.scrollY > 2) finishOpening(); };
     const evs = ["wheel", "touchstart", "pointerdown", "keydown"] as const;
     evs.forEach((e) => window.addEventListener(e, fin, { passive: true }));
@@ -217,8 +246,9 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- finishOpening only touches refs/setState
   }, [phase]);
 
-  // Prototype-only: replay the opening for review (back to the top, first banner, then measure → arm → run again).
-  const replay = () => {
+  // Prototype-only review controls. Replay: back to the top + first banner, then measure → arm → run. WORD / WORLD: the same run, with the real animations held at
+  // 250 ms / 940 ms. FINAL: the finished normal hero.
+  const restart = () => {
     finishOpening();
     window.scrollTo({ top: 0, behavior: "instant" });
     lastFace.current = 0;
@@ -228,6 +258,22 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     setTurns(0);
     setIntro(true);
     setPhase("measure");
+  };
+  const replay = () => {
+    heldRef.current = null;
+    setView(null);
+    restart();
+  };
+  const review = (v: Exclude<View, null>) => {
+    setView(v);
+    if (v === "final") {
+      heldRef.current = null;
+      finishOpening();
+      return;
+    }
+    heldRef.current = v === "word" ? WORD_T : WORLD_T;
+    if (phaseRef.current === "running") sectionRef.current?.getAnimations({ subtree: true }).forEach((a) => { a.pause(); a.currentTime = heldRef.current!; });
+    else if (phaseRef.current === "done" || phaseRef.current === "pending") restart();
   };
 
   useEffect(() => {
@@ -292,7 +338,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
       onKeyDown={onKeyDown}
       data-boot={boot ? "1" : "0"}
       data-open={phase}
-      style={pose ? ({ "--fx": `${pose.fx}px`, "--fy": `${pose.fy}px`, "--fs": pose.fs, "--ox": `${pose.ox}px`, "--oy": `${pose.oy}px` } as React.CSSProperties) : undefined}
+      style={pose ? ({ "--fx": `${pose.fx}px`, "--fy": `${pose.fy}px`, "--fs": pose.fs, "--ox": `${pose.ox}px`, "--oy": `${pose.oy}px`, "--gbs": `${pose.gw}px ${pose.gh}px`, "--gbp": `${pose.gx}px ${pose.gy}px`, "--gimg": `url("${banners[0].poster?.src ?? ""}")` } as React.CSSProperties) : undefined}
       data-intro={intro ? "1" : "0"}
       className="hw-root relative flex h-svh min-h-[560px] flex-col overflow-hidden bg-ink"
     >
@@ -390,6 +436,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
                     </span>
                     <span className="hw-line t-italic mt-1.5 text-[clamp(46px,13.6vw,60px)] text-red md:mt-2 md:text-[clamp(58px,6.7vw,104px)]" style={{ ["--l" as string]: 1 }}>
                       <span>{p.emphasis}</span>
+                      <span className="hw-ghost" aria-hidden="true">{p.emphasis}</span>
                     </span>
                   </span>
                 );
@@ -443,14 +490,17 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
         </div>
       </div>
 
-      {/* prototype-only review control (not part of the hero composition) */}
-      <button
-        type="button"
-        onClick={replay}
-        className="t-meta absolute bottom-[72px] right-(--gutter) z-10 min-h-9 md:bottom-auto md:top-[116px] border border-cream/25 bg-ink/40 px-3 text-[10px] text-cream/70 backdrop-blur-sm transition-colors hover:text-cream"
-      >
-        ↻ Replay<span className="hidden sm:inline"> opening</span> <span className="hidden opacity-60 sm:inline">· preview only</span>
-      </button>
+      {/* prototype-only review controls (not part of the hero composition) */}
+      <div data-hw-preview="" className="t-meta absolute right-(--gutter) top-[84px] z-10 flex items-center gap-px text-[10px] md:top-[116px]" role="group" aria-label="Opening review (preview only)">
+        {(["word", "world", "final"] as const).map((v) => (
+          <button key={v} type="button" aria-pressed={view === v} onClick={() => review(v)} className={`min-h-9 border border-cream/25 bg-ink/50 px-2.5 uppercase backdrop-blur-sm transition-colors md:px-3 ${view === v ? "text-cream" : "text-cream/60 hover:text-cream"}`}>
+            {v}
+          </button>
+        ))}
+        <button type="button" onClick={replay} className="min-h-9 border border-cream/25 bg-ink/50 px-2.5 text-cream/70 backdrop-blur-sm transition-colors hover:text-cream md:px-3">
+          ↻ Replay<span className="hidden opacity-60 md:inline"> · preview only</span>
+        </button>
+      </div>
       <noscript>
         <style>{`.hw-root [data-hw-poster]{opacity:1!important}.hw-root .hw-image{-webkit-mask-image:none!important;mask-image:none!important}.hw-root .hw-rise{animation:none!important;opacity:1!important}.hw-root .hw-line.t-italic{visibility:visible!important}.hw-root .hw-phrase[data-state="active"] .hw-line>span{animation:none!important;transform:none!important}`}</style>
       </noscript>

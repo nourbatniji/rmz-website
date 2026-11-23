@@ -24,33 +24,47 @@
 .hw-rise { animation: hw-rise 560ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(300ms + var(--rd, 0) * 80ms); }
 @keyframes hw-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* ── Opening: the typography-led reveal (see HeroThreeWorlds). Held while data-open is pending / measure / armed; the animations run when it becomes "running".
-   data-intro stays set, so nothing restarts when the phase becomes "done". Everything is a transform/opacity/mask: the picture never moves or scales. ── */
+/* ── Opening: image through typography (see HeroThreeWorlds). Held while data-open is pending / measure / armed; the animations run when it becomes
+   "running". data-intro stays set, so nothing restarts when the phase becomes "done". Beats (ms): WORD 0–400 · WORLD 400–950 · SETTLE 950–1900. ── */
 @property --hw-k { syntax: "<number>"; inherits: false; initial-value: 0; }
-/* the world: a broad, softly feathered mask growing outward from the word's region (the hero centre) */
+
+/* WORLD — the full-size picture is revealed by a controlled left→right wipe with a narrow (3.5 %) edge; nothing of it is visible before (no spotlight, no glow) */
 .hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"], [data-open="running"]) .hw-image {
-  -webkit-mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 calc(var(--hw-k) * 135% - 35%), transparent calc(var(--hw-k) * 135%));
-  mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 calc(var(--hw-k) * 135% - 35%), transparent calc(var(--hw-k) * 135%));
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--hw-k) * 103.5% - 3.5%), transparent calc(var(--hw-k) * 103.5%));
+  mask-image: linear-gradient(90deg, #000 calc(var(--hw-k) * 103.5% - 3.5%), transparent calc(var(--hw-k) * 103.5%));
 }
 .hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-image { --hw-k: 0; }
-.hw-root[data-open="running"] .hw-image { animation: hw-reveal 1100ms cubic-bezier(.3,.55,.2,1) 90ms both; }
+.hw-root[data-open="running"] .hw-image { animation: hw-reveal 550ms cubic-bezier(.4,0,.25,1) 400ms both; }
 @keyframes hw-reveal { from { --hw-k: 0; } to { --hw-k: 1; } }
 
-/* the word: the real "perspective." line, FLIP-animated from its measured start pose (--fx/--fy/--fs/--ox/--oy) to its natural place (transform: none) */
-.hw-root[data-intro="1"][data-boot="1"] .hw-phrase[data-state="active"] .hw-line.t-italic > span { animation: none; transform: none; }
+/* WORD — the real "perspective." line is the animated element: FLIP from its measured start pose (--fx/--fy/--fs/--ox/--oy) to its natural place (transform: none) */
+.hw-root[data-intro="1"][data-boot="1"] .hw-phrase[data-state="active"] .hw-line.t-italic > span:not(.hw-ghost) { animation: none; transform: none; }
 .hw-root:is([data-open="pending"], [data-open="measure"]) .hw-phrase[data-state="active"] .hw-line.t-italic { visibility: hidden; }
+.hw-line.t-italic { position: relative; }
 .hw-root:is([data-open="armed"], [data-open="running"]) .hw-phrase[data-state="active"] .hw-line.t-italic { overflow: visible; transform-origin: var(--ox, 0px) var(--oy, 0px); }
 .hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line.t-italic { transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(var(--fs, 1)); }
-.hw-root[data-open="running"] .hw-phrase[data-state="active"] .hw-line.t-italic { animation: hw-word 1150ms cubic-bezier(.22,.7,.2,1) 110ms both; }
+/* SETTLE — only after the world is visible (950 ms) */
+.hw-root[data-open="running"] .hw-phrase[data-state="active"] .hw-line.t-italic { animation: hw-word 800ms cubic-bezier(.22,.7,.2,1) 950ms both; }
 @keyframes hw-word { from { transform: translate(var(--fx, 0px), var(--fy, 0px)) scale(var(--fs, 1)); } to { transform: none; } }
 
-/* "A DIFFERENT" completes the headline: a restrained upward mask as the word settles */
-.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation: none; transform: translateY(190%); }
-.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation-duration: 700ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: 620ms; }
+/* image through the letters: a ghost copy of the word, transparent fill clipped to the SAME picture (size/position computed in JS so it lines up exactly with the
+   full-size image behind), visible only through a few restrained portions (mask); red stays the dominant lettering colour. It fades out as the world arrives. */
+.hw-ghost { display: none; position: absolute; left: 0.35em; top: 0.14em; white-space: nowrap; pointer-events: none; text-shadow: none;
+  color: transparent; -webkit-text-fill-color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-image: var(--gimg); background-repeat: no-repeat; background-size: var(--gbs); background-position: var(--gbp);
+  -webkit-mask-image: radial-gradient(ellipse 7% 55% at 26% 63%, #000 62%, transparent 100%), radial-gradient(ellipse 8.5% 48% at 55% 50%, #000 62%, transparent 100%), radial-gradient(ellipse 6% 50% at 88% 62%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse 7% 55% at 26% 63%, #000 62%, transparent 100%), radial-gradient(ellipse 8.5% 48% at 55% 50%, #000 62%, transparent 100%), radial-gradient(ellipse 6% 50% at 88% 62%, #000 62%, transparent 100%); }
+.hw-root:is([data-open="armed"], [data-open="running"]) .hw-phrase[data-state="active"] .hw-ghost { display: block; }
+.hw-root[data-open="running"] .hw-phrase[data-state="active"] .hw-ghost { animation: hw-ghost 340ms ease-in-out 600ms both; }
+@keyframes hw-ghost { from { opacity: 1; } to { opacity: 0; } }
 
-/* description · link · bottom controls near the end */
+/* "A DIFFERENT" completes the headline during the latter part of the movement */
+.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation: none; transform: translateY(190%); }
+.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation-duration: 620ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: 1250ms; }
+
+/* description · link · bottom controls follow; everything is finished at ≈1.9 s */
 .hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-rise { animation: none; opacity: 0; }
-.hw-root[data-intro="1"] .hw-rise { animation-duration: 580ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: calc(900ms + var(--rd, 0) * 80ms); }
+.hw-root[data-intro="1"] .hw-rise { animation-duration: 480ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: calc(1300ms + var(--rd, 0) * 60ms); }
 
 /* Scrim behind the headline, concentrated on the red italic line (the 2nd line, ≈ 62 % down the block). Elliptical radial gradient with a long
    smooth tail (many stops, eased) → no box, no edge. Sized in em of the headline so it follows any copy length/size. */
