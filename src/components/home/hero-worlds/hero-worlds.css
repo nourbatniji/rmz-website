@@ -30,10 +30,10 @@
 .hw-root[data-open="pending"] .hw-rise, .hw-root[data-open="armed"] .hw-rise { animation: none; opacity: 0; }
 .hw-root[data-open="pending"] .hw-phrase[data-state="active"] .hw-line > span,
 .hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line > span { animation: none; transform: translateY(190%); }
-/* headline: ONE composition — both lines rise through their masks with a small offset (70 ms) between them, while the scene moves */
-.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line > span { animation-delay: calc(150ms + var(--l) * 70ms); }
+/* headline: ONE composition — both lines rise through their masks with a small offset (90 ms) between them, while the scene moves */
+.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line > span { animation-duration: 840ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: calc(260ms + var(--l) * 90ms); }
 /* description · link · bottom controls follow shortly after */
-.hw-root[data-intro="1"] .hw-rise { animation-delay: calc(650ms + var(--rd, 0) * 80ms); }
+.hw-root[data-intro="1"] .hw-rise { animation-duration: 740ms; animation-timing-function: cubic-bezier(.25,.7,.2,1); animation-delay: calc(880ms + var(--rd, 0) * 100ms); }
 
 /* Scrim behind the headline, concentrated on the red italic line (the 2nd line, ≈ 62 % down the block). Elliptical radial gradient with a long
    smooth tail (many stops, eased) → no box, no edge. Sized in em of the headline so it follows any copy length/size. */

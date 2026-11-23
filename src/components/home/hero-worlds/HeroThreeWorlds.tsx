@@ -30,15 +30,17 @@ const TRANSITION_MS = Math.round(ROTATE_MS * (1 + STAGGER));
 const AUTO_MS = 5000;
 
 // Opening ("the world comes alive"; once per tab session, on entry at the top). The first banner's own frame sequence IS the opening: frames
-// 1 → OPEN_END+1 play once in their original order at a constant cadence (no easing, no interpolation), then the last displayed frame is held. The
+// 1 → OPEN_END+1 play once in their original order at a constant cadence (no easing, no interpolation, no blending), then the last displayed frame is held. The
 // scroll mapping is then continued from that frame (see `scrollProgress`), so the first scroll carries on from it — there is one frame controller:
 // the engine's shared progress is written either by the opening or by the scroll mapping, never both.
 // Segment: frames 1–19 of /media/hero/identity (index 0–18): the woman stays still while the fish drift and a large fish glides in front of her
 // from the right; frames 20–25 are left for the scroll to continue with.
 const OPEN_END = 18; // last frame index played (frame 19 of 25)
-const FRAME_MS = 55; // dwell per frame → 19 frames ≈ 1.05 s
+// Time-based (rAF elapsed time, no timers): frame = floor(elapsed / FRAME_MS), constant cadence, no easing. A cross-dissolve between adjacent frames was
+// evaluated and rejected: this 25-frame sequence moves the large fish ~60–100 px between frames, so even a 25 % blend shows a doubled fish edge.
+const FRAME_MS = 83; // dwell per frame → frame 19 is reached at 18 × 83 ≈ 1.5 s
 const READY_WAIT_MS = 1200; // if the segment is not decoded by then, skip the opening (normal hero)
-const OPEN_DONE_MS = 1500; // copy + controls reveal finished → hand over to the normal behaviour (countdown starts)
+const OPEN_DONE_MS = 1900; // copy + controls reveal finished → hand over to the normal behaviour (countdown starts)
 const OPEN_KEY = "rmz-hero-three-worlds-opening";
 const tri = (t: number) => { const m = ((t % 2) + 2) % 2; return m <= 1 ? m : 2 - m; }; // the hero's ping-pong, shifted by the opening offset
 type Phase = "pending" | "armed" | "running" | "done"; // pending: server render / before the decision · armed: waiting for the opening segment to be decoded · running · done

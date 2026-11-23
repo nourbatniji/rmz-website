@@ -15,7 +15,7 @@ const scrollTo = async (p, y) => { await p.evaluate((y) => scrollTo({ top: y, be
   ok('plays frames in original order (never backwards)', fs.every((v, i) => i === 0 || v >= fs[i - 1]), fs.join());
   ok('plays frame 0 → 18 (frames 1–19 of 25)', fs[0] <= 1 && Math.max(...fs) === 18, `${fs[0]}..${Math.max(...fs)}`);
   const t18 = run.find((x) => x[2] === 18)?.[0], t0 = run[0][0];
-  ok('scene motion ≈1.0–1.4 s (headless frame cadence)', t18 - t0 >= 900 && t18 - t0 <= 1500, `${t18 - t0} ms`);
+  ok('scene motion ≈1.5 s (headless frame cadence)', t18 - t0 >= 1350 && t18 - t0 <= 1800, `${t18 - t0} ms`);
   const e = await st(p); ok('holds the last frame (18) after playback, until the user scrolls', e.f === 18 && e.y === 0 && e.open === 'done', JSON.stringify(e));
   const a = await scrollTo(p, 30), c = await scrollTo(p, 90), d = await scrollTo(p, 150);
   ok('first scroll continues forward from frame 18 (no reset to 0, no jump)', a.f >= 18 && a.f <= 20 && c.f > a.f && d.f >= c.f, JSON.stringify([a.f, c.f, d.f]));
