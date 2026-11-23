@@ -7,6 +7,8 @@
 .hw-phrase[data-state="active"], .hw-phrase[data-state="out"] { visibility: visible; }
 .hw-line { display: block; overflow: hidden; padding-block: 0.06em; margin-block: -0.06em; } /* the mask */
 .hw-line > span { display: block; will-change: transform; }
+/* the italic line has descenders (p, g, y) that fall below its 0.9 line box: give its mask room so nothing is cut */
+.hw-line.t-italic { padding-block: 0.12em 0.32em; margin-block: -0.12em -0.32em; }
 
 /* Entrance / exit follow the prism turn (the ribs rotate over --hw-rot with a left→right stagger, so the left side where the text sits
    turns away first): the old phrase leaves while the left ribs are still turning away, the new phrase enters as the new face arrives. */
@@ -14,8 +16,8 @@
 .hw-phrase[data-state="out"] .hw-line > span { animation: hw-out var(--hw-out) cubic-bezier(.55,0,.8,.3) both; animation-delay: calc(var(--l) * 40ms); }
 /* the very first paint: no prism turn to wait for */
 .hw-root[data-boot="1"] .hw-phrase[data-state="active"] .hw-line > span { animation-delay: calc(250ms + var(--l) * 90ms); }
-@keyframes hw-in { from { transform: translateY(108%); } to { transform: none; } }
-@keyframes hw-out { from { transform: none; } to { transform: translateY(-108%); } }
+@keyframes hw-in { from { transform: translateY(150%); } to { transform: none; } }
+@keyframes hw-out { from { transform: none; } to { transform: translateY(-150%); } }
 /* a phrase that is the active one but not yet entered stays hidden under its mask (animation fill 'both' holds the 'from' keyframe during the delay) */
 
 .hw-fade-in { animation: hw-fade 700ms ease both; animation-delay: 300ms; }
