@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { NavItem, SiteContent } from "@/content/types";
 
 /** Shared pieces of the four navigation prototypes. Lab only. */
@@ -85,48 +85,7 @@ export function useNavState(ids: string[], force: "auto" | "image" | "solid", he
   return { solid: force === "auto" ? solid : force === "solid", active };
 }
 
-/**
- * Overlay behaviour shared by every menu: Escape closes, focus moves into the panel and is trapped (panel + its trigger), the page behind is `inert`,
- * scrolling is contained with `overflow:hidden` (+ a stable scrollbar gutter, so nothing shifts) and the scroll position is simply left untouched.
- * Focus returns to the trigger on close (unless a link was followed — then the link target owns focus).
- */
-export function useOverlay(open: boolean, close: () => void, panel: RefObject<HTMLElement | null>, trigger: RefObject<HTMLElement | null>, followed: RefObject<boolean>) {
-  useEffect(() => {
-    if (!open) return;
-    const root = panel.current;
-    if (!root) return;
-    const html = document.documentElement;
-    const prev = { overflow: html.style.overflow, gutter: html.style.scrollbarGutter };
-    html.style.scrollbarGutter = "stable";
-    html.style.overflow = "hidden";
-    const main = document.querySelector("main#top");
-    const trig = trigger.current;
-    main?.setAttribute("inert", "");
-    const focusables = () => [...root.querySelectorAll<HTMLElement>("a[href], button:not([disabled])")].filter((el) => el.offsetParent !== null || getComputedStyle(el).position === "fixed");
-    const raf = requestAnimationFrame(() => focusables()[0]?.focus());
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { e.preventDefault(); close(); return; }
-      if (e.key !== "Tab") return;
-      const list = [...focusables(), ...(trigger.current ? [trigger.current] : [])];
-      if (!list.length) return;
-      const i = list.indexOf(document.activeElement as HTMLElement);
-      const next = e.shiftKey ? (i <= 0 ? list.length - 1 : i - 1) : i === list.length - 1 ? 0 : i + 1;
-      e.preventDefault();
-      list[next].focus();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      cancelAnimationFrame(raf);
-      document.removeEventListener("keydown", onKey);
-      html.style.overflow = prev.overflow;
-      html.style.scrollbarGutter = prev.gutter;
-      main?.removeAttribute("inert");
-      if (!followed.current) trig?.focus({ preventScroll: true });
-      followed.current = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- panel/trigger/followed are refs; close is stable enough for a prototype
-  }, [open]);
-}
+export { useOverlay } from "@/components/shell/header-parts";
 
 /** Lab toolbar → variant: toggle the menu from outside. */
 export function useToggleEvent(toggle: () => void) {
