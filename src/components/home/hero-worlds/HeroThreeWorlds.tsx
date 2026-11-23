@@ -243,7 +243,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
                     <span className="hw-line t-display text-[clamp(38px,11.4vw,50px)] text-cream md:text-[clamp(46px,5.3vw,84px)]" style={{ ["--l" as string]: 0 }}>
                       <span>{p.lead}</span>
                     </span>
-                    <span className="hw-line t-italic mt-1.5 text-[clamp(46px,13.6vw,60px)] text-yellow md:mt-2 md:text-[clamp(58px,6.7vw,104px)]" style={{ ["--l" as string]: 1 }}>
+                    <span className="hw-line t-italic mt-1.5 text-[clamp(46px,13.6vw,60px)] text-red md:mt-2 md:text-[clamp(58px,6.7vw,104px)]" style={{ ["--l" as string]: 1 }}>
                       <span>{p.emphasis}</span>
                     </span>
                   </span>
