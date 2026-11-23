@@ -28,30 +28,31 @@ const STAGGER = 0.6;
 const TRANSITION_MS = Math.round(ROTATE_MS * (1 + STAGGER));
 const AUTO_MS = 5000;
 
-// Opening ("image through typography"; once per tab session, on entry at the top). One coordinated timeline of live text and the REAL prism (see hero-worlds.css):
-//   01 WORD       0–350 ms     the final red word "perspective." large and centred on the hero's near-black; the banner shows ONLY through portions of the
-//                              letterforms (a ghost copy of the word, clipped to the very same picture, aligned to the full-size image).
-//   02 IMAGE      350–650      more of the photograph becomes visible inside the strokes (same word, same size/position); the ghost then gives way to solid red.
-//   03 WORLD      650–2410     the existing prism transition (same renderer, geometry, shading, stagger, easing, 1100 ms + 60 % stagger): the faces start turned away
-//                              (the face in front is empty, so nothing of the photograph is visible) and turning INTO view they reveal the upright first banner — no overlay.
-//   04 TRAVEL     1500–2100    the SAME word (FLIP from its measured final bounds) settles into the headline during the prism's final portion.
-//   05 HEADLINE   1950–2300    "A DIFFERENT" rises above it.   06 LIVE   2200–2580   description, CTA, controls → the exact normal hero.
+// Opening (once per tab session, on entry at the top). One coordinated timeline of live text and the REAL prism (see hero-worlds.css):
+//   01 WORD      0–100 ms     the final red word "perspective." large and centred on the hero's near-black.
+//   02 PHOTO     100–850      a sweep (left → right) fills the WHOLE word with the banner photograph — ONE image plane clipped by the complete text, never per letter — and it holds
+//                             for ≈450 ms with a very subtle horizontal drift. The plane is cover-fitted into the word's own box (centred unless a focal point exists), so it works
+//                             for any banner image.
+//   03 RETURN    850–1150     the red sweeps back across the lettering while the prism begins turning (OPEN_HOLD_MS) — the word is solid red again before it travels.
+//   04 WORLD     850–2610     the existing prism transition (geometry, shading, stagger, easing): faces start turned away (the front face is empty) and turn the UPRIGHT first banner in.
+//   05 TRAVEL    1700–2300    the SAME word (FLIP from its measured final bounds) settles into the headline during the prism's final portion.
+//   06 LIVE      2150–2780    "A DIFFERENT" rises, then description, CTA, controls → the exact normal hero.
 // The text and header live outside the rotating scene; frame-on-scroll and the normal prism are untouched.
 const READY_WAIT_MS = 900; // first image not painted by then → show the normal hero instead (no waiting)
-const OPEN_DONE_MS = 2650;
-const OPEN_HOLD_MS = 650; // the prism starts turning when the world begins to appear (after beats 01–02) // everything finished → hand over to the normal behaviour (countdown starts)
+const OPEN_DONE_MS = 2850;
+const OPEN_HOLD_MS = 850; // the prism starts turning when the world begins to appear (after beats 01–02) // everything finished → hand over to the normal behaviour (countdown starts)
 /** Preview-only review stages: the REAL animations are paused at these times (06 = finished). */
 const STAGES = [
-  { id: 1, label: "Word", t: 300 },
-  { id: 2, label: "Image", t: 600 },
-  { id: 3, label: "World", t: 1250 },
-  { id: 4, label: "Travel", t: 1800 },
-  { id: 5, label: "Headline", t: 2150 },
+  { id: 1, label: "Word", t: 60 },
+  { id: 2, label: "Photo", t: 650 },
+  { id: 3, label: "Return", t: 1010 },
+  { id: 4, label: "World", t: 1500 },
+  { id: 5, label: "Travel", t: 2050 },
   { id: 6, label: "Live", t: null },
 ] as const;
 const OPEN_KEY = "rmz-hero-three-worlds-opening";
 type Phase = "pending" | "measure" | "armed" | "running" | "done"; // pending: server render / before the decision · measure: reading the headline's final bounds · armed: start pose, waiting for the first image · running · done
-type Pose = { fx: number; fy: number; fs: number; ox: number; oy: number; gw: number; gh: number; gx: number; gy: number };
+type Pose = { fx: number; fy: number; fs: number; ox: number; oy: number; gw: number; gh: number; gx: number; gy: number; gd: number };
 type View = number | null;
 
 /** PROVISIONAL copy. Keyed by banner id; falls back to the content headline. */
@@ -84,7 +85,8 @@ function useTabHidden() {
   );
 }
 
-export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
+/** `ghostBanner` is a preview-only review aid: it picks which existing banner's image fills the word (default: the first banner, i.e. the current banner image). */
+export function HeroThreeWorlds({ hero, ghostBanner = 0 }: { hero: HeroContent; ghostBanner?: number }) {
   const { banners } = hero;
   const wide = useMedia("(min-width: 1024px)", true);
   const mid = useMedia("(min-width: 640px)", true);
@@ -198,20 +200,19 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     const fs = Math.min((usable * (sb.width < 640 ? 0.92 : 0.85)) / tr.width, (sb.height * 0.5) / tr.height, 4); // ~85 % of the usable width, whole word inside the viewport
     const cx = sb.left + sb.width / 2, cy = sb.top + sb.height / 2;
     const fx = cx - (fs * tr.width) / 2 - tr.left, fy = cy - (fs * tr.height) / 2 - tr.top;
-    // Where the full-size picture (the engine's centred "cover" of frame 1) sits, expressed in the word's own un-transformed layout space, so the ghost word's
-    // background is pixel-aligned with the picture revealed behind it: V = O + (P − O − t) / s, with O = the transform origin.
-    const poster = banners[0].poster;
-    let g = { gw: 0, gh: 0, gx: 0, gy: 0 };
+    // One image plane for the whole word: the banner's image cover-fitted into the word's own box (+6 % width of room for a subtle drift). Content-independent: only the
+    // image's size is used; the crop is centred (no focal-point field exists on a banner today — add one here if it ever does).
+    const poster = banners[Math.min(ghostBanner, banners.length - 1)]?.poster;
+    let g = { gw: 0, gh: 0, gx: 0, gy: 0, gd: 0 };
     if (poster && poster.width && poster.height) {
-      const k = Math.max(sb.width / poster.width, sb.height / poster.height);
-      const dw = poster.width * k, dh = poster.height * k;
-      const px = sb.left + (sb.width - dw) / 2, py = sb.top + (sb.height - dh) / 2;
-      const spb = sp.getBoundingClientRect();
-      g = { gw: dw / fs, gh: dh / fs, gx: tr.left + (px - tr.left - fx) / fs - spb.left, gy: tr.top + (py - tr.top - fy) / fs - spb.top };
+      const k = Math.max((tr.width * 1.06) / poster.width, tr.height / poster.height);
+      const gw = poster.width * k, gh = poster.height * k;
+      const spare = gw - tr.width;
+      g = { gw, gh, gx: -spare * 0.2, gy: (tr.height - gh) * 0.5, gd: -spare * 0.6 };
     }
     setPose({ fs, fx, fy, ox: tr.left - wb.left, oy: tr.top - wb.top, ...g });
     setPhase("armed");
-  }, [phase, banners]);
+  }, [phase, banners, ghostBanner]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   // Armed → running once the first image has painted (the engine's existing readiness). Two frames are allowed to paint the start pose first. If the image is not
@@ -358,7 +359,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
       onKeyDown={onKeyDown}
       data-boot={boot ? "1" : "0"}
       data-open={phase}
-      style={pose ? ({ "--fx": `${pose.fx}px`, "--fy": `${pose.fy}px`, "--fs": pose.fs, "--ox": `${pose.ox}px`, "--oy": `${pose.oy}px`, "--gbs": `${pose.gw}px ${pose.gh}px`, "--gbp": `${pose.gx}px ${pose.gy}px`, "--gimg": `url("${banners[0].poster?.src ?? ""}")` } as React.CSSProperties) : undefined}
+      style={pose ? ({ "--fx": `${pose.fx}px`, "--fy": `${pose.fy}px`, "--fs": pose.fs, "--ox": `${pose.ox}px`, "--oy": `${pose.oy}px`, "--gsize": `${pose.gw}px ${pose.gh}px`, "--gx": `${pose.gx}px`, "--gy": `${pose.gy}px`, "--gdrift": `${pose.gd}px`, "--gimg": `url("${banners[Math.min(ghostBanner, banners.length - 1)]?.poster?.src ?? ""}")` } as React.CSSProperties) : undefined}
       data-intro={intro ? "1" : "0"}
       className="hw-root relative flex h-svh min-h-[560px] flex-col overflow-hidden bg-ink"
     >
