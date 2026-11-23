@@ -32,8 +32,8 @@ const AUTO_MS = 5000;
 //   01 WORD       0–350 ms     the final red word "perspective." large and centred on the hero's near-black; the banner shows ONLY through portions of the
 //                              letterforms (a ghost copy of the word, clipped to the very same picture, aligned to the full-size image).
 //   02 IMAGE      350–650      more of the photograph becomes visible inside the strokes (same word, same size/position); the ghost then gives way to solid red.
-//   03 WORLD      650–2410     the existing prism transition (same renderer, geometry, shading, stagger, easing, 1100 ms + 60 % stagger) turns the faces from the first
-//                              banner seen UPSIDE DOWN (a 180° half-turn of the same crop, drawn by PrismEngine.setUpsideDown) into the first banner, upright.
+//   03 WORLD      650–2410     the existing prism transition (same renderer, geometry, shading, stagger, easing, 1100 ms + 60 % stagger): the faces start turned away
+//                              (the face in front is empty, so nothing of the photograph is visible) and turning INTO view they reveal the upright first banner — no overlay.
 //   04 TRAVEL     1500–2100    the SAME word (FLIP from its measured final bounds) settles into the headline during the prism's final portion.
 //   05 HEADLINE   1950–2300    "A DIFFERENT" rises above it.   06 LIVE   2200–2580   description, CTA, controls → the exact normal hero.
 // The text and header live outside the rotating scene; frame-on-scroll and the normal prism are untouched.
@@ -316,12 +316,13 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     const grid = gridRef.current.map((row) => row.slice(0, ribCount));
     engineRef.current?.setCanvases(grid);
   }, [ribCount]);
-  // While the opening is armed the prism is held one face "before" the first banner (turns − 1): that face shows banner 1 upside down, and the opening's single
-  // prism transition then turns it into the normal orientation (turns − 1 → turns). Text/selectors keep using `face` (the first banner) throughout.
+  // While the opening is armed the prism is held one face "before" the first banner (turns − 1): the face in front is left empty (the wall shows only the near-black hero)
+  // and the first banner's faces are turned away. The opening's single prism transition (turns − 1 → turns) then turns the UPRIGHT first banner into view: the turning
+  // faces ARE the reveal. Text/selectors keep using `face` (the first banner) throughout.
   const shift = phase === "armed" ? -1 : 0;
   const prismFace = (((turns + shift) % FACES) + FACES) % FACES;
   useEffect(() => {
-    engineRef.current?.setUpsideDown(phase === "armed" || phase === "running" ? { face: 2, src: 0 } : null);
+    engineRef.current?.setBlankFace(phase === "armed" || phase === "running" ? 2 : null);
   }, [phase]);
   useEffect(() => {
     engineRef.current?.setActive(prismFace);
@@ -371,7 +372,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
           data-hw-poster=""
           className="absolute inset-0 bg-cover bg-center transition-opacity duration-500"
           style={{
-            opacity: ready ? 0 : 1, // the poster (frame 1) stays up until the renderer has painted: never a blank first view
+            opacity: phase === "armed" || phase === "running" ? 0 : ready ? 0 : 1, // the poster (frame 1) covers the wait; during the opening the prism itself is the reveal
             backgroundColor: "#1a1a18",
             backgroundImage: poster ? `url(${poster.src})` : undefined,
           }}

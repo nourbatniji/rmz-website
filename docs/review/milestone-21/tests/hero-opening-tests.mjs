@@ -50,39 +50,48 @@ let A, B;
   ok('Replay: back to top + first banner, armed → running → done, final = normal hero', /armed>running>done$/.test(R) && f.y === 0 && f.c === '01 / 03' && same(f.it, B.it), `${R} ${JSON.stringify([f.y, f.c, f.it, B.it])}`);
   await p.close();
 }
-{ // review stages 01–06 (preview-only controls seek the REAL animations/transition) + the prism reveal: upside-down start, real rotation, upright end
+{ // review stages 01–06 (preview-only controls seek the REAL animations/transition) + the prism IS the reveal (upright, no overlay, nothing visible before it turns)
   const w0 = await b.newPage(); await w0.goto(URL, { waitUntil: 'networkidle0' }); await w0.close();
   const p = await b.newPage(); await p.setViewport({ width: 1440, height: 900 }); await p.goto(URL, { waitUntil: 'networkidle0' }); await sleep(3400);
   const click = (n) => p.evaluate((n) => [...document.querySelectorAll('[data-hw-preview] button[title]')][n - 1].click(), n);
   const st = () => p.evaluate(() => { const r = document.querySelector('.hw-root'); const img = document.querySelector('.hw-image'); const g = document.querySelector('.hw-phrase[data-state=active] .hw-ghost'); const it = document.querySelector('.hw-phrase[data-state=active] .hw-line.t-italic'); const m = new DOMMatrix(getComputedStyle(it).transform);
     const ribs = [...document.querySelectorAll('button.cursor-pointer > div > div')]; const ang = (el) => { const q = new DOMMatrix(getComputedStyle(el).transform); return Math.round(Math.atan2(q.m13, q.m11) * 180 / Math.PI); };
-    return { open: r.dataset.open, io: +getComputedStyle(img).opacity, mask: getComputedStyle(img).maskImage, gm: +getComputedStyle(g).getPropertyValue('--hw-gm'), go: +getComputedStyle(g).opacity, gd: getComputedStyle(g).display, s: Math.round(m.a * 100) / 100, rise: +getComputedStyle(document.querySelector('.hw-root p.hw-rise')).opacity, lead: new DOMMatrix(getComputedStyle(document.querySelector('.hw-phrase[data-state=active] .hw-line.t-display > span')).transform).m42, a0: Math.abs(ang(ribs[0])), aN: Math.abs(ang(ribs.at(-1))) }; });
+    return { open: r.dataset.open, io: +getComputedStyle(img).opacity, mask: getComputedStyle(img).maskImage, imgAnims: img.getAnimations().length, gm: +getComputedStyle(g).getPropertyValue('--hw-gm'), go: +getComputedStyle(g).opacity, gd: getComputedStyle(g).display, s: Math.round(m.a * 100) / 100, rise: +getComputedStyle(document.querySelector('.hw-root p.hw-rise')).opacity, lead: new DOMMatrix(getComputedStyle(document.querySelector('.hw-phrase[data-state=active] .hw-line.t-display > span')).transform).m42, a0: Math.abs(ang(ribs[0])), aN: Math.abs(ang(ribs.at(-1))) }; });
   const stage = async (n) => { await click(n); for (let i = 0; i < 6; i++) { await fr(p); await sleep(80); } return st(); };
-  const s1 = await stage(1), s2 = await stage(2), s3 = await stage(3), s4 = await stage(4), s5 = await stage(5);
-  ok('01 WORD: picture not shown outside the letters, image-through-type minimal, word at start pose, copy hidden', s1.open === 'running' && s1.io === 0 && s1.gm < 0.05 && s1.go === 1 && s1.s > 1.5 && s1.rise === 0 && s1.lead > 10 && s1.a0 === 120 && s1.aN === 120, JSON.stringify(s1));
-  ok('02 IMAGE: more photograph inside the strokes (gm>0.9), same size/position, world still not shown, prism still at its upside-down start', s2.io === 0 && s2.gm > 0.9 && s2.s === s1.s && s2.a0 === 120, JSON.stringify(s2));
-  ok('03 WORLD: the REAL prism is turning (stagger: left ribs well ahead of right ribs), no mask anywhere, word still large & centred', s3.io === 1 && s3.mask === 'none' && s3.a0 < 60 && s3.aN > s3.a0 + 40 && s3.s === s1.s && s3.go === 0, JSON.stringify(s3));
-  ok('04 TRAVEL: prism still resolving on the right (the word travels over its final portion), word mid-way between start and final size', s4.a0 === 0 && s4.aN > 20 && s4.aN < s3.aN && s4.s > 1.05 && s4.s < s1.s - 0.2, JSON.stringify(s4));
-  ok('05 HEADLINE: prism essentially upright (last ribs within 12°), word in place, "A DIFFERENT" mid-rise, copy not yet', s5.a0 === 0 && s5.aN <= 12 && s5.s === 1 && s5.lead > 2 && s5.lead < 90 && s5.rise === 0, JSON.stringify(s5));
+  const { execFileSync } = await import('node:child_process');
+  const lum = (f) => +execFileSync('python3', ['-c', `
+from PIL import Image
+im=Image.open('${f}').convert('L'); W,H=im.size
+def m(b): c=im.crop(b); d=list(c.getdata()); return sum(d)/len(d)
+print(round(max(m((60,150,1380,330)), m((60,660,1380,860))),1))`]).toString().trim();
+  const s1 = await stage(1); await p.screenshot({ path: '/private/tmp/hw-s1.png' });
+  const s2 = await stage(2); await p.screenshot({ path: '/private/tmp/hw-s2.png' });
+  // t = 640 ms: just before the prism starts turning — still no photograph outside the letters
+  await click(2); for (let i = 0; i < 4; i++) { await fr(p); await sleep(80); }
+  await p.evaluate(() => document.getAnimations().forEach((a) => { a.pause(); a.currentTime = 640; })); await fr(p); await sleep(150); await p.screenshot({ path: '/private/tmp/hw-s640.png' });
+  const s3 = await stage(3); const s4 = await stage(4); await p.screenshot({ path: '/private/tmp/hw-s4.png' }); const s5 = await stage(5);
+  const l1 = lum('/private/tmp/hw-s1.png'), l2 = lum('/private/tmp/hw-s2.png'), l640 = lum('/private/tmp/hw-s640.png');
+  ok('01 WORD: no photograph outside the letters (background ≈ near-black), prism faces turned away, image-through-type minimal, word at start pose', s1.open === 'running' && l1 < 22 && s1.gm < 0.05 && s1.go === 1 && s1.s > 1.5 && s1.rise === 0 && s1.a0 === 120 && s1.aN === 120, JSON.stringify([l1, s1]));
+  ok('02 IMAGE: more photograph inside the strokes (gm>0.9), same word size/position, still nothing outside the letters', l2 < 22 && s2.gm > 0.9 && s2.s === s1.s && s2.a0 === 120, JSON.stringify([l2, s2]));
+  ok('just before the prism turns (640 ms) the wall is still empty — no complete photograph fades in first, and the wall has no opacity animation', l640 < 22 && s2.imgAnims === 0 && s2.io === 1 && s2.mask === 'none', JSON.stringify([l640, s2.imgAnims, s2.io]));
+  ok('03 WORLD: the REAL prism is turning (stagger: left ribs well ahead of the right), word still large & centred, ghost gone', s3.a0 < 60 && s3.aN > s3.a0 + 40 && s3.s === s1.s && s3.go === 0, JSON.stringify(s3));
+  ok('04 TRAVEL: left ribs resolved, right ribs still turning (word travels over the prism\'s final portion)', s4.a0 === 0 && s4.aN > 20 && s4.aN < s3.aN && s4.s > 1.05 && s4.s < s1.s - 0.2, JSON.stringify(s4));
+  ok('05 HEADLINE: prism essentially resolved, word in place, "A DIFFERENT" mid-rise, copy not yet', s5.a0 === 0 && s5.aN <= 12 && s5.s === 1 && s5.lead > 2 && s5.lead < 90 && s5.rise === 0, JSON.stringify(s5));
   await click(6); for (let i = 0; i < 6; i++) { await fr(p); await sleep(80); } const s6 = await st();
   ok('06 LIVE = the finished normal hero (done, ribs 0°, word in place, copy visible, no ghost)', s6.open === 'done' && s6.a0 === 0 && s6.aN === 0 && s6.rise === 1 && s6.lead === 0 && s6.s === 1 && s6.gd === 'none', JSON.stringify(s6));
-  // upside-down check: at 700 ms the right-hand ribs are still at the start pose. Their picture must be the first banner rotated 180° (not mirrored, not upright).
-  await click(1); for (let i = 0; i < 6; i++) { await fr(p); await sleep(80); }
-  await p.evaluate(() => document.getAnimations().forEach((a) => { a.pause(); a.currentTime = a.effect?.target?.classList?.contains('hw-image') ? 900 : 880; })); await fr(p); await sleep(150); await p.screenshot({ path: '/private/tmp/hw-ud.png' });
-  const { execFileSync } = await import('node:child_process');
+  // the picture revealed by the turning faces is UPRIGHT: at 1800 ms the left (already resolved) ribs must match the first banner upright, not rotated/mirrored/flipped
   const r = execFileSync('python3', ['-c', `
 from PIL import Image
-S=Image.open('/private/tmp/hw-ud.png').convert('RGB'); W,H=S.size
+S=Image.open('/private/tmp/hw-s4.png').convert('RGB'); W,H=S.size
 P=Image.open('/Users/mac/rmz-webf/rmz-website/public/media/hero/identity/frame-01.webp').convert('RGB')
 k=max(W/P.width,H/P.height); dw,dh=round(P.width*k),round(P.height*k); P=P.resize((dw,dh)); L=(dw-W)//2; T=(dh-H)//2; P=P.crop((L,T,L+W,T+H))
 vars={'upright':P,'rot180':P.rotate(180),'mirrorX':P.transpose(Image.FLIP_LEFT_RIGHT),'flipY':P.transpose(Image.FLIP_TOP_BOTTOM)}
-box=(1180,130,1420,330)  # right-hand ribs (still un-turned), clear of the word and the header
-sc=S.crop(box); out={}
+box=(40,130,360,330); sc=S.crop(box); out={}
 for n,v in vars.items():
-    c=v.crop(box); out[n]=sum(abs(a-b) for x,y in zip(sc.getdata(),c.getdata()) for a,b in zip(x,y))/(240*200*3)
+    c=v.crop(box); out[n]=sum(abs(a-b) for x,y in zip(sc.getdata(),c.getdata()) for a,b in zip(x,y))/(320*200*3)
 print(' '.join(f'{n}={d:.1f}' for n,d in out.items()))`]).toString().trim();
   const d = Object.fromEntries(r.split(' ').map((x) => x.split('=')));
-  ok('right-hand faces show the first banner rotated 180° (closest to rot180, not upright / mirrored / flipped)', +d.rot180 < 30 && +d.rot180 < +d.upright - 10 && +d.rot180 < +d.mirrorX - 10 && +d.rot180 < +d.flipY - 10, r);
+  ok('the faces that have turned into view show the first banner UPRIGHT (closest to upright; not rotated, mirrored or flipped)', +d.upright < 30 && +d.upright < +d.rot180 - 10 && +d.upright < +d.mirrorX - 10 && +d.upright < +d.flipY - 10, r);
   await p.close();
 }
 { // reduced motion, no-JS fallback

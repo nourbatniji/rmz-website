@@ -28,11 +28,10 @@
    data-intro stays set, so nothing restarts when the phase becomes "done". Timeline (ms): 01 0–350 · 02 350–650 · 03 prism 650–2410 · 04 1500–2100 · 05 1950–2300 · 06 2200–2580 ── */
 @property --hw-gm { syntax: "<number>"; inherits: false; initial-value: 0; }
 
-/* 03 WORLD — no mask: the picture is the REAL prism. It is simply not shown during beats 01–02 and appears as the prism starts turning (650 ms); the ribs' own
-   transition (inline style: 1100 ms + stagger, delayed by OPEN_HOLD_MS) turns the upside-down first banner into the upright one. */
-.hw-root:is([data-open="pending"], [data-open="measure"], [data-open="armed"]) .hw-image { opacity: 0; }
-.hw-root[data-open="running"] .hw-image { animation: hw-world-in 180ms linear 650ms both; }
-@keyframes hw-world-in { from { opacity: 0; } to { opacity: 1; } }
+/* 03 WORLD — no mask, no fade: the picture is the REAL prism. Before the decision/measure the wall is hidden (it would show the poster); from "armed" on the prism is
+   present but its front face is empty, so only the near-black hero is visible; the ribs' own transition (inline style: 1100 ms + stagger, delayed by OPEN_HOLD_MS, 650 ms)
+   then turns the upright first banner into view. */
+.hw-root:is([data-open="pending"], [data-open="measure"]) .hw-image { opacity: 0; }
 
 /* the word: the real "perspective." line is the animated element: FLIP from its measured start pose (--fx/--fy/--fs/--ox/--oy) to its natural place (transform: none) */
 .hw-root[data-intro="1"][data-boot="1"] .hw-phrase[data-state="active"] .hw-line.t-italic > span:not(.hw-ghost) { animation: none; transform: none; }
