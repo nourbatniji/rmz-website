@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { HeroContent } from "@/content/types";
-import { pingPongProgress } from "../hero/config";
+import { heroConfig } from "../hero/config";
+import { sequenceLength } from "../hero/frame-store";
 import { PrismEngine } from "../hero/prism-engine";
 import "./hero-worlds.css";
 
@@ -28,25 +29,19 @@ const STAGGER = 0.6;
 const TRANSITION_MS = Math.round(ROTATE_MS * (1 + STAGGER));
 const AUTO_MS = 5000;
 
-// Opening ("a world coming into alignment"; once per tab session, on entry at the top). The first banner is on screen from its first painted frame with
-// its vertical slices (the existing ribs) slightly out of alignment — a smooth wave, calmer near the face, resolved from the centre outward — while the
-// whole picture eases from a small overscan to 1:1 so no slice ever exposes the background. Timings live in hero-worlds.css (--hw-*) and match OPEN_DONE_MS.
-const OPEN_DONE_MS = 1700; // image 1.1 s + copy/controls reveal finished at ≈1.6 s → hand over to the normal behaviour
+// Opening ("the world comes alive"; once per tab session, on entry at the top). The first banner's own frame sequence IS the opening: frames
+// 1 → OPEN_END+1 play once in their original order at a constant cadence (no easing, no interpolation), then the last displayed frame is held. The
+// scroll mapping is then continued from that frame (see `scrollProgress`), so the first scroll carries on from it — there is one frame controller:
+// the engine's shared progress is written either by the opening or by the scroll mapping, never both.
+// Segment: frames 1–19 of /media/hero/identity (index 0–18): the woman stays still while the fish drift and a large fish glides in front of her
+// from the right; frames 20–25 are left for the scroll to continue with.
+const OPEN_END = 18; // last frame index played (frame 19 of 25)
+const FRAME_MS = 55; // dwell per frame → 19 frames ≈ 1.05 s
+const READY_WAIT_MS = 1200; // if the segment is not decoded by then, skip the opening (normal hero)
+const OPEN_DONE_MS = 1500; // copy + controls reveal finished → hand over to the normal behaviour (countdown starts)
 const OPEN_KEY = "rmz-hero-three-worlds-opening";
-const FACE_X = 0.49; // horizontal position of the subject's face (fraction of the width) — offsets are damped around it
-/** Per-slice opening offset: a coherent wave, 12–30 px (at 900 px tall) at the edges/centre-left, calm near the face; delay grows from the centre outward. */
-function sliceOffsets(n: number) {
-  const out = Array.from({ length: n }, (_, i) => {
-    const x = n > 1 ? i / (n - 1) : 0.5;
-    const edge = Math.abs(2 * x - 1);
-    const narrow = n <= 12; // phones: fewer, wider slices → smaller offsets and a wider calm zone around the face
-    const amp = (12 + 18 * Math.pow(edge, 1.3)) * (narrow ? 0.55 : 1);
-    const face = 1 - (narrow ? 0.92 : 0.78) * Math.exp(-Math.pow((x - FACE_X) / (narrow ? 0.17 : 0.11), 2));
-    return { dy: amp * Math.sin(2 * Math.PI * 1.35 * x + 0.5) * face, dl: Math.round(edge * 280) };
-  });
-  return { slices: out, max: Math.max(...out.map((o) => Math.abs(o.dy))) };
-}
-type Phase = "pending" | "armed" | "running" | "done"; // pending: server render / before the decision · armed: offset pose, waiting for the first image paint · running · done
+const tri = (t: number) => { const m = ((t % 2) + 2) % 2; return m <= 1 ? m : 2 - m; }; // the hero's ping-pong, shifted by the opening offset
+type Phase = "pending" | "armed" | "running" | "done"; // pending: server render / before the decision · armed: waiting for the opening segment to be decoded · running · done
 
 /** PROVISIONAL copy. Keyed by banner id; falls back to the content headline. */
 const PHRASES: Record<string, { lead: string; emphasis: string }> = {
@@ -109,10 +104,30 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
   const swipe = useRef<{ x: number; moved: boolean } | null>(null);
   const settle = useRef(0);
   const lastFace = useRef(0);
+  /** The single frame controller state: who writes the engine's progress, and the scroll offset that continues from the opening's last frame. */
+  const ctl = useRef({ mode: "scroll" as "scroll" | "opening", o: 0, f: 0 });
+
+  /** Write the engine's shared progress (0..1). `data-hw-frame` mirrors the displayed frame of banner 1 (review aid). */
+  const show = (p: number) => {
+    engineRef.current?.setProgress(p);
+    const n = sequenceLength(banners[0].sequence!);
+    sectionRef.current?.setAttribute("data-hw-frame", String(Math.round(p * (n - 1))));
+  };
+  /** Scroll mapping: the hero's ping-pong of page scroll, phase-shifted by `o` px so the first scroll continues from the opening's last frame. */
+  const scrollProgress = () => tri((window.scrollY + ctl.current.o) / heroConfig.sequenceScrollDistancePx);
+  /** End the automatic playback and give control to scroll, continuing from the frame on screen (works for the normal end and for an interruption). */
+  const handOff = () => {
+    if (ctl.current.mode !== "opening") return;
+    const n = sequenceLength(banners[0].sequence!);
+    ctl.current.o = (ctl.current.f / (n - 1)) * heroConfig.sequenceScrollDistancePx - window.scrollY; // scroll position now ↔ frame now
+    ctl.current.mode = "scroll";
+    show(scrollProgress()); // identical frame: nothing visibly changes
+  };
 
   /** Finish the opening NOW (every running transition/animation jumps to its end state). Never touches scroll. */
   const finishOpening = () => {
     if (phaseRef.current === "done") return;
+    handOff(); // stop automatic playback immediately; control passes to scroll from the frame currently displayed
     try {
       sectionRef.current?.getAnimations({ subtree: true }).forEach((a) => {
         try { a.finish(); } catch { /* ignore */ }
@@ -149,7 +164,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
       if (window.scrollY > 8) skip = true;
       if (sessionStorage.getItem(OPEN_KEY)) skip = true;
     } catch { /* storage blocked etc.: play (still harmless) */ }
-    // Synchronous on purpose (layout effect, before the first paint): the offset pose must be in place before the image can paint.
+    // Synchronous on purpose (layout effect, before the first paint): the copy is held hidden before it can flash.
     if (phaseRef.current === "pending") {
       if (skip) {
         setPhase("done"); // eslint-disable-line react-hooks/set-state-in-effect
@@ -164,17 +179,38 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     return () => { window.clearTimeout(wd); };
   }, []);
 
-  // Armed → running as soon as the first image has painted (the engine's existing readiness); no page-wide gate: after 1.5 s without it, skip the opening.
+  // Armed → running once the first image has painted AND the opening segment (frames 1–19) is decoded. The poster stays up meanwhile; if the segment is not
+  // ready within READY_WAIT_MS the normal hero is shown instead (no loader, no gate).
   useEffect(() => {
     if (phase !== "armed") return;
-    let r1 = 0, r2 = 0, to = 0;
-    if (ready) {
-      r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setPhase("running")); }); // two frames: the start pose is committed first
-    } else {
-      to = window.setTimeout(() => { if (phaseRef.current === "armed") setPhase("done"); }, 1500);
-    }
-    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); window.clearTimeout(to); };
+    let raf = 0;
+    const t0 = performance.now();
+    const check = () => {
+      if (ready && engineRef.current?.hasFrames(0, OPEN_END)) { setPhase("running"); return; }
+      if (performance.now() - t0 > READY_WAIT_MS) { setPhase("done"); return; }
+      raf = requestAnimationFrame(check);
+    };
+    raf = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(raf);
   }, [phase, ready]);
+
+  // The opening itself: write the engine's progress frame by frame (constant cadence), hold the last frame, then continue from it with the scroll mapping.
+  useEffect(() => {
+    if (phase !== "running") return;
+    const n = sequenceLength(banners[0].sequence!);
+    ctl.current.mode = "opening";
+    const t0 = performance.now();
+    let raf = 0, last = -1;
+    const tick = (now: number) => {
+      const f = Math.min(OPEN_END, Math.floor((now - t0) / FRAME_MS));
+      if (f !== last) { last = f; ctl.current.f = f; show(f / (n - 1)); }
+      if (f < OPEN_END) raf = requestAnimationFrame(tick);
+      else handOff();
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- show/handOff only touch refs
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== "running") return;
@@ -203,6 +239,8 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     window.scrollTo({ top: 0, behavior: "instant" });
     lastFace.current = 0;
     settle.current = 0;
+    ctl.current = { mode: "scroll", o: 0, f: 0 }; // reset the controller: scroll mapping from frame 1 again
+    show(scrollProgress());
     setLeaving([]);
     setBoot(true);
     setTurns(0);
@@ -217,7 +255,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     const ro = new ResizeObserver(() => engine.resize(wall.clientWidth, wall.clientHeight, window.devicePixelRatio || 1));
     ro.observe(wall);
     engine.resize(wall.clientWidth, wall.clientHeight, window.devicePixelRatio || 1);
-    const progress = () => engine.setProgress(pingPongProgress(window.scrollY));
+    const progress = () => { if (ctl.current.mode === "scroll") show(scrollProgress()); }; // never competes with the opening
     window.addEventListener("scroll", progress, { passive: true });
     const io = new IntersectionObserver(([e]) => {
       progress();
@@ -232,6 +270,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
       engine.dispose();
       engineRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `show` only touches refs
   }, [banners]);
 
   useEffect(() => {
@@ -259,8 +298,6 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     if (e.key === "ArrowLeft") { e.preventDefault(); turn(-1, true); }
   };
 
-  const wave = useMemo(() => sliceOffsets(ribCount), [ribCount]);
-  const overscan = 1 + (2 * wave.max) / 900 + 0.006; // enough that the largest offset never exposes the background
   const rib = `calc(100cqw / ${ribCount})`;
   const radius = `calc(${rib} * ${RADIUS_PER_RIB})`;
   const current = banners[face];
@@ -285,9 +322,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
           data-hw-poster=""
           className="absolute inset-0 bg-cover bg-center transition-opacity duration-500"
           style={{
-            // the picture is never a separate layer during the opening: the poster stays out of the way until/unless the opening is skipped
-            opacity: phase === "pending" || phase === "armed" || phase === "running" ? 0 : ready ? 0 : 1,
-            transition: phase === "armed" ? "none" : undefined,
+            opacity: ready ? 0 : 1, // the poster (frame 1) stays up until the renderer has painted: never a blank first view
             backgroundColor: "#1a1a18",
             backgroundImage: poster ? `url(${poster.src})` : undefined,
           }}
@@ -312,14 +347,12 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
             }
           }}
         >
-          <div className="hw-ribs absolute inset-0 [transform-style:preserve-3d]" style={{ transform: `translateZ(calc(${radius} * -1))`, ["--hw-s" as string]: overscan.toFixed(4) }}>
+          <div className="absolute inset-0 [transform-style:preserve-3d]" style={{ transform: `translateZ(calc(${radius} * -1))` }}>
             {Array.from({ length: ribCount }, (_, i) => (
               <div
                 key={i}
-                className="hw-rib absolute top-0 h-full [transform-style:preserve-3d]"
+                className="absolute top-0 h-full [transform-style:preserve-3d]"
                 style={{
-                  ["--dy" as string]: `${(wave.slices[i].dy / 9).toFixed(3)}svh`,
-                  ["--dl" as string]: `${wave.slices[i].dl}ms`,
                   left: `calc(${rib} * ${i})`,
                   width: rib,
                   transform: `rotateY(${-120 * turns}deg)`,
@@ -434,7 +467,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
         ↻ Replay<span className="hidden sm:inline"> opening</span> <span className="hidden opacity-60 sm:inline">· preview only</span>
       </button>
       <noscript>
-        <style>{`.hw-root [data-hw-poster]{opacity:1!important}.hw-root .hw-rise{animation:none!important;opacity:1!important}.hw-root .hw-phrase[data-state="active"] .hw-line>span{animation:none!important;transform:none!important}.hw-root .hw-line{clip-path:none!important}`}</style>
+        <style>{`.hw-root [data-hw-poster]{opacity:1!important}.hw-root .hw-rise{animation:none!important;opacity:1!important}.hw-root .hw-phrase[data-state="active"] .hw-line>span{animation:none!important;transform:none!important}`}</style>
       </noscript>
 
       <p className="sr-only" aria-live="polite">{announce}</p>

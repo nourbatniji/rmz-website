@@ -6,6 +6,7 @@ const p = await b.newPage(); await p.setViewport({ width: 1440, height: 900 });
 await p.goto('about:blank');
 const rec = await p.screencast({ path: `${out}/hero-opening.mp4`, fps: 30 });
 await p.goto('http://localhost:3111/lab/hero-three-worlds', { waitUntil: 'domcontentloaded' });
-await sleep(7600); // the automatic countdown (5 s after the opening) turns the prism to the next banner: normal transition + new phrase
-await sleep(2800);
+await sleep(1800); await p.mouse.move(700, 500); for (let i = 0; i < 8; i++) { await p.mouse.wheel({ deltaY: 25 }); await sleep(60); } await sleep(700); // first scroll continues from the held frame
+for (let i = 0; i < 8; i++) { await p.mouse.wheel({ deltaY: -25 }); await sleep(60); } await sleep(900);
+await sleep(5200); await sleep(2800); // countdown (5 s after the opening) → the normal prism transition
 await rec.stop(); await b.close();

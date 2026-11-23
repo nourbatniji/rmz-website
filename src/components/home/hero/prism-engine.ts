@@ -86,6 +86,14 @@ export class PrismEngine {
     this.syncFrames();
   }
 
+  /** True when frames 0..to of banner `b` are decoded (lets a caller play a short opening segment only when it is ready). */
+  hasFrames(b: number, to: number): boolean {
+    const st = this.stores[b];
+    if (!st) return false;
+    for (let i = 0; i <= to; i++) if (!st.get(i)) return false;
+    return true;
+  }
+
   /** Which banner faces the viewer. Does not touch progress. */
   setActive(i: number) {
     if (i === this.active) return;

@@ -24,36 +24,16 @@
 .hw-rise { animation: hw-rise 560ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(300ms + var(--rd, 0) * 80ms); }
 @keyframes hw-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* ── Opening: "a world coming into alignment" (see HeroThreeWorlds) ─────────────────────────────────────────────────────────────────────────
-   Held while data-open is "pending" (before the decision; server render) or "armed" (offset pose, first image just painted); animations run
-   when it becomes "running". data-intro stays set, so the same animations persist through "done" and nothing restarts at the handoff.
-   Slices: the existing rib elements get a vertical `translate` (a separate property, so the prism's own transform is untouched), resolving
-   centre-outward (--dl) while the whole picture eases from a small overscan (--hw-s) to 1:1 — the overscan is what guarantees no gap.
-   Image 1.1 s: ribs 820 ms after 0–280 ms, overscan 820 ms after 280 ms. Copy reveal overlaps; everything is finished at ≈1.6 s.          */
-.hw-root[data-open="armed"] .hw-rib { translate: 0 var(--dy); }
-.hw-root[data-open="armed"] .hw-ribs { scale: var(--hw-s); }
-.hw-root[data-open="running"] .hw-rib { animation: hw-align 820ms cubic-bezier(.22,.75,.25,1) backwards; animation-delay: var(--dl); }
-.hw-root[data-open="running"] .hw-ribs { animation: hw-zoom 820ms cubic-bezier(.22,.75,.25,1) backwards; animation-delay: 280ms; }
-@keyframes hw-align { from { translate: 0 var(--dy); } to { translate: 0 0; } }
-@keyframes hw-zoom { from { scale: var(--hw-s); } to { scale: 1; } }
-
-/* holds */
+/* ── Opening: "the world comes alive" (see HeroThreeWorlds). The picture is the banner's own frame sequence playing (driven from JS); only the copy is
+   animated here. Held hidden while data-open is "pending" (before the decision / server render) or "armed" (waiting for the segment to be decoded);
+   the animations run when it becomes "running". data-intro stays set, so nothing restarts when the phase becomes "done". ── */
 .hw-root[data-open="pending"] .hw-rise, .hw-root[data-open="armed"] .hw-rise { animation: none; opacity: 0; }
 .hw-root[data-open="pending"] .hw-phrase[data-state="active"] .hw-line > span,
-.hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line > span { animation: none; transform: translateY(118%); }
-.hw-root[data-open="pending"] .hw-phrase[data-state="active"] .hw-line.t-italic,
-.hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line.t-italic { clip-path: inset(0 100% 0 0); }
-.hw-root[data-open="pending"] .hw-phrase[data-state="active"] .hw-line.t-italic > span,
-.hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line.t-italic > span { transform: none; }
-
-/* headline: "A DIFFERENT" rises through its mask as the image starts settling; the red italic line is revealed by a horizontal mask (the lettering
-   itself does not move) timed to end with the image alignment. Only while the opening owns the first phrase (data-boot="1"). */
-.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line.t-display > span { animation: hw-in-soft 640ms cubic-bezier(.2,.8,.2,1) both; animation-delay: 200ms; }
-.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line.t-italic > span { animation: none; transform: none; }
-.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line.t-italic { animation: hw-wipe 700ms cubic-bezier(.3,.55,.2,1) both; animation-delay: 400ms; }
-@keyframes hw-in-soft { from { transform: translateY(118%); } to { transform: none; } }
-@keyframes hw-wipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-.hw-root[data-intro="1"] .hw-rise { animation-delay: calc(880ms + var(--rd, 0) * 80ms); }
+.hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line > span { animation: none; transform: translateY(190%); }
+/* headline: ONE composition — both lines rise through their masks with a small offset (70 ms) between them, while the scene moves */
+.hw-root[data-intro="1"][data-boot="1"]:is([data-open="running"], [data-open="done"]) .hw-phrase[data-state="active"] .hw-line > span { animation-delay: calc(150ms + var(--l) * 70ms); }
+/* description · link · bottom controls follow shortly after */
+.hw-root[data-intro="1"] .hw-rise { animation-delay: calc(650ms + var(--rd, 0) * 80ms); }
 
 /* Scrim behind the headline, concentrated on the red italic line (the 2nd line, ≈ 62 % down the block). Elliptical radial gradient with a long
    smooth tail (many stops, eased) → no box, no edge. Sized in em of the headline so it follows any copy length/size. */
@@ -81,6 +61,5 @@
   /* no motion: the phrase simply swaps with the (also instant) prism turn */
   .hw-phrase .hw-line > span { animation: none !important; transform: none !important; }
   .hw-rise { animation: none !important; opacity: 1 !important; transform: none !important; }
-  .hw-rib, .hw-ribs, .hw-line { animation: none !important; translate: none !important; scale: none !important; clip-path: none !important; }
   .hw-phrase[data-state="out"] { visibility: hidden; }
 }
