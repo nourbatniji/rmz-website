@@ -67,7 +67,7 @@ export class LiquidImageFx {
   constructor() {
     this.canvas = document.createElement("canvas");
     this.canvas.setAttribute("aria-hidden", "true");
-    this.canvas.className = "fw-liquid";
+    this.canvas.className = "ab-liquid";
     this.canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); this.disable(); });
     window.addEventListener("pointermove", this.onMove, { passive: true });
   }
@@ -99,10 +99,10 @@ export class LiquidImageFx {
     if (this.dead || !this.enabled || e.pointerType === "touch" || e.buttons) { this.hasLast = false; return; }
     const t = e.target;
     // the browser's hit-test says which image is under the pointer (3D-correct); anything else (text, controls, other sections) is ignored
-    const img = t instanceof HTMLImageElement && t.closest(".fw-flip") ? t : null;
+    // opt-in: only images whose parent carries data-liquid (the About scrubber's current image)
+    const img = t instanceof HTMLImageElement && t.parentElement?.hasAttribute("data-liquid") ? t : null;
     const host = img?.parentElement;
-    const front = img?.closest<HTMLElement>(".fw-front");
-    if (!img || !host || !host.classList.contains("fw-img") || !front || getComputedStyle(front).visibility === "hidden") { this.hasLast = false; return; }
+    if (!img || !host || getComputedStyle(host).visibility === "hidden" || parseFloat(getComputedStyle(host).opacity) < 0.6) { this.hasLast = false; return; }
     if (img !== this.img) this.attach(img, host);
     const w = img.clientWidth, h = img.clientHeight;
     if (!w || !h) return;

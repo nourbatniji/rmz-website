@@ -2,7 +2,7 @@ import { Collective } from "@/components/home/collective/Collective";
 import { SiteHeader } from "@/components/shell/SiteHeader";
 import type { SectionKey } from "@/lib/admin/section-meta";
 import { Footer } from "@/components/home/footer/Footer";
-import { FeaturedWorkFocus } from "@/components/home/featured/FeaturedWorkFocus";
+import { AboutScrubber } from "@/components/home/about/AboutScrubber";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
 import { HeroThreeWorlds } from "@/components/home/hero/HeroThreeWorlds";
 import { ServicesOrbit } from "@/components/home/services-orbit/ServicesOrbit";
@@ -15,7 +15,7 @@ import { getWorkContent } from "@/lib/content/work";
 
 /**
  * Homepage in the approved canvas order:
- * hero → showreel corridor → statement → featured work (canvas "About": pinned flipping cards) → services (orbital lens) → Minds → work archive (links to /work/[slug]) → collaborations → footer.
+ * hero → showreel corridor → statement → About (scroll-linked scrubber, Journey V2 layout) → services (orbital lens) → Minds → work archive (links to /work/[slug]) → collaborations → footer.
  * Sections not built yet are compact dev markers (DevSectionPlaceholder, currently none).
  *
  * `draft` = admin preview: reads the unpublished draft content instead of the published content.
@@ -39,7 +39,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       hero: <HeroThreeWorlds hero={hero} />,
       corridor: <>{header}<ShowreelCorridor content={corridor} /></>,
       statement: <StatementRotator statement={statement} />,
-      featured: <>{header}<FeaturedWorkFocus content={featured} /></>,
+      featured: <>{header}<AboutScrubber content={featured} /></>,
       services: <>{header}<ServicesOrbit content={lens} services={services} /></>,
       lens: <>{header}<ServicesOrbit content={lens} services={services} /></>,
       minds: <Minds content={minds} />,
@@ -52,7 +52,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       <HeroThreeWorlds hero={hero} />
       <ShowreelCorridor content={corridor} />
       <StatementRotator statement={statement} />
-      <FeaturedWorkFocus content={featured} />
+      <AboutScrubber content={featured} />
       <ServicesOrbit content={lens} services={services} />
       <Minds content={minds} />
       {archive}

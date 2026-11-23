@@ -15,12 +15,6 @@ const identityPoster = "/media/hero/identity/frame-01.webp";
  * To swap in real media, replace a `media: null` with a `sequence` / `still` ref.
  * Nothing in components needs to change. Copy is taken from the approved canvas.
  */
-const FEATURED_PHOTOS: { src: string; alt: string; pos: string }[] = [
-  { src: "/media/featured/work-01-arid.webp", alt: "Portrait of a woman in red lipstick and red bead earrings among prickly-pear cactus pads", pos: "50% 28%" },
-  { src: "/media/featured/work-02-drift.webp", alt: "A woman in a black feather collar looking through a magnifying glass against a red gradient", pos: "50% 36%" },
-  { src: "/media/featured/work-03-tidepool.webp", alt: "A woman in a red coat surfing a wave while carrying a green suitcase", pos: "50% 38%" },
-];
-
 export const devHomepageContent: HomepageContent = {
   site: {
     brand: {
@@ -172,35 +166,42 @@ export const devHomepageContent: HomepageContent = {
       };
     }),
   },
-  // Featured work focus (canvas board "HOME - ABOUT SECTION" — titled About, designed as selected work). The six project names, categories
-  // and colours are the canvas's DEMO entries, and every description is a placeholder: no verified case summaries or images exist yet.
-  // Cards 01–03 now carry delivered photographs (public/media/featured, 900×1200 WebP); 04–06 still show the labelled placeholder.
-  // See docs/featured-work-section.md.
+  // About: three steps told with the delivered photographs. Copy is taken from existing studio wording (footer "Studio" text, the statement phrase,
+  // the approved service names) and is PROVISIONAL until the studio approves it. Reuses the `featured` section shape so the admin editor keeps working
+  // (name = title, category = kicker, description = text). See docs/about-scrubber.md.
   featured: {
-    label: "Selected work",
-    items: (
-      [
-        ["Arid", "Brand identity", "#F86015"],
-        ["Drift", "Campaign", "#FFCA26"],
-        ["Tidepool", "Digital experience", "#9ACC42"],
-        ["Rouge", "Campaign", "#D52518"],
-        ["Blush", "Content & production", "#E8402F"],
-        ["Bloom", "Brand identity", "#971409"],
-      ] as const
-    ).map(([name, category, color], i) => {
-      const n = String(i + 1).padStart(2, "0");
-      const photo = FEATURED_PHOTOS[i] ?? null;
-      return {
-        id: `work-${n}`,
-        number: n,
-        name,
-        category,
-        description: `Placeholder for ${name}: two or three sentences on the brief, the idea and the result will go here once the verified case summary is supplied.`,
-        copyStatus: "placeholder" as const,
-        image: photo ? { src: photo.src, alt: photo.alt, width: 900, height: 1200 } : null,
-        imagePosition: photo?.pos ?? "50% 50%",
-        placeholderColor: color,
-      };
-    }),
+    label: "About",
+    items: [
+      {
+        id: "about-01",
+        number: "01",
+        name: "Who we are",
+        category: "Rebel Mind Zone · Cairo, Egypt",
+        description: "A creative identity house in Cairo, Egypt. We make brands, campaigns, content and digital work for people who refuse to blend in.",
+        image: { src: "/media/featured/work-01-arid.webp", alt: "Portrait of a woman in red lipstick and red bead earrings among prickly-pear cactus pads", width: 900, height: 1200 },
+        imagePosition: "50% 28%",
+        placeholderColor: "#F86015",
+      },
+      {
+        id: "about-02",
+        number: "02",
+        name: "How we think",
+        category: "Our point of view",
+        description: "RMZ, when expectations are broken, rewritten, exceeded or challenged. That is where our ideas start, and where we like to finish.",
+        image: { src: "/media/featured/work-02-drift.webp", alt: "A woman in a black feather collar looking through a magnifying glass against a red gradient", width: 900, height: 1200 },
+        imagePosition: "50% 36%",
+        placeholderColor: "#FFCA26",
+      },
+      {
+        id: "about-03",
+        number: "03",
+        name: "What we make",
+        category: "Seven services, one studio",
+        description: "Branding, creative strategy, content production, social media, design, paid media and web experiences, planned together so the work holds up everywhere.",
+        image: { src: "/media/featured/work-03-tidepool.webp", alt: "A woman in a red coat surfing a wave while carrying a green suitcase", width: 900, height: 1200 },
+        imagePosition: "50% 38%",
+        placeholderColor: "#9ACC42",
+      },
+    ].map((it) => ({ ...it, copyStatus: "placeholder" as const })),
   },
 };

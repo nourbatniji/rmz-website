@@ -20,7 +20,7 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
   hero: { label: "Top banner", about: "The first thing visitors see: headline, intro and the three animated banners.", anchor: "top", group: "page" },
   corridor: { label: "Showreel video", about: "The big showreel video, its cover image and the words around it.", anchor: "showreel", group: "page" },
   statement: { label: "Statement", about: "The one-sentence statement and the words that rotate in it.", anchor: "statement", group: "page" },
-  featured: { label: "Featured projects", about: "The cards that flip from an image to a short description as people scroll.", anchor: "featured", group: "page" },
+  featured: { label: "About", about: "The scroll-linked About steps: an image, a title and a short text for each step.", anchor: "featured", group: "page" },
   services: { label: "Service names", about: "The names of the services the studio offers.", anchor: "services", group: "page" },
   lens: { label: "Services showcase", about: "A description, label and picture for each service.", anchor: "services", group: "page" },
   minds: { label: "Team", about: "The eight team members: names, roles, short bios and portraits.", anchor: "minds", group: "page" },
