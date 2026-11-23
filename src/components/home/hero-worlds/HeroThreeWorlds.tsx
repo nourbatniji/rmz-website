@@ -225,8 +225,11 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
 
         {/* ── Copy: inside the picture ─────────────────────────────── */}
         <div className="pointer-events-none absolute inset-x-(--gutter) bottom-[148px] md:bottom-auto md:top-1/2 md:-translate-y-[46%]">
-          <div className="hw-text-shadow max-w-[min(92vw,640px)]">
-            <h1 className="hw-phrases">
+          <div className="max-w-[min(92vw,640px)]">
+            <div className="relative">
+            {/* copy-attached scrim: lives in the text layout (not in the prism/image layer), centred behind the red word, fades to nothing */}
+            <div aria-hidden="true" className="hw-scrim pointer-events-none absolute" />
+            <h1 className="hw-phrases relative">
               {banners.map((b, i) => {
                 const p = phraseOf(b.id);
                 const state = i === face ? "active" : leaving.includes(i) ? "out" : "idle";
@@ -250,6 +253,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
                 );
               })}
             </h1>
+            </div>
             <p className="t-body hw-fade-in mt-5 max-w-[420px] text-[15px] text-cream md:mt-7 md:text-[18px]">{DESCRIPTION}</p>
             <a
               href="#work"

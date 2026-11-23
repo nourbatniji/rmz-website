@@ -23,8 +23,17 @@
 .hw-fade-in { animation: hw-fade 700ms ease both; animation-delay: 300ms; }
 @keyframes hw-fade { from { opacity: 0; } to { opacity: 1; } }
 
+/* Scrim behind the headline, concentrated on the red italic line (the 2nd line, ≈ 62 % down the block). Elliptical radial gradient with a long
+   smooth tail (many stops, eased) → no box, no edge. Sized in em of the headline so it follows any copy length/size. */
+.hw-scrim { inset: -0.55em -1.1em -0.7em -0.9em; font-size: clamp(46px, 5.3vw, 84px); z-index: 0;
+  background: radial-gradient(ellipse 58% 50% at 40% 64%, rgba(10,9,8,.66) 0%, rgba(10,9,8,.56) 22%, rgba(10,9,8,.40) 42%, rgba(10,9,8,.22) 62%, rgba(10,9,8,.09) 80%, rgba(10,9,8,0) 100%); }
+@media (max-width: 767px) { .hw-scrim { font-size: clamp(38px, 11.4vw, 50px); inset: -0.7em -0.8em -0.9em -0.8em; background: radial-gradient(ellipse 66% 50% at 42% 64%, rgba(10,9,8,.66) 0%, rgba(10,9,8,.56) 24%, rgba(10,9,8,.38) 46%, rgba(10,9,8,.18) 68%, rgba(10,9,8,0) 100%); } }
+/* near-black edge separation for the red letters: tight, no glow, no outline */
+.hw-line.t-italic { text-shadow: 0 1px 1px rgba(8,7,6,.55), 0 2px 7px rgba(8,7,6,.5); }
+.hw-line.t-display { text-shadow: 0 1px 12px rgba(8,7,6,.3); }
+
 /* Restrained local contrast: a soft shade behind the copy only, fading out before the middle of the picture. */
-.hw-shade { background: radial-gradient(ellipse 62% 78% at 0% 54%, rgba(15,15,14,.62), rgba(15,15,14,.28) 52%, rgba(15,15,14,0) 78%); }
+.hw-shade { background: radial-gradient(ellipse 62% 78% at 0% 54%, rgba(15,15,14,.4), rgba(15,15,14,.18) 52%, rgba(15,15,14,0) 78%); }
 .hw-shade-b { background: linear-gradient(to top, rgba(15,15,14,.66), rgba(15,15,14,0)); }
 .hw-text-shadow { text-shadow: 0 1px 18px rgba(15,15,14,.35); }
 
