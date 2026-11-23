@@ -28,23 +28,25 @@ const STAGGER = 0.6;
 const TRANSITION_MS = Math.round(ROTATE_MS * (1 + STAGGER));
 const AUTO_MS = 5000;
 
-// Opening ("image through typography"; once per tab session, on entry at the top). One coordinated ≈2 s timeline of live text and masks (see hero-worlds.css):
+// Opening ("image through typography"; once per tab session, on entry at the top). One coordinated timeline of live text and the REAL prism (see hero-worlds.css):
 //   01 WORD       0–350 ms     the final red word "perspective." large and centred on the hero's near-black; the banner shows ONLY through portions of the
-//                              letterforms (a ghost copy of the word, clipped to the very same picture, aligned to the full-size image below).
-//   02 IMAGE      350–650      more of the photograph becomes visible inside the strokes (same word, same size/position).
-//   03 WORLD      650–1100     the letters return to solid red while the full-size photograph is revealed behind them left → right (slightly feathered vertical edge).
-//   04 TRAVEL     1000–1600    the SAME word (FLIP from its measured final bounds) moves/shrinks to its headline position; the picture stays still.
-//   05 HEADLINE   1450–1800    "A DIFFERENT" rises above it.   06 LIVE   1700–2050   description, CTA, controls → the exact normal hero.
-// The picture never moves or scales; frame-on-scroll and the prism are untouched.
+//                              letterforms (a ghost copy of the word, clipped to the very same picture, aligned to the full-size image).
+//   02 IMAGE      350–650      more of the photograph becomes visible inside the strokes (same word, same size/position); the ghost then gives way to solid red.
+//   03 WORLD      650–2410     the existing prism transition (same renderer, geometry, shading, stagger, easing, 1100 ms + 60 % stagger) turns the faces from the first
+//                              banner seen UPSIDE DOWN (a 180° half-turn of the same crop, drawn by PrismEngine.setUpsideDown) into the first banner, upright.
+//   04 TRAVEL     1500–2100    the SAME word (FLIP from its measured final bounds) settles into the headline during the prism's final portion.
+//   05 HEADLINE   1950–2300    "A DIFFERENT" rises above it.   06 LIVE   2200–2580   description, CTA, controls → the exact normal hero.
+// The text and header live outside the rotating scene; frame-on-scroll and the normal prism are untouched.
 const READY_WAIT_MS = 900; // first image not painted by then → show the normal hero instead (no waiting)
-const OPEN_DONE_MS = 2100; // everything finished → hand over to the normal behaviour (countdown starts)
+const OPEN_DONE_MS = 2650;
+const OPEN_HOLD_MS = 650; // the prism starts turning when the world begins to appear (after beats 01–02) // everything finished → hand over to the normal behaviour (countdown starts)
 /** Preview-only review stages: the REAL animations are paused at these times (06 = finished). */
 const STAGES = [
   { id: 1, label: "Word", t: 300 },
   { id: 2, label: "Image", t: 600 },
-  { id: 3, label: "World", t: 860 },
-  { id: 4, label: "Travel", t: 1300 },
-  { id: 5, label: "Headline", t: 1620 },
+  { id: 3, label: "World", t: 1250 },
+  { id: 4, label: "Travel", t: 1800 },
+  { id: 5, label: "Headline", t: 2150 },
   { id: 6, label: "Live", t: null },
 ] as const;
 const OPEN_KEY = "rmz-hero-three-worlds-opening";
@@ -314,9 +316,16 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
     const grid = gridRef.current.map((row) => row.slice(0, ribCount));
     engineRef.current?.setCanvases(grid);
   }, [ribCount]);
+  // While the opening is armed the prism is held one face "before" the first banner (turns − 1): that face shows banner 1 upside down, and the opening's single
+  // prism transition then turns it into the normal orientation (turns − 1 → turns). Text/selectors keep using `face` (the first banner) throughout.
+  const shift = phase === "armed" ? -1 : 0;
+  const prismFace = (((turns + shift) % FACES) + FACES) % FACES;
   useEffect(() => {
-    engineRef.current?.setActive(face);
-  }, [face]);
+    engineRef.current?.setUpsideDown(phase === "armed" || phase === "running" ? { face: 2, src: 0 } : null);
+  }, [phase]);
+  useEffect(() => {
+    engineRef.current?.setActive(prismFace);
+  }, [prismFace]);
 
   useEffect(() => {
     if (paused || tabHidden || phase !== "done") return; // the countdown starts once the opening has completed
@@ -395,8 +404,10 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
                 style={{
                   left: `calc(${rib} * ${i})`,
                   width: rib,
-                  transform: `rotateY(${-120 * turns}deg)`,
-                  transition: reduced ? "none" : `transform ${ROTATE_MS}ms cubic-bezier(.65,0,.35,1) ${Math.round((i / (ribCount - 1)) * STAGGER * ROTATE_MS)}ms`,
+                  transform: `rotateY(${-120 * (turns + shift)}deg)`,
+                  transition: reduced || phase === "armed"
+                    ? "none"
+                    : `transform ${ROTATE_MS}ms cubic-bezier(.65,0,.35,1) ${(phase === "running" ? OPEN_HOLD_MS : 0) + Math.round((i / (ribCount - 1)) * STAGGER * ROTATE_MS)}ms`,
                 }}
               >
                 {banners.map((b, bi) => (
@@ -512,7 +523,7 @@ export function HeroThreeWorlds({ hero }: { hero: HeroContent }) {
         </button>
       </div>
       <noscript>
-        <style>{`.hw-root [data-hw-poster]{opacity:1!important}.hw-root .hw-image{-webkit-mask-image:none!important;mask-image:none!important}.hw-root .hw-rise{animation:none!important;opacity:1!important}.hw-root .hw-line.t-italic{visibility:visible!important}.hw-root .hw-phrase[data-state="active"] .hw-line>span{animation:none!important;transform:none!important}`}</style>
+        <style>{`.hw-root [data-hw-poster]{opacity:1!important}.hw-root .hw-image{opacity:1!important}.hw-root .hw-rise{animation:none!important;opacity:1!important}.hw-root .hw-line.t-italic{visibility:visible!important}.hw-root .hw-phrase[data-state="active"] .hw-line>span{animation:none!important;transform:none!important}`}</style>
       </noscript>
 
       <p className="sr-only" aria-live="polite">{announce}</p>

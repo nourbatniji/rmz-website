@@ -33,6 +33,7 @@ export class PrismEngine {
   private disposed = false;
   private painted = false;
   private shown: (HTMLImageElement | null)[];
+  private ud: { face: number; src: number } | null = null; // opening only: face `face` temporarily shows banner `src` rotated 180°
   private font = "sans-serif";
 
   constructor(
@@ -84,6 +85,17 @@ export class PrismEngine {
   setProgress(p: number) {
     this.progress = Math.min(1, Math.max(0, p));
     this.syncFrames();
+  }
+
+  /** Opening only: face `face` shows banner `src`'s current frame rotated 180° (a true half-turn, not a mirror) until cleared with null. */
+  setUpsideDown(ud: { face: number; src: number } | null) {
+    const prev = this.ud;
+    this.ud = ud;
+    for (const f of [prev?.face, ud?.face]) {
+      if (f === undefined) continue;
+      this.shown[f] = null;
+      this.mark(f);
+    }
   }
 
   /** Which banner faces the viewer. Does not touch progress. */
@@ -198,12 +210,15 @@ export class PrismEngine {
     const ctx = this.offCtx;
     const W = this.off.width;
     const H = this.off.height;
-    const store = this.stores[bi];
+    const ud = this.ud && this.ud.face === bi ? this.ud : null;
+    const sb = ud ? ud.src : bi; // the banner whose pixels this face shows
+    const store = this.stores[sb];
     // The requested frame if it is decoded; while it is still loading keep showing the LAST RENDERED frame (never a blank or a jump
     // to some other frame); only before anything was rendered fall back to the nearest valid frame, then the poster.
-    const exact = store && store.usable ? store.get(this.frames[bi]) : null;
-    const frame = exact ?? this.shown[bi] ?? (store && store.usable ? store.best(this.frames[bi]) : null);
-    const poster = this.posters[bi];
+    const want = ud ? this.frameFor(sb) : this.frames[bi];
+    const exact = store && store.usable ? store.get(want) : null;
+    const frame = exact ?? this.shown[bi] ?? (store && store.usable ? store.best(want) : null);
+    const poster = this.posters[sb];
     const img = frame ?? (poster && poster.naturalWidth > 0 ? poster : null);
     if (img && (exact || !this.shown[bi])) this.shown[bi] = img;
     if (img) {
@@ -212,10 +227,16 @@ export class PrismEngine {
       const k = Math.max(W / img.naturalWidth, H / img.naturalHeight);
       const dw = img.naturalWidth * k;
       const dh = img.naturalHeight * k;
+      if (ud) {
+        ctx.save();
+        ctx.translate(W, H);
+        ctx.rotate(Math.PI);
+      }
       ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+      if (ud) ctx.restore();
       return;
     }
-    this.placeholder(ctx, this.banners[bi], W, H);
+    this.placeholder(ctx, this.banners[sb], W, H);
   }
 
   /** Last-resort labelled placeholder (no sequence, no poster). */
