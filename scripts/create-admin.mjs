@@ -25,8 +25,30 @@ if (!process.env.DATABASE_URL) {
 }
 
 // pg already treats sslmode=require as verify-full and warns about a future change; say verify-full to keep the behaviour and silence it.
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL.replace(/([?&])sslmode=(?:require|prefer|verify-ca)(?=&|$)/, "$1sslmode=verify-full") });
-await client.connect();
+const connectionString = process.env.DATABASE_URL.replace(/([?&])sslmode=(?:require|prefer|verify-ca)(?=&|$)/, "$1sslmode=verify-full");
+
+// Connect with a bounded wait and a few retries. Without a timeout a blocked/flaky network path leaves `node` hanging until the OS gives up
+// (minutes) and then reports a bare AggregateError [ETIMEDOUT]; Neon computes can also need a moment to wake. TLS stays strict (verify-full).
+async function connect(attempts = 4, timeoutMs = 15000) {
+  for (let i = 1; ; i++) {
+    const c = new pg.Client({ connectionString, connectionTimeoutMillis: timeoutMs });
+    try {
+      await c.connect();
+      return c;
+    } catch (e) {
+      await c.end().catch(() => {});
+      const why = e?.errors?.length ? [...new Set(e.errors.map((x) => x.code))].join(", ") : (e?.code ?? e?.message ?? "unknown error");
+      if (i >= attempts) {
+        const host = (() => { try { return new URL(connectionString).host; } catch { return "the database host"; } })();
+        console.error(`Could not connect to ${host} after ${attempts} attempts (${why}). Check the network/VPN/firewall for outbound TCP 5432 from Node, and that the Neon project is active.`);
+        process.exit(1);
+      }
+      console.error(`Connection attempt ${i}/${attempts} failed (${why}); retrying…`);
+      await new Promise((r) => setTimeout(r, 1500 * i));
+    }
+  }
+}
+const client = await connect();
 try {
   const hash = await bcrypt.hash(password, 12);
   const { rowCount } = await client.query(
