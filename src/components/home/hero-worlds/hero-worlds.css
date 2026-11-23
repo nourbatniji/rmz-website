@@ -20,8 +20,17 @@
 @keyframes hw-out { from { transform: none; } to { transform: translateY(-190%); } }
 /* a phrase that is the active one but not yet entered stays hidden under its mask (animation fill 'both' holds the 'from' keyframe during the delay) */
 
-.hw-fade-in { animation: hw-fade 700ms ease both; animation-delay: 300ms; }
-@keyframes hw-fade { from { opacity: 0; } to { opacity: 1; } }
+/* description · link · bottom controls rise in after the headline (--rd = order) */
+.hw-rise { animation: hw-rise 650ms cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(300ms + var(--rd, 0) * 100ms); }
+@keyframes hw-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ── Opening (see HeroThreeWorlds): held hidden before the decision / while the start pose waits for the first image; the animations then run
+   when data-open becomes "running". data-intro keeps the opening delays so nothing restarts when the phase becomes "done". ── */
+.hw-root[data-open="pending"] .hw-rise, .hw-root[data-open="armed"] .hw-rise { animation: none; opacity: 0; }
+.hw-root[data-open="pending"] .hw-phrase[data-state="active"] .hw-line > span,
+.hw-root[data-open="armed"] .hw-phrase[data-state="active"] .hw-line > span { animation: none; transform: translateY(190%); }
+.hw-root[data-intro="1"][data-boot="1"] .hw-phrase[data-state="active"] .hw-line > span { animation-delay: calc(850ms + var(--l) * 90ms); }
+.hw-root[data-intro="1"] .hw-rise { animation-delay: calc(1050ms + var(--rd, 0) * 110ms); }
 
 /* Scrim behind the headline, concentrated on the red italic line (the 2nd line, ≈ 62 % down the block). Elliptical radial gradient with a long
    smooth tail (many stops, eased) → no box, no edge. Sized in em of the headline so it follows any copy length/size. */
@@ -48,6 +57,6 @@
 @media (prefers-reduced-motion: reduce) {
   /* no motion: the phrase simply swaps with the (also instant) prism turn */
   .hw-phrase .hw-line > span { animation: none !important; transform: none !important; }
-  .hw-fade-in { animation: none; }
+  .hw-rise { animation: none !important; opacity: 1 !important; transform: none !important; }
   .hw-phrase[data-state="out"] { visibility: hidden; }
 }
