@@ -135,3 +135,15 @@ export function useToggleEvent(toggle: () => void) {
     return () => window.removeEventListener(TOGGLE_EVENT, toggle);
   });
 }
+
+/** Small diagonal arrow used by the Contact links. */
+export function Arrow({ className = "" }: { className?: string }) {
+  return (
+    <svg className={`nv-arrow ${className}`} width="9" height="9" viewBox="0 0 9 9" aria-hidden="true">
+      <path d="M1 8 8 1M2.5 1H8v5.5" fill="none" stroke="currentColor" strokeWidth="1.1" />
+    </svg>
+  );
+}
+
+/** The Menu control: label + a delicate two-line icon that becomes a cross when open. */
+export const MenuIcon = () => <i className="nv-ico" aria-hidden="true" />;

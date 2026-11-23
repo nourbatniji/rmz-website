@@ -7,20 +7,18 @@ import { HeroThreeWorlds } from "@/components/home/hero/HeroThreeWorlds";
 import { NavA } from "./NavA";
 import { NavB } from "./NavB";
 import { NavC } from "./NavC";
-import { NavD } from "./NavD";
 import { TOGGLE_EVENT, useMedia, useNavState, type NavProps } from "./shared";
 import "./nav-lab.css";
 
 /** Lab only (/lab/navigation). The four navigation prototypes over the REAL hero (same component, opening included) and stand-in sections for the real destinations. */
 
-type V = "A" | "B" | "C" | "D";
+type V = "A" | "B" | "C";
 type Force = "auto" | "image" | "solid";
 type Cfg = { v: V; force: Force; reduce: boolean };
 const VARIANTS: { id: V; name: string }[] = [
-  { id: "A", name: "Editorial rail" },
-  { id: "B", name: "Split" },
-  { id: "C", name: "Compact bar" },
-  { id: "D", name: "Menu stage" },
+  { id: "A", name: "Quiet editorial" },
+  { id: "B", name: "Balanced centre" },
+  { id: "C", name: "Minimal menu" },
 ];
 const OPEN_KEY = "rmz-lab-nav-opening";
 const CMD_EVENT = "nav-lab-cmd";
@@ -32,7 +30,7 @@ function Stage({ hero, site, cfg }: Props & { cfg: Cfg }) {
   const sys = useMedia("(prefers-reduced-motion: reduce)");
   const reduced = sys || cfg.reduce;
   const ids = useMemo(() => IDS, []);
-  const { solid, active } = useNavState(ids, cfg.force, 92);
+  const { solid, active } = useNavState(ids, cfg.force, 72);
   const props: NavProps = { brand: site.brand, nav: site.nav, solid, active, reduced };
 
   useEffect(() => {
@@ -59,7 +57,6 @@ function Stage({ hero, site, cfg }: Props & { cfg: Cfg }) {
       {cfg.v === "A" && <NavA {...props} />}
       {cfg.v === "B" && <NavB {...props} />}
       {cfg.v === "C" && <NavC {...props} />}
-      {cfg.v === "D" && <NavD {...props} />}
       <main id="top">
         <HeroThreeWorlds hero={hero} sessionKey={OPEN_KEY} />
         <section id="work" className="nv-sec nv-sec-ink"><p className="t-meta">Work</p><h2 className="t-display">Selected<br />work.</h2></section>
@@ -73,7 +70,7 @@ function Stage({ hero, site, cfg }: Props & { cfg: Cfg }) {
 
 function Embedded(props: Props) {
   const q = useSearchParams();
-  const [cfg, setCfg] = useState<Cfg>({ v: (q.get("v") as V) || "A", force: (q.get("state") as Force) || "auto", reduce: q.get("reduce") === "1" });
+  const [cfg, setCfg] = useState<Cfg>({ v: (["A", "B", "C"].includes(q.get("v") ?? "") ? q.get("v") : "A") as V, force: (q.get("state") as Force) || "auto", reduce: q.get("reduce") === "1" });
   useEffect(() => {
     const onMsg = (e: MessageEvent) => { if (e.data?.type === "nav-set") setCfg((c) => ({ ...c, ...e.data.cfg })); };
     window.addEventListener("message", onMsg);
@@ -101,7 +98,7 @@ function Seg({ label, items }: { label: string; items: { id: string; text: strin
 }
 
 function Review({ hero, site, initialV }: Props & { initialV: V }) {
-  const [v, setV] = useState<V>(["A", "B", "C", "D"].includes(initialV) ? initialV : "A");
+  const [v, setV] = useState<V>(["A", "B", "C"].includes(initialV) ? initialV : "A");
   const [force, setForce] = useState<Force>("auto");
   const [reduce, setReduce] = useState(false);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
