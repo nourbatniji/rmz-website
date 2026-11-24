@@ -1,0 +1,29 @@
+/* Homepage loader cover. Server-rendered and opaque from the first paint (nothing of the page shows before the logo), hidden by the boot script / noscript when it
+   should not appear. Black = the approved logo's own ground (#000); the hero's near-black (#0f0f0e) lies under it, so the fade reveals no seam. */
+.rmz-loader { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow: hidden; background: #000; opacity: 1; touch-action: none; overscroll-behavior: none;
+  /* CSS-only failsafe: if the script never takes over (bundle failed), the cover removes itself. Longer than every scripted bound (loader-config.ts). */
+  animation: rmz-loader-failsafe 0s linear 12s forwards; }
+.rmz-loader[data-state="exiting"] { opacity: 0; pointer-events: none; transition: opacity 420ms cubic-bezier(.4, 0, .2, 1); }
+.rmz-loader[data-state="off"] { display: none; }
+@keyframes rmz-loader-failsafe { to { visibility: hidden; pointer-events: none; } }
+
+/* The artwork is a square (1080) with generous black around the lockup: on narrow screens it is allowed to be wider than the viewport (the cover clips it). */
+.rmz-loader__svg { display: block; width: min(120vw, 900px); height: auto; aspect-ratio: 1; }
+
+/* Restrained activity indicator: a hairline with a short light travelling along it. Shown only while HOLDING (the logo is resolved and the first view is not ready yet)
+   and, before the script has taken over, if that takes noticeably long. It never moves the logo and has no percentage. */
+.rmz-loader__activity { position: absolute; left: 50%; top: calc(50% + min(18vw, 135px)); width: 56px; height: 1px; transform: translateX(-50%); overflow: hidden; background: rgba(243, 232, 204, .16); opacity: 0; }
+.rmz-loader__activity::after { content: ""; position: absolute; top: 0; left: 0; width: 18px; height: 1px; background: rgba(243, 232, 204, .85); transform: translateX(-100%); }
+.rmz-loader[data-hold="1"] .rmz-loader__activity { animation: rmz-loader-fade 400ms ease 700ms forwards; }
+.rmz-loader[data-hold="1"] .rmz-loader__activity::after { animation: rmz-loader-sweep 1.6s cubic-bezier(.45, 0, .55, 1) 700ms infinite; }
+@keyframes rmz-loader-fade { to { opacity: 1; } }
+@keyframes rmz-loader-sweep { to { transform: translateX(56px); } }
+
+html[data-rmz-loading] { overflow: hidden; scrollbar-gutter: stable; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* static logo, no sweep and no fade (the global reduced-motion rule would otherwise turn these into flicker) */
+  .rmz-loader[data-state="exiting"] { transition: none; }
+  .rmz-loader[data-hold="1"] .rmz-loader__activity { animation: none; opacity: 1; }
+  .rmz-loader[data-hold="1"] .rmz-loader__activity::after { animation: none; transform: translateX(19px); }
+}

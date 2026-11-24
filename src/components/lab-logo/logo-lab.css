@@ -1,0 +1,31 @@
+/* Logo animation lab (/lab/logo-animation). Everything is scoped to .ll-* */
+
+.ll { min-height: 100vh; background: #000; color: var(--color-cream); display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 24px 16px 40px; }
+.ll-head { width: min(100%, 920px); }
+.ll-title { font-size: 15px; font-weight: 600; letter-spacing: .02em; }
+.ll-sub { margin-top: 4px; font-size: 13px; color: rgba(243, 232, 204, .6); }
+
+/* the stage is the logo's own square canvas (1080 x 1080) on black */
+.ll-stage { width: min(100%, 920px, calc(100vh - 260px)); min-width: 280px; aspect-ratio: 1; background: #000; outline: 1px solid rgba(243, 232, 204, .14); }
+.ll-svg { display: block; width: 100%; height: 100%; }
+
+.ll-controls { width: min(100%, 920px); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ll-scrub { position: relative; flex: 1 1 260px; min-width: 200px; height: 32px; display: flex; align-items: center; }
+.ll-scrub input[type="range"] { width: 100%; margin: 0; accent-color: var(--color-yellow); }
+.ll-ticks { position: absolute; inset: 0; pointer-events: none; }
+.ll-tick { position: absolute; bottom: 0; width: 1px; height: 6px; background: rgba(243, 232, 204, .45); }
+.ll-time { min-width: 108px; font-variant-numeric: tabular-nums; font-size: 13px; color: rgba(243, 232, 204, .8); }
+
+.ll-btn { min-height: 40px; padding: 0 16px; border: 1px solid rgba(243, 232, 204, .35); background: transparent; color: var(--color-cream); font: inherit; font-size: 13px; font-weight: 500; letter-spacing: .02em; cursor: pointer; }
+.ll-btn:hover { border-color: var(--color-cream); }
+.ll-btn:focus-visible, .ll-phase:focus-visible { outline: 2px solid var(--color-yellow); outline-offset: 3px; }
+.ll-btn-primary { background: var(--color-cream); color: #000; border-color: var(--color-cream); }
+.ll-btn-sm { min-height: 32px; padding: 0 10px; }
+.ll-btn[aria-pressed="true"]:not(.ll-btn-primary) { border-color: var(--color-yellow); color: var(--color-yellow); }
+.ll-speed { display: flex; gap: 6px; }
+
+.ll-phases { width: min(100%, 920px); display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0; }
+.ll-phase { width: 100%; text-align: left; padding: 8px 10px; border: 1px solid rgba(243, 232, 204, .18); background: transparent; color: var(--color-cream); font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.ll-phase:hover { border-color: rgba(243, 232, 204, .5); }
+.ll-phase-t { font-size: 11px; font-variant-numeric: tabular-nums; color: rgba(243, 232, 204, .55); }
+.ll-phase-l { font-size: 13px; }

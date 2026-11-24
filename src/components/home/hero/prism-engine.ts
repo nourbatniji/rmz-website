@@ -36,9 +36,17 @@ export class PrismEngine {
   private blank = -1; // opening only: this face is drawn empty (transparent) so the wall shows nothing until the prism turns the real faces into view
   private font = "sans-serif";
 
+  private sequencesStarted = false;
+
+  /**
+   * `deferSequences` (homepage loader only): the poster of each banner loads at once, but the frame sequences — the remaining, non-essential images — only start
+   * when `startSequences()` is called (once the first hero image is decoded). Their order, concurrency and priorities are unchanged. Without it (lab route,
+   * repeat visits) everything starts immediately, exactly as before.
+   */
   constructor(
     private banners: HeroBanner[],
     private onFirstPaint: () => void,
+    opts: { deferSequences?: boolean } = {},
   ) {
     this.font = getComputedStyle(document.body).fontFamily || "sans-serif";
     this.frames = banners.map(() => 0);
@@ -51,7 +59,8 @@ export class PrismEngine {
       im.src = b.poster.src;
       return im;
     });
-    this.stores = banners.map((b, bi) => (b.sequence ? new FrameStore(b.sequence, () => this.mark(bi)) : null));
+    this.stores = banners.map(() => null);
+    if (!opts.deferSequences) this.createStores();
     // Test-only hook, compiled out unless the build sets NEXT_PUBLIC_HERO_DEBUG=1.
     if (process.env.NEXT_PUBLIC_HERO_DEBUG === "1") {
       (window as unknown as { __rmzHero?: unknown }).__rmzHero = () => ({
@@ -62,6 +71,19 @@ export class PrismEngine {
         counts: this.stores.map((s) => s?.count ?? 0),
       });
     }
+  }
+
+  /** Start loading the frame sequences (staged: frame 0, keyframes, nearest first — see FrameStore). Idempotent. */
+  startSequences() {
+    if (this.sequencesStarted || this.disposed) return;
+    this.createStores();
+    this.syncFrames();
+    this.markStage();
+  }
+
+  private createStores() {
+    this.sequencesStarted = true;
+    this.stores = this.banners.map((b, bi) => (b.sequence ? new FrameStore(b.sequence, () => this.mark(bi)) : null));
   }
 
   setCanvases(grid: HTMLCanvasElement[][]) {
