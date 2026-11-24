@@ -1,0 +1,20 @@
+/* Magnetic Collaborations (lab). Prefix mg-. Near-black, cream logos, RMZ red square; no cards, grid, gradients or glows. */
+.mg { background: #0f0f0e; color: #f3e8cc; font-family: var(--font-sans); }
+.mg-wrap { padding: 30px var(--gutter) 22px; }
+.mg-field { position: relative; height: 252px; margin-top: 8px; }
+.mg-logos { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
+.mg-logo { position: absolute; transform: translate(-50%, -50%); will-change: transform; line-height: 0; color: #f3e8cc; }
+.mg-logo svg, .mg-logo img { display: block; }
+.mg-link { display: block; outline: none; color: inherit; }
+.mg-link:focus-visible { outline: 1.5px solid #ffca26; outline-offset: 6px; }
+.mg-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.mg-lines line { stroke: #d52518; stroke-width: 1; stroke-linecap: round; opacity: 0; }
+.mg-magnet { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; padding: 0; border: 0; background: #d52518; color: #f3e8cc; display: grid; place-items: center; font: 900 15px/1 var(--font-sans); letter-spacing: -.02em; cursor: pointer; will-change: transform; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+.mg-magnet[aria-disabled="true"] { cursor: default; }
+.mg-magnet:focus-visible { outline: 1.5px solid #ffca26; outline-offset: 5px; }
+.mg-magnet[data-drag] { cursor: grabbing; }
+@media (max-width: 767px) {
+  .mg-wrap { padding: 44px var(--gutter) 36px; }
+  .mg-field { height: 340px; margin-top: 18px; }
+  .mg-magnet { width: 52px; height: 52px; margin: -26px 0 0 -26px; font-size: 14px; }
+}
