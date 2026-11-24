@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Footer } from "@/components/home/footer/Footer";
+import { FooterCompact } from "@/components/home/footer/FooterCompact";
 import { ProjectCase } from "@/components/work/ProjectCase";
 import { getFooterContent } from "@/lib/content/closing";
 import { getWorkContent, getWorkProject } from "@/lib/content/work";
@@ -29,7 +29,7 @@ export default async function WorkProjectPage({ params }: { params: Promise<Para
   return (
     <>
       <ProjectCase project={found.project} prev={found.prev} next={found.next} contact={found.contact} seed={seed} />
-      <Footer content={footer} />
+      <FooterCompact content={footer} />
     </>
   );
 }

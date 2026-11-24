@@ -1,0 +1,45 @@
+/* Compact footer (prefix fc-): cream band, four plain columns, thin bar. Fluid: 4 cols ≥ 1024, 2 cols ≥ 640, 1 col below. */
+.fc-root { background: #f3e8cc; color: #0f0f0e; font-family: var(--font-sans); padding: 48px clamp(20px, 4.4vw, 64px) 0; }
+.fc-root a { color: inherit; text-decoration: none; }
+.fc-root a:focus-visible { outline: 2px solid #d52518; outline-offset: 4px; }
+.fc-grid { display: grid; grid-template-columns: 1fr; gap: 36px; padding-bottom: 40px; }
+/* vertical dividers between columns: 90 % of the row height, centred, faint */
+.fc-grid { --fc-gap: 40px; }
+.fc-grid > .fc-col { position: relative; }
+.fc-grid > .fc-col::before { content: ""; position: absolute; top: 18%; height: 64%; left: calc(var(--fc-gap) / -2); width: 1px; background: rgb(15 15 14 / 0.045); }
+.fc-brand { display: flex; flex-direction: column; align-items: flex-start; }
+.fc-lg { font-weight: 900; font-size: 30px; line-height: 1; letter-spacing: -0.03em; text-transform: uppercase; margin-bottom: 14px; }
+.fc-lg span { color: #ffca26; }
+.fc-lead { margin: 0; max-width: 300px; font-weight: 300; font-size: 14px; line-height: 1.55; }
+.fc-mail { margin-top: 22px; font-weight: 600; font-size: 14px; border-bottom: 1px solid #0f0f0e; padding-bottom: 2px; transition: color 0.25s, border-color 0.25s; overflow-wrap: anywhere; }
+.fc-mail:hover, .fc-mail:focus-visible { color: #d52518; border-color: #d52518; }
+.fc-k { margin: 0 0 10px; font-weight: 600; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #d52518; }
+.fc-lk, .fc-sv { display: block; font-size: 14px; line-height: 2; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s; }
+.fc-lk { font-weight: 600; }
+.fc-sv { font-weight: 300; }
+.fc-lk:hover, .fc-lk:focus-visible, .fc-sv:hover { transform: translateX(8px); color: #d52518; }
+.fc-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 18px 0 22px; border-top: 1px solid rgb(15 15 14 / 0.18); }
+.fc-bar p { margin: 0; font-weight: 600; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.75; }
+.fc-up { border: 1px solid #0f0f0e; border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; transition: background 0.25s, border-color 0.25s; }
+.fc-up:hover, .fc-up:focus-visible { background: #ffca26; border-color: #ffca26; }
+
+/* phones: brand on top, Explore + What we do side by side, Elsewhere as a wrapped row */
+@media (max-width: 639px) {
+  .fc-grid { grid-template-columns: 1fr 1fr; gap: 30px 20px; --fc-gap: 20px; }
+  .fc-grid > nav.fc-col::before, .fc-grid > .fc-els::before { display: none; }
+  .fc-brand { grid-column: 1 / -1; }
+  .fc-els { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0 22px; }
+  .fc-els .fc-k { flex-basis: 100%; }
+  .fc-lk, .fc-sv { line-height: 2.2; }
+}
+/* tablets */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .fc-grid { grid-template-columns: 1fr 1fr 1fr; gap: 36px 28px; --fc-gap: 28px; }
+  .fc-grid > nav.fc-col::before { display: none; }
+  .fc-brand { grid-column: 1 / -1; }
+}
+/* desktop */
+@media (min-width: 1024px) {
+  .fc-grid { grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 40px; --fc-gap: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .fc-root * { transition: none !important; } }

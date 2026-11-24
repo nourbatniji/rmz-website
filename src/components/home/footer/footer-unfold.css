@@ -1,4 +1,4 @@
-/* Closing sequence — Collaborations curtain + folded footer that unfolds once uncovered. Prefix: fu- (desktop ≥ 1024 px only) */
+/* Closing sequence — contact curtain + folded footer that unfolds once uncovered into one compact footer. Prefix: fu- (desktop ≥ 1024 px only) */
 .fu-wrap { position: relative; background: #0f0f0e; }
 .fu-track { display: none; }
 .fu-anchor { display: block; height: 0; }
@@ -6,47 +6,60 @@
 @media (min-width: 1024px) {
   .fu-wrap {
     --hc: calc(var(--sc, 1) * 900px);
-    --hf: calc(var(--sc, 1) * 400px);
-    height: calc(var(--hc) + var(--hf) + 130svh);
+    --hf: calc(var(--sc, 1) * 300px);
+    height: calc(var(--hc) + var(--hf) + 130svh + 112svh); /* 112svh = dwell (32) + heavy pull (80), see FooterUnfold */
   }
-  .fu-cover { position: sticky; z-index: 2; top: min(0px, calc(100svh - var(--hf) - var(--hc))); box-shadow: 0 26px 60px rgb(0 0 0 / 0.6); }
-  .fu-track { display: block; position: relative; z-index: 1; margin-top: calc(var(--hf) * -1); height: calc(var(--hf) * 2 + 130svh); }
+  .fu-cover { position: sticky; z-index: 2; top: calc(100svh - var(--hc)); will-change: transform; box-shadow: 0 26px 60px rgb(0 0 0 / 0.6); }
+  .fu-track { display: block; position: relative; z-index: 1; margin-top: calc(var(--hf) * -1); height: calc(var(--hf) * 2 + 130svh + 112svh); }
   .fu-stage { position: sticky; top: calc(100svh - var(--hf)); height: var(--hf); overflow: hidden; background: #0f0f0e; color: #f3e8cc; font-family: var(--font-sans); }
   .fu-anchor { display: block; position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; pointer-events: none; }
   .fu-stack { display: none; }
-  .fu-wrap.is-static { height: calc(var(--hc) + var(--hf)); }
+  .fu-wrap.is-static { height: calc(var(--hc) + var(--hf)); margin-top: 0; }
+  /* closing cover: the logos stay put while the cream contact panel rises over them (see ClosingCover) */
+  .cc-t1 { position: relative; z-index: 1; height: calc(var(--hl, 0px) + var(--hf, 0px)); }
+  .cc-lg { position: sticky; top: 0; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; background: #0f0f0e; transform-origin: 50% 50%; transform: translate3d(0, calc(var(--p, 0) * -70px), 0) scale(calc(1 - var(--p, 0) * 0.05)); opacity: calc(1 - var(--p, 0) * 0.55); will-change: transform, opacity; }
+  .cc-fm { position: relative; z-index: 2; margin-top: calc(var(--hf, 0px) * -1); }
+  .fu-wrap.is-static .cc-t1 { height: auto; }
+  .fu-wrap.is-static .cc-lg { position: static; min-height: 0; transform: none; opacity: 1; }
+  .fu-wrap.is-static .cc-fm { margin-top: 0; }
   .fu-wrap.is-static .fu-track { height: calc(var(--hf) * 2); }
 }
 
 .fu-stage a { color: inherit; text-decoration: none; }
 .fu-stage a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 
-/* 1440 × 400 artboard, scaled to the width by useFit */
-.fu-box { position: absolute; left: 0; top: 0; width: 1440px; height: 400px; transform-origin: 0 0; box-sizing: border-box; border-top: 1px solid rgb(243 232 204 / 0.2); }
-.fu-top { position: absolute; left: 64px; right: 64px; top: 22px; z-index: 6; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
-.fu-up { border: 1px solid; border-radius: 999px; padding: 8px 18px; }
+/* the 1440 × 300 artboard, scaled to the width by useFit */
+.fu-box { position: absolute; left: 0; top: 0; width: 1440px; height: 300px; transform-origin: 0 0; box-sizing: border-box; }
 .fu-persp { position: absolute; inset: 0; z-index: 1; perspective: 2200px; perspective-origin: 50% 50%; }
 .fu-strip { position: absolute; left: 0; width: 360px; transform-style: preserve-3d; }
-.fu-bar { position: absolute; left: 64px; right: 64px; bottom: 16px; z-index: 6; display: flex; justify-content: space-between; font-weight: 600; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; }
-.fu-bar span { opacity: 0.75; }
+.fu-bar { position: absolute; left: 64px; right: 64px; bottom: 16px; z-index: 6; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; }
+.fu-bar > span { opacity: 0.75; }
+.fu-bar .fu-hint { position: absolute; left: 0; right: 0; text-align: center; }
+.fu-up { border: 1px solid; border-radius: 999px; padding: 6px 14px; transition: background 0.25s, color 0.25s; }
+.fu-up:hover { background: #ffca26; color: #0f0f0e !important; border-color: #ffca26 !important; }
 
+/* panels: the shade fades to nothing once open; a faint divider remains between the columns */
 .fu-p { position: absolute; top: 0; width: 360px; transform-style: preserve-3d; transform-origin: 0 50%; }
 .fu-p0 { left: 0; }
 .fu-p .fu-p { left: 100%; }
-.fu-fc { position: absolute; inset: 0; overflow: hidden; box-sizing: border-box; padding: 78px 40px 54px; display: flex; flex-direction: column; background: #f3e8cc; color: #0f0f0e; box-shadow: inset 2px 0 0 rgb(0 0 0 / 0.22); }
-.fu-gh { position: absolute; right: -20px; bottom: -100px; font-weight: 900; font-size: 400px; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
+.fu-fc { position: absolute; inset: 0; overflow: hidden; box-sizing: border-box; padding: 46px 40px 64px 64px; display: flex; flex-direction: column; background: #f3e8cc; color: #0f0f0e; }
+/* faint vertical divider on the left edge of panels 2-4: 90 % of the height, centred */
+.fu-p:not(.fu-p0) > .fu-fc::before { content: ""; position: absolute; left: 0; top: 18%; height: 64%; width: 1px; background: rgb(15 15 14 / 0.045); }
+.fu-gh { position: absolute; right: -10px; bottom: -52px; font-weight: 900; font-size: 210px; line-height: 0.9; letter-spacing: -0.03em; text-transform: uppercase; color: #0f0f0e; pointer-events: none; }
+.fu-gh-dot { color: #ffca26; }
 .fu-pc { position: relative; display: flex; flex-direction: column; flex: 1; }
 .fu-sh { position: absolute; inset: 0; pointer-events: none; }
-.fu-k { margin: 0 0 14px; font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #d52518; }
-.fu-lead { margin: 0; font-weight: 300; font-size: 16px; line-height: 1.5; }
-.fu-mail { margin-top: auto; align-self: flex-start; font-weight: 900; font-size: 23px; line-height: 1.02; letter-spacing: -0.02em; text-transform: uppercase; border-bottom: 3px solid #0f0f0e; padding-bottom: 4px; }
-.fu-nav { font-weight: 900; font-size: 27px; line-height: 1.12; letter-spacing: -0.02em; text-transform: uppercase; }
-.fu-lk { display: block; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.fu-lk:hover { transform: translateX(12px); }
-.fu-sv { font-weight: 300; font-size: 18px; line-height: 1.85; }
-.fu-sv span { display: block; }
-.fu-soc { font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; border-top: 1px solid rgb(15 15 14 / 0.4); }
-.fu-so { display: flex; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid rgb(15 15 14 / 0.4); transition: padding 0.3s; }
-.fu-so:hover { padding-left: 10px; }
+.fu-lg { align-self: flex-start; font-weight: 900; font-size: 30px; line-height: 1; letter-spacing: -0.03em; text-transform: uppercase; margin-bottom: 14px; }
+.fu-lg span { color: #ffca26; }
+.fu-k { margin: 0 0 12px; font-weight: 600; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #d52518; }
+.fu-lead { margin: 0; max-width: 270px; font-weight: 300; font-size: 12.5px; line-height: 1.55; }
+.fu-mail { margin-top: auto; align-self: flex-start; font-weight: 600; font-size: 12.5px; border-bottom: 1px solid #0f0f0e; padding-bottom: 2px; transition: color 0.25s, border-color 0.25s; }
+.fu-mail:hover, .fu-mail:focus-visible { color: #d52518; border-color: #d52518; }
+.fu-nav { font-weight: 600; font-size: 13px; line-height: 1.9; }
+.fu-lk { display: block; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s; }
+.fu-lk:hover, .fu-lk:focus-visible { transform: translateX(8px); color: #d52518; }
+.fu-sv { font-weight: 300; font-size: 13px; line-height: 1.9; }
+.fu-sv span { display: block; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s; }
+.fu-sv span:hover { transform: translateX(8px); color: #d52518; }
 
 @media (prefers-reduced-motion: reduce) { .fu-stage *, .fu-stage *::before { transition: none !important; } }

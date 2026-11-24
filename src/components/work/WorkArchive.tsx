@@ -8,6 +8,7 @@ import type { WorkContent, WorkProject } from "@/content/work-types";
 import { pointerOverCards } from "@/lib/use-pinned-skip";
 import { useWheelSteps } from "@/lib/use-wheel-steps";
 import { useMedia } from "@/lib/use-media";
+import { attachStepScroll, type StepScroll } from "@/lib/step-scroll";
 import "./work.css";
 
 /**
@@ -34,7 +35,7 @@ type Props = {
 };
 
 const OPEN_MS = 520;
-const ALIGN_TOL = 2; // px of slack when judging alignment (sub-pixel scroll positions, rounding)
+const ALIGN_TOL = 6; // px of slack when judging alignment (sub-pixel scroll positions, rounding)
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const two = (v: number) => String(v).padStart(2, "0");
@@ -56,11 +57,12 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
   const reduced = useMedia("(prefers-reduced-motion: reduce)", true); // server / no-JS = unpinned
   const live = !reduced && n > 1;
   const narrow = useMedia("(max-width: 1023px)", false);
-  const scrollMode = live && narrow; // phone / tablet: the section pins and the scroll position moves the cards
+  const scrollMode = live && narrow; // phone / tablet: the section pins and the scroll position moves the cards. Desktop: the cards step only while the pointer is over them
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null); // the stage
   const boxRef = useRef<HTMLDivElement>(null); // the scaled artboard
+  const stepsRef = useRef<StepScroll | null>(null); // phone / tablet: one swipe or wheel gesture = one project
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
@@ -163,11 +165,7 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
     const to = clamp(j, 0, n - 1);
     targetRef.current = to;
     if (!live) { apply(to); return; }
-    if (scrollMode && trackRef.current && pinRef.current) {
-      const ex = Math.max(1, trackRef.current.offsetHeight - pinRef.current.offsetHeight);
-      window.scrollTo({ top: window.scrollY + trackRef.current.getBoundingClientRect().top - hhRef.current + (to / Math.max(1, n - 1)) * ex, behavior: "smooth" });
-      return;
-    }
+    if (scrollMode && stepsRef.current) { stepsRef.current.goTo(to); return; }
     animateTo(to);
   };
   const step = (k: number) => goTo(targetRef.current + k);
@@ -188,19 +186,64 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
       apply(v);
     };
     const kick = () => { if (!raf) raf = window.requestAnimationFrame(paint); };
+    const exOf = () => Math.max(1, tr.offsetHeight - pin.offsetHeight);
+    const steps = attachStepScroll({
+      count: n,
+      seated: () => { const r = tr.getBoundingClientRect(); return r.top <= hhRef.current + 2 && r.bottom - hhRef.current >= pin.offsetHeight - 2; },
+      index: () => Math.round(clamp((hhRef.current - tr.getBoundingClientRect().top) / exOf(), 0, 1) * (n - 1)),
+      target: (i) => window.scrollY + tr.getBoundingClientRect().top - hhRef.current + (i / Math.max(1, n - 1)) * exOf(),
+    });
+    stepsRef.current = steps;
     paint();
     window.addEventListener("scroll", kick, { passive: true });
     window.addEventListener("resize", kick);
-    return () => { window.removeEventListener("scroll", kick); window.removeEventListener("resize", kick); window.cancelAnimationFrame(raf); };
+    return () => { steps.destroy(); if (stepsRef.current === steps) stepsRef.current = null; window.removeEventListener("scroll", kick); window.removeEventListener("resize", kick); window.cancelAnimationFrame(raf); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollMode, opening, n]);
 
+  // Desktop: with the pointer over the cards, a scroll that arrives at the section (from above or below) must not carry the section past before the cards can be used.
+  // While the stage is still approaching its seat (or has just been scrolled a little past the end of the dwell going back up), the wheel is taken and the page glides the
+  // last bit into place; the momentum of that gesture is swallowed, and the next gesture steps the cards.
+  useEffect(() => {
+    if (!live || scrollMode || opening) return;
+    let until = 0;
+    let raf = 0;
+    const glide = (to: number) => {
+      window.cancelAnimationFrame(raf);
+      const from = window.scrollY, t0 = performance.now(), dur = 420;
+      const f = (now: number) => {
+        const t = Math.min(1, (now - t0) / dur);
+        window.scrollTo(0, from + (to - from) * ease(t));
+        if (t < 1) raf = window.requestAnimationFrame(f);
+      };
+      raf = window.requestAnimationFrame(f);
+    };
+    const onWheel = (e: WheelEvent) => {
+      const tr = trackRef.current, pin = pinRef.current;
+      if (!tr || !pin || e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      if (!pointerOverCards(e, tr.querySelectorAll<HTMLElement>(".wk-bs"), tr.querySelector<HTMLElement>(".wk-ctl"), 24, tr.querySelector<HTMLElement>(".wk-stage"))) return;
+      const now = performance.now();
+      if (now < until) { e.preventDefault(); until = now + 200; return; } // the rest of the gesture that was just caught
+      const hh = hhRef.current, vh = window.innerHeight, top = pin.getBoundingClientRect().top;
+      const down = e.deltaY > 0;
+      let to: number | null = null;
+      if (down && top > hh + 4 && top < hh + vh * 0.6) to = window.scrollY + tr.getBoundingClientRect().top - hh;
+      else if (!down && top < hh - 4 && top > hh - vh * 0.7 && tr.getBoundingClientRect().bottom > hh + 4) to = window.scrollY + tr.getBoundingClientRect().top - hh + Math.max(0, tr.offsetHeight - pin.offsetHeight);
+      if (to === null) return;
+      e.preventDefault();
+      until = now + 650;
+      glide(to);
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => { window.removeEventListener("wheel", onWheel); window.cancelAnimationFrame(raf); };
+  }, [live, scrollMode, opening]);
+
   useWheelSteps({
-    active: live && !opening && !scrollMode,
-    over: overCards,
+    active: live && !opening,
+    over: (e) => (scrollMode ? !!stepsRef.current?.seated() : overCards(e)),
     settle: true,
-    canStep: (dir) => (dir > 0 ? targetRef.current < n - 1 : targetRef.current > 0),
-    step: (dir) => goTo(targetRef.current + dir),
+    canStep: (dir) => (scrollMode ? !!stepsRef.current?.canStep(dir) : dir > 0 ? targetRef.current < n - 1 : targetRef.current > 0),
+    step: (dir) => (scrollMode ? stepsRef.current?.step(dir) : goTo(targetRef.current + dir)),
   });
 
   const setCat = (id: "all" | WorkProject["category"]) => {

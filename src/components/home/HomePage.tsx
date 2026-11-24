@@ -1,6 +1,8 @@
 import { Collaborations } from "@/components/home/collaborations/Collaborations";
 import { SiteHeader } from "@/components/shell/SiteHeader";
 import type { SectionKey } from "@/lib/admin/section-meta";
+import { ContactReveal } from "@/components/home/contact/ContactReveal";
+import { ClosingCover } from "@/components/home/footer/ClosingCover";
 import { FooterUnfold } from "@/components/home/footer/FooterUnfold";
 import { AboutScrubber } from "@/components/home/about/AboutScrubber";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
@@ -15,7 +17,7 @@ import { getWorkContent } from "@/lib/content/work";
 
 /**
  * Homepage in the approved canvas order:
- * hero → showreel corridor → statement → About (scroll-linked scrubber, Journey V2 layout) → services (orbital lens) → Minds → work archive (links to /work/[slug]) → collaborations → footer.
+ * hero → showreel corridor → statement → About (scroll-linked scrubber, Journey V2 layout) → services (orbital lens) → Minds → work archive (links to /work/[slug]) → collaborations → contact form (C01-D aperture reveal, the footer's curtain) → footer.
  * Sections not built yet are compact dev markers (DevSectionPlaceholder, currently none).
  *
  * `draft` = admin preview: reads the unpublished draft content instead of the published content.
@@ -57,7 +59,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       <ServicesOrbit content={lens} services={services} />
       <Minds content={minds} />
       {archive}
-      <FooterUnfold cover={<Collaborations content={collaborations} />} content={footer} />
+      <FooterUnfold cover={<ClosingCover logos={<Collaborations content={collaborations} />} form={<ContactReveal />} />} content={footer} />
     </main>
   );
 }

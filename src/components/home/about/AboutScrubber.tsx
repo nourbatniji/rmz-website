@@ -4,6 +4,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { FeaturedWorkContent, FeaturedWorkItem } from "@/content/types";
 import { LiquidImageFx } from "./liquid-image";
+import { attachStepScroll, type StepScroll } from "@/lib/step-scroll";
+import { useWheelSteps } from "@/lib/use-wheel-steps";
 import "./about.css";
 
 /**
@@ -45,6 +47,7 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
   const mTrackRef = useRef<HTMLDivElement>(null);
   const mStageRef = useRef<HTMLDivElement>(null);
   const [cur, setCur] = useState(0);
+  const stepsRef = useRef<StepScroll[]>([]); // one gesture = one project (touch swipe / wheel), whichever layout is live
 
   useEffect(() => {
     const root = rootRef.current, track = trackRef.current, stage = stageRef.current;
@@ -61,6 +64,13 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
     const live = () => desktop.matches && !reduced.matches;
     const hh = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;
     const extra = () => Math.max(1, track.offsetHeight - stage.offsetHeight);
+    const steps = attachStepScroll({
+      count: n,
+      seated: () => { if (!live()) return false; const r = track.getBoundingClientRect(); return r.top <= hh() + 2 && r.bottom - hh() >= stage.offsetHeight - 2; },
+      index: () => Math.round(clamp(clamp((hh() - track.getBoundingClientRect().top) / extra()) * n - 0.5, 0, n - 1)),
+      target: (i) => window.scrollY + track.getBoundingClientRect().top - hh() + ((i + 0.5) / n) * extra(),
+    });
+    stepsRef.current.push(steps);
 
     const paint = () => {
       raf = 0;
@@ -93,10 +103,7 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
     };
     // always re-request: an rAF callback that never ran (throttled / backgrounded page) must not block later scroll updates
     const kick = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(paint); };
-    const jump = (i: number) => {
-      const top = window.scrollY + track.getBoundingClientRect().top - hh() + ((i + 0.5) / n) * extra();
-      window.scrollTo({ top, behavior: "smooth" });
-    };
+    const jump = (i: number) => steps.goTo(i);
     const onIdx = (e: Event) => { const b = (e.currentTarget as HTMLElement).dataset.abIdx; if (b != null) jump(Number(b)); };
     idx.forEach((b) => b.addEventListener("click", onIdx));
     paint();
@@ -112,6 +119,8 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
       desktop.removeEventListener("change", kick);
       reduced.removeEventListener("change", kick);
       idx.forEach((b) => b.removeEventListener("click", onIdx));
+      steps.destroy();
+      stepsRef.current = stepsRef.current.filter((x) => x !== steps);
       ro.disconnect();
       cancelAnimationFrame(raf);
       window.clearTimeout(idle);
@@ -143,20 +152,20 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
       raf = 0;
       if (!live() || !rail) return;
       const sc = scOf();
-      // One big image at a time: the next card slides in from the right over the current one and covers it; the covered card steps back and dims.
-      const cw = cards[0]?.offsetWidth ?? 0;
+      // Same motion as desktop: true crossfade (full within ±0.25 of its step) with a gentle vertical drift.
       cards.forEach((c, i) => {
-        const dd = sc - i; // < 0: not arrived yet; > 0: covered
-        const u = clamp(-dd), sm = u * u * (3 - 2 * u); // 0 = landed, 1 = fully off to the right
-        const covered = clamp(dd);
+        const d = Math.abs(sc - i);
+        const op = clamp(1 - (d - 0.25) / 0.5);
         c.style.zIndex = String(10 + i);
-        c.style.transform = `translate3d(${(sm * cw).toFixed(1)}px, 0, 0) scale(${(1 - 0.06 * covered).toFixed(3)})`;
-        c.style.filter = `brightness(${(1 - 0.4 * covered).toFixed(2)})`;
-        c.style.visibility = u >= 0.999 || covered >= 1 ? "hidden" : "visible";
+        c.style.opacity = op.toFixed(3);
+        c.style.transform = `translateY(${((sc - i) * -40).toFixed(1)}px)`;
+        c.style.filter = "";
+        c.style.visibility = op < 0.01 ? "hidden" : "visible";
       });
       txts.forEach((t, i) => {
         const top = clamp(1 - (Math.abs(sc - i) - 0.15) / 0.25);
         t.style.opacity = top.toFixed(3);
+        t.style.transform = `translateY(${((sc - i) * -40).toFixed(1)}px)`;
         t.style.visibility = top < 0.01 ? "hidden" : "visible";
         t.style.pointerEvents = top > 0.5 ? "auto" : "none";
         if (top > 0.5) t.removeAttribute("aria-hidden"); else t.setAttribute("aria-hidden", "true");
@@ -165,10 +174,14 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
       if (count) count.textContent = `${two(Math.round(sc) + 1)} / ${two(n)}`;
     };
     const kick = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(paint); };
-    const jump = (i: number) => {
-      const top = window.scrollY + track.getBoundingClientRect().top - hh() + ((i + 0.5) / n) * extra();
-      window.scrollTo({ top, behavior: "smooth" });
-    };
+    const jump = (i: number) => steps.goTo(i);
+    const steps = attachStepScroll({
+      count: n,
+      seated: () => { if (!live()) return false; const r = track.getBoundingClientRect(); return r.top <= hh() + 2 && r.bottom - hh() >= stage.offsetHeight - 2; },
+      index: () => Math.round(scOf()),
+      target: (i) => window.scrollY + track.getBoundingClientRect().top - hh() + ((i + 0.5) / n) * extra(),
+    });
+    stepsRef.current.push(steps);
     const onPrev = () => jump(clamp(Math.round(scOf()) - 1, 0, n - 1));
     const onNext = () => jump(clamp(Math.round(scOf()) + 1, 0, n - 1));
     prevBtn?.addEventListener("click", onPrev);
@@ -184,6 +197,8 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
       prevBtn?.removeEventListener("click", onPrev);
       nextBtn?.removeEventListener("click", onNext);
       window.removeEventListener("scroll", kick);
+      steps.destroy();
+      stepsRef.current = stepsRef.current.filter((x) => x !== steps);
       window.removeEventListener("resize", kick);
       desktop.removeEventListener("change", kick);
       reduced.removeEventListener("change", kick);
@@ -191,6 +206,14 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
       cancelAnimationFrame(raf);
     };
   }, [n]);
+
+  useWheelSteps({
+    active: n > 1,
+    over: () => stepsRef.current.some((x) => x.seated()),
+    settle: true,
+    canStep: (dir) => !!stepsRef.current.find((x) => x.seated())?.canStep(dir),
+    step: (dir) => stepsRef.current.find((x) => x.seated())?.step(dir),
+  });
 
   const pending = "Image pending";
   const cta = { href: "#services", label: "What we do ↓" };
@@ -293,8 +316,12 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
               <a className="ab-cta" href={cta.href}>
                 {cta.label}
               </a>
-              <button type="button" className="ab-marr" data-ab-mprev aria-label="Previous project">←</button>
-              <button type="button" className="ab-marr" data-ab-mnext aria-label="Next project">→</button>
+              <button type="button" className="ab-marr" data-ab-mprev aria-label="Previous project">
+                <svg width="20" height="14" viewBox="0 0 22 14" fill="none" aria-hidden="true"><path d="M22 7H2M8 1L2 7l6 6" stroke="currentColor" strokeWidth="2" /></svg>
+              </button>
+              <button type="button" className="ab-marr" data-ab-mnext aria-label="Next project">
+                <svg width="20" height="14" viewBox="0 0 22 14" fill="none" aria-hidden="true"><path d="M0 7h20M14 1l6 6-6 6" stroke="currentColor" strokeWidth="2" /></svg>
+              </button>
             </div>
           </div>
         </div>

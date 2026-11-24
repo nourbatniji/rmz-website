@@ -381,7 +381,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
 
   // ── mobile: curved selector above the lens ──
   if (mobile) {
-    const room = mobScroll && pinH ? pinH - 250 : Infinity; // pinned: height left by the heading, count and description
+    const room = mobScroll && pinH ? pinH - 330 : Infinity; // pinned: height left by the heading, count and description
     const mS = clamp(Math.min((box.w || 390) / AW, room / AH), 0.3, 1); // ring layout scale (same geometry as the desktop lens)
     const mFsK = clamp(11.5 / (FS * mS), 1, 1.3); // keep the curved names legible on small screens
     const mPoses = makePoses(mFsK, false);
