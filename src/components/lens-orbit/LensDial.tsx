@@ -3,7 +3,6 @@
 import { useId, type CSSProperties } from "react";
 import type { LensContent } from "@/content/types";
 import { LensScene } from "@/components/home/lens/lens-scenes";
-import { slotOfService } from "@/components/home/lens/scene-slots";
 import "@/components/home/lens/services-lens.css"; // the existing lens' own styles (marks, placeholders); the homepage component is NOT modified
 
 /**
@@ -90,7 +89,7 @@ export function LensDial({ items, images, shown, sel, op, reduced, bladeMs }: Pr
       <div style={{ position: "absolute", left: 39, top: 39, width: 722, height: 722, borderRadius: "50%", overflow: "hidden", background: "#0F0F0E", boxShadow: "0 0 0 5px #1c1b19,0 0 0 6px rgba(243,232,204,.2)" }}>
         {items.map((v, i) => (
           <div key={v.id} data-sc={i} aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: i === shown ? 1 : 0, transition: T("opacity 140ms linear") }}>
-            <LensScene slot={slotOfService(v.id, i)} imgs={images} />
+            <LensScene kind={v.scene} imgs={images} />
           </div>
         ))}
       </div>

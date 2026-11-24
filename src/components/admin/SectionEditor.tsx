@@ -1,19 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { discardDraft, publishSection, resetSectionToDefault, saveSectionDraft, type SectionResult } from "@/lib/admin/section-actions";
 import { PAGE_ORDER, SECTION_META, type SectionKey } from "@/lib/admin/section-meta";
 import { EditorBar } from "./EditorBar";
-import { serviceOfSlot } from "@/components/home/lens/scene-slots";
-import { describeFields } from "./form/field-map";
 import { Fields } from "./form/FormFields";
 import { SECTION_FIELDS } from "./form/section-specs";
 import { stableStringify, type Errors, type Obj } from "./form/spec";
 import { PreviewFrame } from "./PreviewFrame";
 import { card, ConfirmDialog, menuItem, MoreMenu, primaryBtn, secondaryBtn, type Tone } from "./ui";
-import { UndoRedo } from "./UndoRedo";
-import { useHistory } from "./useHistory";
 import { useUnsavedGuard } from "./useUnsavedGuard";
 
 /** Every section shows the live preview beside the form on wide screens (it can be hidden). Edits are auto-saved to the DRAFT shortly after you stop typing so the preview follows them; nothing goes live until Publish. */
@@ -24,6 +20,7 @@ export type SectionStatus = { publishedSnapshot: string | null; updatedAt: strin
 
 export function SectionEditor({ sectionKey, initial, status }: { sectionKey: SectionKey; initial: Obj; status: SectionStatus }) {
   const meta = SECTION_META[sectionKey];
+  const [data, setData] = useState<Obj>(initial);
   const [savedSnap, setSavedSnap] = useState(() => stableStringify(initial));
   const [pubSnap, setPubSnap] = useState<string | null>(status.publishedSnapshot);
   const [errors, setErrors] = useState<Errors>({});
@@ -34,77 +31,6 @@ export function SectionEditor({ sectionKey, initial, status }: { sectionKey: Sec
   const [confirm, setConfirm] = useState<null | "discard" | "reset">(null);
   const [previewNote, setPreviewNote] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(true);
-  /** The list item (e.g. a service) the editor last opened; the preview opens the same one. */
-  const [openItem, setOpenItem] = useState<string | null>(null);
-  /** Latest form data and open service, readable from the hover handler without re-binding it. */
-  const latest = useRef<{ data: Obj; openItem: string | null }>({ data: initial as Obj, openItem: null });
-  /** The field the pointer or focus is on (outlined in the preview). */
-  const [activePath, setActivePath] = useState<string | null>(null);
-  /** What the preview should find on the page. Sent once the draft has had time to autosave, so the frame already shows the same text. */
-  const [previewFields, setPreviewFields] = useState(() => describeFields(SECTION_FIELDS[sectionKey], initial));
-  const rootRef = useRef<HTMLDivElement>(null);
-  const flashTimer = useRef<number | undefined>(undefined);
-  /** A click on something in the preview: open the list item it lives in, scroll to its field and flash it. */
-  const jumpToField = (path: string) => {
-    const el = rootRef.current?.querySelector<HTMLElement>(`[data-path="${CSS.escape(path)}"]`);
-    if (!el) return;
-    for (let d = el.closest("details"); d; d = d.parentElement?.closest("details") ?? null) d.open = true;
-    el.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    el.querySelector<HTMLElement>("input:not([type=file]), textarea, select")?.focus({ preventScroll: true });
-    el.classList.add("ring-4", "ring-accent/60");
-    window.clearTimeout(flashTimer.current);
-    flashTimer.current = window.setTimeout(() => el.classList.remove("ring-4", "ring-accent/60"), 1800);
-  };
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    const onToggle = (e: Event) => {
-      const d = e.target as HTMLElement;
-      if (d instanceof HTMLDetailsElement && d.open && d.dataset.item) setOpenItem(d.dataset.item);
-    };
-    /** Hovering or focusing a field outlines the same text or picture in the preview. */
-    let off: number | undefined;
-    const pathOf = (t: EventTarget | null) => (t instanceof Element ? t.closest<HTMLElement>("[data-path]")?.dataset.path ?? null : null);
-    const onIn = (e: Event) => {
-      window.clearTimeout(off);
-      const path = pathOf(e.target);
-      if (!path) return;
-      setActivePath(path);
-      if (sectionKey === "lens" && path.startsWith("images.")) {
-        const id = serviceOfSlot(path.slice("images.".length));
-        if (id) setOpenItem(id);
-      }
-    };
-    const onOut = () => {
-      window.clearTimeout(off);
-      off = window.setTimeout(() => setActivePath(null), 250);
-    };
-    root.addEventListener("toggle", onToggle, true);
-    root.addEventListener("focusin", onIn);
-    root.addEventListener("focusout", onOut);
-    root.addEventListener("mouseover", onIn);
-    root.addEventListener("mouseleave", onOut);
-    return () => {
-      window.clearTimeout(off);
-      root.removeEventListener("toggle", onToggle, true);
-      root.removeEventListener("focusin", onIn);
-      root.removeEventListener("focusout", onOut);
-      root.removeEventListener("mouseover", onIn);
-      root.removeEventListener("mouseleave", onOut);
-    };
-  }, [sectionKey]);
-  const hist = useHistory<Obj>(initial, () => {
-    setFlash(null);
-    setMessage((m) => (m?.tone === "error" ? null : m));
-  });
-  const data = hist.value;
-  useEffect(() => {
-    latest.current = { data: data as Obj, openItem };
-  });
-  useEffect(() => {
-    const t = window.setTimeout(() => setPreviewFields(describeFields(SECTION_FIELDS[sectionKey], data)), AUTOSAVE_MS + 900);
-    return () => window.clearTimeout(t);
-  }, [data, sectionKey]);
   const idx = ORDER.indexOf(sectionKey);
   const prev = idx > 0 ? ORDER[idx - 1] : null;
   const next = idx < ORDER.length - 1 ? ORDER[idx + 1] : null;
@@ -156,7 +82,7 @@ export function SectionEditor({ sectionKey, initial, status }: { sectionKey: Sec
   }, [snap, dirty, pending, version, data, sectionKey]);
 
   const edit = (next: Obj) => {
-    hist.set(next);
+    setData(next);
     setFlash(null);
     if (message?.tone === "error") setMessage(null);
   };
@@ -211,7 +137,7 @@ export function SectionEditor({ sectionKey, initial, status }: { sectionKey: Sec
   const replaceWith = (r: SectionResult, text: string) =>
     finish(r, () => {
       if (r.ok && r.data) {
-        hist.reset(r.data as Obj);
+        setData(r.data as Obj);
         setSavedSnap(stableStringify(r.data));
       }
       setFlash(null);
@@ -231,9 +157,8 @@ export function SectionEditor({ sectionKey, initial, status }: { sectionKey: Sec
   const errorList = Object.entries(errors);
 
   return (
-    <div ref={rootRef}>
+    <div>
       <EditorBar backHref="/admin/website" backLabel="Website" title={meta.label} about={meta.about} pill={pill} savedAt={version} message={message}>
-        <UndoRedo canUndo={hist.canUndo} canRedo={hist.canRedo} onUndo={hist.undo} onRedo={hist.redo} />
         <button type="button" className={secondaryBtn} onClick={save} disabled={pending || !dirty}>
           Save Draft
         </button>
@@ -300,7 +225,7 @@ export function SectionEditor({ sectionKey, initial, status }: { sectionKey: Sec
 
         {showPreview && (
           <section aria-label="Live preview" className="hidden min-w-0 xl:sticky xl:top-36 xl:block xl:self-start">
-            <PreviewFrame section={sectionKey} reloadKey={reloadKey} note={previewNote} focusItem={openItem} fields={previewFields} activePath={activePath} onFieldClick={jumpToField} />
+            <PreviewFrame section={sectionKey} reloadKey={reloadKey} note={previewNote} />
           </section>
         )}
       </div>

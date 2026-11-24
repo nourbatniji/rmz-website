@@ -35,14 +35,6 @@ export type WorkProject = {
   copyStatus: "placeholder" | "approved";
   /** Page blocks shown/hidden and their order (see src/lib/work-layout.ts). Missing = the original page. */
   layout?: { id: string; show: boolean }[];
-  /** Ids of single images / paragraphs deleted from the page (see `elementsOf` in src/lib/work-layout.ts). */
-  hidden?: string[];
-  /** Real pictures that replace the demo art, keyed by element id (e.g. "idea.image"). */
-  images?: Record<string, ImageRef>;
-  /** The showcase film of campaign / content projects. Missing = placeholder. */
-  video?: { src: string } | null;
-  /** Replacements for the page's fixed wording, by id (see `fixedTextsOf` in src/lib/work-layout.ts). */
-  texts?: Record<string, string>;
 };
 
 export type WorkContent = {

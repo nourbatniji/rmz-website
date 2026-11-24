@@ -17,9 +17,11 @@ const coverOf = (body: unknown) => {
 
 export default async function OverviewPage() {
   await requireAdmin();
-  const [states, projectRows, unread, messages] = await Promise.all([
+  const [states, projectRows, media, mediaCount, unread, messages] = await Promise.all([
     getSectionStates(),
     db.project.findMany({ orderBy: { updatedAt: "desc" }, select: { id: true, name: true, status: true, body: true, updatedAt: true, updatedBy: true } }),
+    db.media.findMany({ orderBy: { createdAt: "desc" }, take: 5, select: { id: true, pathname: true, createdAt: true } }),
+    db.media.count(),
     db.contactMessage.count({ where: { read: false } }),
     db.contactMessage.findMany({ orderBy: { createdAt: "desc" }, take: 3, select: { id: true, name: true, message: true, createdAt: true, read: true } }),
   ]);
@@ -47,6 +49,7 @@ export default async function OverviewPage() {
   const activity = [
     ...states.filter((s) => s.updatedAt).map((s) => ({ at: s.updatedAt as Date, by: s.updatedBy, text: `${SECTION_META[s.key].label} (website)`, href: `/admin/website/${s.key}` })),
     ...projectRows.slice(0, 6).map((p) => ({ at: p.updatedAt, by: p.updatedBy, text: `Project: ${p.name}`, href: `/admin/work/${p.id}` })),
+    ...media.map((m) => ({ at: m.createdAt, by: null as string | null, text: `Uploaded ${m.pathname.replace(/^media\//, "")}`, href: "/admin/media" })),
   ]
     .sort((a, b) => b.at.getTime() - a.at.getTime())
     .slice(0, 7);
@@ -61,6 +64,9 @@ export default async function OverviewPage() {
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href="/admin/work?new=1" className={primaryBtn}>
             + Add Project
+          </Link>
+          <Link href="/admin/media" className={secondaryBtn}>
+            Upload media
           </Link>
           <a href="/" target="_blank" rel="noreferrer" className={secondaryBtn}>
             View live site ↗
@@ -216,6 +222,7 @@ export default async function OverviewPage() {
                 ))}
               </ul>
             )}
+            <p className="mt-3 border-t border-fg/8 pt-2 text-xs text-fg/50">{mediaCount} files in the media library.</p>
           </section>
         </div>
       </div>
