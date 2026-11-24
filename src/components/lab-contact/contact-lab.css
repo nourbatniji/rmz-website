@@ -1,0 +1,119 @@
+/* Contact lab (/lab/contact) — three restrained Contact prototypes. Prototypes: .lt-*; the comparison bar: .lt-lab-* (outside every design).
+   Brand only: ink #0F0F0E, cream #F3E8CC, red #D52518 (one accent), existing Figtree + the italic Playfair accent. No cards, glows, gradients or decorative motion.
+   A Ink · B Cream · C Quiet division. Structure is shared: introduction on one half (heading, one sentence, email), form on the other. */
+
+.lt-stage { background: var(--color-ink); padding-bottom: 72px; }
+.lt-ctx { position: relative; height: 100svh; overflow: hidden; background: var(--color-ink); }
+.lt-ctx-in { position: absolute; left: 0; right: 0; bottom: 0; }
+.lt-anchor { scroll-margin-top: var(--header-h); }
+
+/* ── header surface (lab only) ────────────────────────────────────────────────
+   The production header is transparent with cream links. While the lab is mounted it sets html[data-lt-hdr]; these rules give the header a solid,
+   readable surface that matches the active direction. Nothing in the production header files changes, and the rules vanish with the attribute. */
+html[data-lt-hdr="ink"] { --lt-hdr-bg: var(--color-ink); --lt-hdr-line: rgb(243 232 204 / 0.14); }
+html[data-lt-hdr="cream"] { --lt-hdr-bg: var(--color-cream); --lt-hdr-line: rgb(15 15 14 / 0.16); }
+html[data-lt-hdr] .sh-bg { height: calc(var(--h) + env(safe-area-inset-top)); }
+html[data-lt-hdr] .sh-bg::before { height: 100%; background: var(--lt-hdr-bg); box-shadow: 0 1px 0 var(--lt-hdr-line); }
+html[data-lt-hdr="cream"] .sh:not(.is-open) { color: var(--color-ink); }
+html[data-lt-hdr="cream"] .sh:not(.is-open) .sh-dot { color: var(--color-red); }
+html[data-lt-hdr="cream"] .sh:not(.is-open) .sh-logo { text-shadow: none; }
+html[data-lt-hdr="cream"] .sh:not(.is-open) :is(.sh-link, .sh-menubtn) { color: rgb(15 15 14 / 0.8); text-shadow: none; }
+html[data-lt-hdr="cream"] .sh:not(.is-open) :is(.sh-link:hover, .sh-link:focus-visible, .sh-menubtn:hover, .sh-menubtn:focus-visible, .sh-link[aria-current="location"]) { color: var(--color-ink); }
+html[data-lt-hdr="cream"] .sh:not(.is-open) :focus-visible { outline-color: var(--color-ink); }
+
+/* ── shared ─────────────────────────────────────────────────────────────── */
+.lt { --lt-ease: cubic-bezier(0.2, 0.8, 0.2, 1); position: relative; background: var(--lt-bg); color: var(--lt-fg); font-family: var(--font-sans); overflow-x: clip; }
+.lt a { color: inherit; text-decoration: none; }
+.lt button, .lt input, .lt textarea { font-family: inherit; }
+.lt :focus-visible { outline: 2px solid var(--lt-focus-ring); outline-offset: 4px; }
+.lt-it { font-family: var(--font-serif); font-style: italic; font-weight: 700; letter-spacing: -0.02em; text-transform: none; color: var(--lt-accent); }
+
+/* introduction: modest heading, one sentence, the real email */
+.lt-intro { display: grid; align-content: start; gap: 16px; min-width: 0; max-width: 30rem; }
+.lt-h { margin: 0; font-weight: 800; text-transform: uppercase; letter-spacing: -0.02em; line-height: 1.05; font-size: 30px; }
+.lt-lede { margin: 0; font-size: 16px; line-height: 1.6; color: var(--lt-muted); }
+.lt-mail { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; margin-top: -8px; font-size: 16px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: var(--lt-line); text-underline-offset: 5px; transition: text-decoration-color 0.2s ease; }
+.lt-mail:hover { text-decoration-color: currentColor; }
+@media (min-width: 900px) { .lt-h { font-size: 40px; } }
+@media (min-width: 1280px) { .lt-h { font-size: 44px; } }
+
+/* the form: persistent labels, understated underline fields, a reserved line for each inline error (nothing jumps) */
+.lt-form { container-type: inline-size; display: grid; gap: 10px; min-width: 0; }
+.lt-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 32px; }
+@container (min-width: 520px) { .lt-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lt-field { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "label" "ctl" "err"; }
+.lt-label { grid-area: label; color: var(--lt-label); font: 600 12px/1.4 var(--font-sans); letter-spacing: 0.14em; text-transform: uppercase; transition: color 0.2s ease; }
+.lt-opt { margin-left: 10px; font-weight: 500; letter-spacing: 0.04em; text-transform: none; }
+.lt-field:focus-within .lt-label { color: var(--lt-fg); }
+.lt-ctl { grid-area: ctl; min-width: 0; }
+.lt-ctl input, .lt-ctl textarea { display: block; width: 100%; box-sizing: border-box; margin: 0; min-height: 48px; padding: 10px 0 9px; border: 0; border-radius: 0; background: transparent; color: var(--lt-fg); font-size: 16px; font-weight: 400; line-height: 1.5; outline: 2px solid transparent; outline-offset: 4px; box-shadow: inset 0 -1px 0 var(--lt-line); transition: box-shadow 0.2s ease, opacity 0.3s ease; appearance: none; }
+.lt-ctl textarea { resize: none; min-height: 112px; max-height: 60svh; overflow: auto; }
+@supports (field-sizing: content) { .lt-ctl textarea { field-sizing: content; } }
+.lt-ctl input:focus-visible, .lt-ctl textarea:focus-visible { outline: 2px solid transparent; outline-offset: 4px; } /* the underline is the focus indicator; the transparent outline still shows in forced-colors */
+.lt-ctl input:focus, .lt-ctl textarea:focus { box-shadow: inset 0 -2px 0 var(--lt-line-hot); }
+.lt-ctl input:hover:not(:focus):not([readonly]), .lt-ctl textarea:hover:not(:focus):not([readonly]) { box-shadow: inset 0 -1px 0 var(--lt-line-hot); }
+.lt-field[data-invalid] .lt-ctl input, .lt-field[data-invalid] .lt-ctl textarea { box-shadow: inset 0 -2px 0 var(--lt-err-line); }
+.lt-ctl input[readonly], .lt-ctl textarea[readonly] { opacity: 0.65; }
+.lt-ctl input:-webkit-autofill { -webkit-text-fill-color: var(--lt-fg); caret-color: var(--lt-fg); transition: background-color 600000s 0s; }
+.lt-err { grid-area: err; margin: 6px 0 0; min-height: 1.5em; color: var(--lt-err); font: 500 14px/1.5 var(--font-sans); }
+@media (forced-colors: active) { .lt-ctl input, .lt-ctl textarea { border-bottom: 2px solid CanvasText; } }
+
+/* send: small, labelled, square like the rest of the site */
+.lt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 6px; }
+.lt-send { min-height: 44px; padding: 0 22px; border: 0; border-radius: 0; background: var(--lt-btn); color: var(--lt-btn-fg); font: 600 14px/1 var(--font-sans); letter-spacing: 0.02em; cursor: pointer; transition: background-color 0.2s ease, opacity 0.3s ease; }
+.lt-send:hover { background: var(--lt-btn-hover); }
+.lt-send[aria-disabled="true"] { opacity: 0.7; cursor: progress; }
+.lt-demo { margin: 0; font-size: 13px; line-height: 1.5; color: var(--lt-muted); }
+.lt-fail { margin: 0; min-height: 1.5em; color: var(--lt-err); font: 500 14px/1.5 var(--font-sans); }
+
+/* two states in one cell: the layout never changes size when the form is replaced by its confirmation */
+.lt-swap { display: grid; min-width: 0; }
+.lt-swap > * { grid-area: 1 / 1; min-width: 0; transition: opacity 0.4s ease 0.1s; }
+.lt-swap > [data-hidden] { visibility: hidden; pointer-events: none; opacity: 0; transition: opacity 0.25s ease, visibility 0s 0.25s; }
+.lt-done { display: grid; align-content: start; align-self: start; gap: 12px; }
+.lt .lt-done:focus, .lt .lt-done:focus-visible { outline: none; } /* focus is moved here on success so it is announced; the container itself is not a control */
+.lt-done-h { margin: 0; font-size: 24px; font-weight: 700; line-height: 1.2; }
+.lt-done-p { margin: 0; font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.lt-again { justify-self: start; min-height: 44px; margin-top: 8px; padding: 0; border: 0; background: none; color: inherit; font: 600 14px var(--font-sans); text-decoration: underline; text-underline-offset: 5px; cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) { .lt *, .lt *::before, .lt *::after { transition: none !important; animation: none !important; } }
+
+/* ── layout shared by A and B: two equal halves inside the site's content gutters ── */
+.lt-a, .lt-b { padding: clamp(64px, 8vw, 112px) var(--gutter); }
+.lt-wrap { max-width: 1312px; margin-inline: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(48px, 7vw, 96px); align-items: start; }
+@media (max-width: 899px) { .lt-wrap { grid-template-columns: minmax(0, 1fr); row-gap: 40px; } .lt-intro { max-width: none; } }
+
+/* ── A — Ink ─────────────────────────────────────────────────────────────── */
+.lt-a { --lt-bg: var(--color-ink); --lt-fg: var(--color-cream); --lt-muted: rgb(243 232 204 / 0.78); --lt-line: rgb(243 232 204 / 0.3); --lt-line-hot: var(--color-cream); --lt-label: rgb(243 232 204 / 0.72); --lt-err: #ff7a68; --lt-err-line: #ff7a68; --lt-focus-ring: var(--color-yellow); --lt-accent: var(--color-red); --lt-btn: #bd2113; --lt-btn-fg: var(--color-cream); --lt-btn-hover: #c6220f; }
+
+/* ── B — Cream ───────────────────────────────────────────────────────────── */
+.lt-b { --lt-bg: var(--color-cream); --lt-fg: var(--color-ink); --lt-muted: rgb(15 15 14 / 0.76); --lt-line: rgb(15 15 14 / 0.34); --lt-line-hot: var(--color-ink); --lt-label: rgb(15 15 14 / 0.72); --lt-err: #b01e10; --lt-err-line: #b01e10; --lt-focus-ring: var(--color-ink); --lt-accent: var(--color-red); --lt-btn: var(--color-ink); --lt-btn-fg: var(--color-cream); --lt-btn-hover: #bd2113; }
+
+/* ── C — Quiet division: ink section, cream form half that simply continues to the edge of the screen (no card, radius, border or shadow) ── */
+.lt-c { --lt-bg: var(--color-ink); --lt-fg: var(--color-cream); --lt-muted: rgb(243 232 204 / 0.78); --lt-line: rgb(243 232 204 / 0.3); --lt-focus-ring: var(--color-yellow); --lt-accent: var(--color-red); }
+.lt-c-grid { display: grid; grid-template-columns: minmax(var(--gutter), 1fr) minmax(0, 640px) minmax(0, 640px) minmax(var(--gutter), 1fr); }
+.lt-c-intro { grid-column: 2; padding: clamp(64px, 8vw, 112px) 56px clamp(64px, 8vw, 112px) 0; }
+.lt-c-surface { grid-column: 3 / 5; padding: clamp(64px, 8vw, 112px) 0 clamp(64px, 8vw, 112px) 56px;
+  background: var(--color-cream); color: var(--color-ink); --lt-fg: var(--color-ink); --lt-muted: rgb(15 15 14 / 0.76); --lt-line: rgb(15 15 14 / 0.34); --lt-line-hot: var(--color-ink); --lt-label: rgb(15 15 14 / 0.72); --lt-err: #b01e10; --lt-err-line: #b01e10; --lt-focus-ring: var(--color-ink); --lt-btn: var(--color-ink); --lt-btn-fg: var(--color-cream); --lt-btn-hover: #bd2113; }
+.lt-c-form { max-width: 584px; }
+@media (max-width: 899px) {
+  .lt-c-grid { grid-template-columns: minmax(0, 1fr); }
+  .lt-c-intro { grid-column: 1; padding: 64px var(--gutter) 48px; }
+  .lt-c-surface { grid-column: 1; padding: 48px var(--gutter) 64px; }
+  .lt-c-form { max-width: none; }
+}
+
+/* ── comparison bar (lab only; not part of any design) ───────────────────── */
+.lt-lab { position: fixed; z-index: 90; left: 50%; bottom: 12px; transform: translateX(-50%); width: max-content; max-width: calc(100vw - 16px); background: rgb(15 15 14 / 0.96); border: 1px solid rgb(243 232 204 / 0.3); color: var(--color-cream); font: 600 11px var(--font-sans); }
+.lt-lab-main, .lt-lab-extra { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; padding: 6px 8px; }
+.lt-lab-extra { border-top: 1px solid rgb(243 232 204 / 0.2); }
+.lt-lab-extra[hidden] { display: none; }
+.lt-lab-tag { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(243 232 204 / 0.7); }
+.lt-lab-lbl { margin-right: 2px; font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: rgb(243 232 204 / 0.5); }
+.lt-lab-seg { display: flex; align-items: center; gap: 4px; }
+.lt-lab button { min-height: 32px; min-width: 32px; padding: 0 10px; border: 1px solid rgb(243 232 204 / 0.28); background: transparent; color: rgb(243 232 204 / 0.85); font: 600 11px var(--font-sans); cursor: pointer; }
+.lt-lab button:hover:not(:disabled):not([aria-pressed="true"]) { color: var(--color-cream); border-color: rgb(243 232 204 / 0.6); }
+.lt-lab button:disabled { opacity: 0.4; cursor: default; }
+.lt-lab button[aria-pressed="true"] { background: var(--color-cream); color: var(--color-ink); border-color: var(--color-cream); }
+.lt-lab :focus-visible { outline: 2px solid var(--color-yellow); outline-offset: 2px; }
+@media (max-width: 760px) { .lt-lab-nm { display: none; } .lt-lab-main { gap: 6px 8px; } }
