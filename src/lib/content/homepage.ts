@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import type { CollaborationsContent } from "@/content/collab-types";
 import type { HomepageContent, ServiceTaxonomyItem } from "@/content/types";
 import { defaultSection, sectionSchemas, type SectionKey } from "./sections";
 import { readSections } from "./store";
@@ -28,6 +29,13 @@ const load = cache(async (draft: boolean): Promise<HomepageContent> => {
     featured: get("featured"),
   };
 });
+
+/** Collaborations (magnetic logos) for the homepage: published content, or the draft in the admin preview. */
+export async function getCollaborationsContent(opts?: { draft?: boolean }): Promise<CollaborationsContent> {
+  const rows = await readSections(!!opts?.draft);
+  const parsed = sectionSchemas.collaborations.safeParse(rows.collaborations);
+  return (parsed.success ? parsed.data : defaultSection("collaborations")) as CollaborationsContent;
+}
 
 export function getHomepageContent(opts?: { draft?: boolean }): Promise<HomepageContent> {
   return load(!!opts?.draft);

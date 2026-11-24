@@ -9,7 +9,9 @@ export type Field =
   | (Base & { kind: "text"; name: string; multiline?: boolean; rows?: number; nullable?: boolean; readOnly?: boolean; placeholder?: string })
   | (Base & { kind: "color"; name: string })
   | (Base & { kind: "select"; name: string; options: Option[] })
-  | (Base & { kind: "image"; name: string })
+  | (Base & { kind: "image"; name: string; /** The image has no alt box of its own (the entry has a separate alt-text field). */ noAlt?: boolean })
+  | (Base & { kind: "toggle"; name: string; onLabel?: string; offLabel?: string })
+  | (Base & { kind: "range"; name: string; min: number; max: number; step?: number; unit?: string; /** Shows a live preview beside the slider. */ preview?: "partner" | "magnet"; def?: number })
   | (Base & { kind: "video"; name: string })
   | (Base & { kind: "sequence"; name: string })
   | (Base & { kind: "strings"; name: string; min?: number; max?: number; fixed?: boolean; placeholder?: string; color?: boolean })
@@ -24,6 +26,10 @@ export type Field =
       /** No add / remove (the design fixes the count). Reordering stays available unless `fixedOrder`. */
       fixed?: boolean;
       fixedOrder?: boolean;
+      /** Small picture shown in the row header (e.g. the entry's logo). */
+      thumb?: (item: Obj) => string | null;
+      /** Name of a boolean field: when false the row is shown dimmed with a "Hidden" tag and gets a quick Hide/Show button. */
+      hideKey?: string;
       blank?: () => Obj;
     });
 

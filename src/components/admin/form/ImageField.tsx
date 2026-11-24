@@ -8,7 +8,7 @@ import { MediaPicker } from "./MediaPicker";
 import type { Obj } from "./spec";
 
 /** Edits an ImageRef ({src, alt, width?, height?}) or null (= not delivered yet, the site shows a labelled placeholder). */
-export function ImageField({ label, help, error, value, onChange }: { label: string; help?: string; error?: string; value: Obj | null; onChange: (v: Obj | null) => void }) {
+export function ImageField({ label, help, error, value, onChange, noAlt }: { label: string; help?: string; error?: string; value: Obj | null; onChange: (v: Obj | null) => void; noAlt?: boolean }) {
   const id = useId();
   const [picker, setPicker] = useState(false);
   const [busy, setBusy] = useState<number | null>(null);
@@ -59,7 +59,7 @@ export function ImageField({ label, help, error, value, onChange }: { label: str
             )}
           </div>
           <input id={id} type="text" value={src} placeholder="/media/… or https://…" aria-label={`${label} URL`} onChange={(e) => (e.target.value ? onChange({ ...(value ?? {}), src: e.target.value, alt }) : onChange(null))} className={inputCls} />
-          {value && <input type="text" value={alt} placeholder="Alt text: describe the image for screen readers" aria-label={`${label} alt text`} onChange={(e) => onChange({ ...value, alt: e.target.value })} className={inputCls} />}
+          {value && !noAlt && <input type="text" value={alt} placeholder="Alt text: describe the image for screen readers" aria-label={`${label} alt text`} onChange={(e) => onChange({ ...value, alt: e.target.value })} className={inputCls} />}
         </div>
       </div>
       {picker && (

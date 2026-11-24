@@ -1,4 +1,4 @@
-import { Collective } from "@/components/home/collective/Collective";
+import { Collaborations } from "@/components/home/collaborations/Collaborations";
 import { SiteHeader } from "@/components/shell/SiteHeader";
 import type { SectionKey } from "@/lib/admin/section-meta";
 import { Footer } from "@/components/home/footer/Footer";
@@ -9,8 +9,8 @@ import { ServicesOrbit } from "@/components/home/services-orbit/ServicesOrbit";
 import { Minds } from "@/components/home/minds/Minds";
 import { StatementRotator } from "@/components/home/statement/StatementRotator";
 import { WorkArchive } from "@/components/work/WorkArchive";
-import { getCollectiveContent, getFooterContent } from "@/lib/content/closing";
-import { getHomepageContent } from "@/lib/content/homepage";
+import { getFooterContent } from "@/lib/content/closing";
+import { getCollaborationsContent, getHomepageContent } from "@/lib/content/homepage";
 import { getWorkContent } from "@/lib/content/work";
 
 /**
@@ -24,7 +24,7 @@ import { getWorkContent } from "@/lib/content/work";
 export async function HomePage({ draft = false, only }: { draft?: boolean; only?: SectionKey }) {
   const { site, hero, corridor, statement, services, lens, minds, featured } = await getHomepageContent({ draft });
   const { projects, ...work } = await getWorkContent({ draft });
-  const [collective, footer] = await Promise.all([getCollectiveContent(), getFooterContent()]);
+  const [collaborations, footer] = await Promise.all([getCollaborationsContent({ draft }), getFooterContent()]);
   const archive = (
     <WorkArchive
       {...work}
@@ -44,6 +44,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       lens: <>{header}<ServicesOrbit content={lens} services={services} /></>,
       minds: <Minds content={minds} />,
       workIntro: <>{header}{archive}</>,
+      collaborations: <Collaborations content={collaborations} />,
     }[only];
     return <main id="top">{one}</main>;
   }
@@ -56,7 +57,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       <ServicesOrbit content={lens} services={services} />
       <Minds content={minds} />
       {archive}
-      <Collective content={collective} />
+      <Collaborations content={collaborations} />
       <Footer content={footer} />
     </main>
   );

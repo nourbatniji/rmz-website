@@ -1,5 +1,5 @@
 /** Client-safe metadata about the editable homepage sections (no server imports). */
-export const SECTION_KEYS = ["site", "hero", "corridor", "statement", "featured", "services", "lens", "minds", "workIntro"] as const;
+export const SECTION_KEYS = ["site", "hero", "corridor", "statement", "featured", "services", "lens", "minds", "workIntro", "collaborations"] as const;
 export type SectionKey = (typeof SECTION_KEYS)[number];
 
 export function isSectionKey(v: string): v is SectionKey {
@@ -24,8 +24,9 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
   services: { label: "Service names", about: "The names of the services the studio offers.", anchor: "services", group: "page" },
   lens: { label: "Services showcase", about: "A description, label and picture for each service.", anchor: "services", group: "page" },
   minds: { label: "Team", about: "The eight team members: names, roles, short bios and portraits.", anchor: "minds", group: "page" },
+  collaborations: { label: "Collaborations", about: "The partner logos around the red RMZ square: add, hide, resize and reorder logos, and set the square's artwork.", anchor: "collaborations", group: "page" },
   workIntro: { label: "Work archive intro", about: "The heading, intro text and filters above the grid of projects.", anchor: "work-archive", group: "page" },
 };
 
 /** Sidebar order for the "Homepage" group (page order). */
-export const PAGE_ORDER: SectionKey[] = ["hero", "corridor", "statement", "featured", "services", "lens", "minds", "workIntro"];
+export const PAGE_ORDER: SectionKey[] = ["hero", "corridor", "statement", "featured", "services", "lens", "minds", "workIntro", "collaborations"];

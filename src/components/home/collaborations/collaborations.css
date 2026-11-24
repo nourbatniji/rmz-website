@@ -1,0 +1,34 @@
+/* Collaborations — magnetic logos. Prefix: cm-. Near-black ground, cream logos, one red square; no cards, grid, gradients or glows. */
+.cm { background: var(--color-ink); color: var(--color-cream); font-family: var(--font-sans); }
+.cm-wrap { padding: 30px var(--gutter) 22px; }
+.cm-label { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: rgba(243,232,204,.5); }
+.cm-h { margin: 12px 0 0; font-size: 26px; line-height: 1.15; font-weight: 600; letter-spacing: -.012em; color: var(--color-cream); }
+.cm-iv { font-family: var(--font-serif); font-style: italic; font-weight: 700; letter-spacing: -.03em; color: var(--color-red); font-size: 1.12em; }
+
+.cm-field { position: relative; margin-top: 8px; min-height: 252px; }
+.cm-logos { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
+.cm-logo { position: absolute; transform: translate(-50%, -50%); will-change: transform; line-height: 0; color: var(--color-cream); }
+.cm-logo svg, .cm-logo img { display: block; max-width: none; }
+.cm-link, .cm-static { display: block; outline: none; color: inherit; text-decoration: none; }
+.cm-link:focus-visible { outline: 1.5px solid var(--color-yellow); outline-offset: 6px; }
+.cm-text { display: block; line-height: 1; font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+.cm-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.cm-lines line { stroke: var(--color-red); stroke-width: 1; stroke-linecap: round; opacity: 0; }
+.cm-magnet { box-sizing: border-box; position: absolute; padding: 0; border: 0; display: grid; place-items: center; cursor: pointer; will-change: transform; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; font: 900 15px/1 var(--font-sans); letter-spacing: -.02em; }
+.cm-magnet[aria-disabled="true"] { cursor: default; }
+.cm-magnet:focus-visible { outline: 1.5px solid var(--color-yellow); outline-offset: 5px; }
+.cm-magnet[data-drag] { cursor: grabbing; }
+.cm-art { display: block; width: 100%; height: 100%; object-fit: contain; }
+.cm-mask { display: block; }
+
+/* Before the layout is measured (server render / no script): a plain, centred, wrapping list of the logos; the square waits. */
+.cm-field:not([data-ready]) { padding: 24px 0; }
+.cm-field:not([data-ready]) .cm-logos { position: static; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 28px 44px; }
+.cm-field:not([data-ready]) .cm-logo { position: static; transform: none; }
+.cm-field:not([data-ready]) .cm-magnet, .cm-field:not([data-ready]) .cm-lines { display: none; }
+
+@media (max-width: 767px) {
+  .cm-wrap { padding: 44px var(--gutter) 36px; }
+  .cm-field { margin-top: 18px; min-height: 340px; }
+  .cm-magnet { font-size: 14px; }
+}
