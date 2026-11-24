@@ -13,3 +13,4 @@
 * **Skipped / finished at once:** reduced motion, anchor entry, restored scroll position, reload/back-forward, repeat entry in the tab, first image/fonts not ready in time;
   any scroll, key, pointer or banner selection finishes it immediately. No JavaScript: the static hero (poster, word, copy) is shown.
 * Review notes and recordings: `docs/review/milestone-21/` (lab) and `docs/review/milestone-22/` (homepage integration check).
+* **Page loader:** on first visits the opening waits for `loaderGate` (see `docs/page-loader.md`); the countdown and opening never run behind the cover, and a loader timeout leaves the static hero.

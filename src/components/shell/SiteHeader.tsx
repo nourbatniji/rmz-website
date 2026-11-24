@@ -3,105 +3,111 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { SiteContent } from "@/content/types";
+import { Arrow, MenuIcon, useOverlay } from "./header-parts";
+import "./site-header.css";
 
 /**
- * Fixed site header. Desktop = approved canvas (logo left, four links right).
- * Below `md` a menu button opens a full-screen panel — MOBILE PASS, pending design review.
+ * Fixed site header — "Balanced centre" (approved in /lab/navigation, direction B). One slim row (72 px; 60 px on phones): logo left, the main links centred on the page
+ * independently of the logo, Contact at the far right. Always the over-image surface (transparent, with a short soft scrim and a discreet text shadow — it never turns
+ * solid), always reduced motion (instant state changes; the rest of the site is unaffected). The section under the header is marked with a short red underline on the
+ * homepage. Phones: logo, a Contact text link and a Menu control; the menu drops from the header as a compact sheet.
+ * Destinations come from the site content (`nav`), so the labels and anchors stay editable in the dashboard.
  */
 export function SiteHeader({ brand, nav }: SiteContent) {
   const [open, setOpen] = useState(false);
-  // Past the hero the header gets a solid ink bar so it never sits translucent over section content.
-  // Over the hero it keeps the approved transparent gradient. Isolated to the header; hero untouched.
-  const [solid, setSolid] = useState(false);
-  const ref = useRef<HTMLElement>(null);
-  // Off the homepage (e.g. /work/[slug]) the section anchors must point back at the homepage; "Work" lands on the work archive.
+  const [active, setActive] = useState<string | null>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const followed = useRef(false);
   const pathname = usePathname();
   const onHome = pathname === "/" || pathname.startsWith("/admin/preview");
+  // Off the homepage (e.g. /work/[slug]) the section anchors must point back at the homepage; "Work" lands on the work archive.
   const link = (href: string) => (onHome || !href.startsWith("#") ? href : href === "#work" ? "/#work-archive" : `/${href}`);
+  const close = () => setOpen(false);
+  useOverlay(open, close, panel, trigger, followed);
 
+  const contact = nav.find((n) => /contact/i.test(n.label)) ?? nav[nav.length - 1];
+  const links = nav.filter((n) => n !== contact);
+
+  // close the menu when the route changes
   useEffect(() => {
-    const hero = document.querySelector("main#top > section");
-    // No homepage hero (inner pages): solid bar as soon as the page scrolls.
-    const update = () => setSolid(hero ? hero.getBoundingClientRect().bottom <= (ref.current?.offsetHeight ?? 92) : window.scrollY > 8);
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
+    const t = window.setTimeout(() => setOpen(false), 0);
+    return () => window.clearTimeout(t);
   }, [pathname]);
 
+  // homepage only: which section is under the header (the same anchors the links point at)
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+    if (!onHome) {
+      const t = window.setTimeout(() => setActive(null), 0);
+      return () => window.clearTimeout(t);
+    }
+    const ids = nav.map((n) => n.href).filter((h) => h.startsWith("#") && h !== "#top").map((h) => h.slice(1));
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      let cur: string | null = null;
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 72 + window.innerHeight * 0.3) cur = `#${id}`;
+      }
+      setActive((a) => (a === cur ? a : cur));
+    };
+    const on = () => { if (!raf) raf = requestAnimationFrame(update); };
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    window.addEventListener("resize", on);
+    window.addEventListener("load", on);
+    return () => { window.removeEventListener("scroll", on); window.removeEventListener("resize", on); window.removeEventListener("load", on); if (raf) cancelAnimationFrame(raf); };
+  }, [onHome, nav]);
 
   const logo = brand.logo ? (
     // eslint-disable-next-line @next/next/no-img-element -- official logo, svg/png, fixed height
-    <img src={brand.logo.src} alt={brand.logo.alt || brand.name} className="h-8 w-auto md:h-10" />
+    <img src={brand.logo.src} alt={brand.logo.alt || brand.name} />
   ) : (
     // TEMPORARY text wordmark until the official logo file is delivered.
-    <span className="t-display text-2xl md:text-3xl" aria-label={brand.name}>
-      RMZ<span className="text-yellow">.</span>
+    <span className="t-display" aria-label={brand.name}>
+      RMZ<span className="sh-dot">.</span>
     </span>
   );
 
   return (
-    <header ref={ref} className="fixed inset-x-0 top-0 z-50">
-      <div
-        aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 top-0 transition-opacity duration-200 ${solid ? "h-[var(--header-h)] border-b border-cream/10 bg-ink" : "h-28 bg-gradient-to-b from-ink/75 to-transparent md:h-36"}`}
-      />
-      <div className="relative flex items-center justify-between px-(--gutter) py-5 md:py-7">
-        <a href={link("#top")} aria-label={`${brand.name} — home`} className="block">
+    <header className={`sh ${open ? "is-open" : ""}`}>
+      <div className="sh-bg" aria-hidden="true" />
+      <div className="sh-row">
+        <a href={link("#top")} aria-label={`${brand.name} — home`} className="sh-logo">
           {logo}
         </a>
 
-        <nav aria-label="Primary" className="hidden gap-11 md:flex">
-          {nav.map((item) => (
-            <a
-              key={item.href}
-              href={link(item.href)}
-              className="t-meta group relative py-1.5 text-xs text-cream"
-            >
+        <nav aria-label="Primary" className="sh-links">
+          {links.map((item) => (
+            <a key={item.href} href={link(item.href)} className="sh-link" aria-current={onHome && active === item.href ? "location" : undefined}>
               {item.label}
-              <span className="absolute inset-x-0 bottom-0 h-0.5 origin-left scale-x-0 bg-yellow transition-transform duration-300 ease-out-soft group-hover:scale-x-100 group-focus-visible:scale-x-100" />
             </a>
           ))}
         </nav>
 
-        <button
-          type="button"
-          className="t-meta -mr-2 flex h-11 items-center px-2 text-xs md:hidden"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? "Close" : "Menu"}
-        </button>
+        <div className="sh-end">
+          <a href={link(contact.href)} className="sh-link" aria-current={onHome && active === contact.href ? "location" : undefined}>
+            {contact.label}
+            <Arrow />
+          </a>
+          <button ref={trigger} type="button" className="sh-menubtn" aria-expanded={open} aria-controls="site-menu" onClick={() => setOpen((v) => !v)}>
+            <span>{open ? "Close" : "Menu"}</span>
+            <MenuIcon />
+          </button>
+        </div>
       </div>
 
-      {open && (
-        <nav
-          id="mobile-nav"
-          aria-label="Primary"
-          className="fixed inset-0 -z-10 flex flex-col justify-center gap-6 bg-ink px-(--gutter) md:hidden"
-        >
-          {nav.map((item) => (
-            <a
-              key={item.href}
-              href={link(item.href)}
-              onClick={() => setOpen(false)}
-              className="t-display text-5xl text-cream active:text-yellow"
-            >
+      <div className="sh-scrim" aria-hidden="true" onClick={close} />
+      <div id="site-menu" ref={panel} className="sh-sheet" aria-hidden={!open} inert={!open}>
+        <nav aria-label="Primary" className="sh-sheet-nav">
+          {links.map((item) => (
+            <a key={item.href} href={link(item.href)} className="sh-slink" aria-current={onHome && active === item.href ? "location" : undefined} onClick={() => { followed.current = true; close(); }}>
               {item.label}
             </a>
           ))}
         </nav>
-      )}
+      </div>
     </header>
   );
 }

@@ -41,6 +41,19 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
 
   useFit(wrap, box, 1440);
 
+  // The cover's height is whatever the cover really is (the Collaborations section is content-driven and grows or shrinks with its logos), not a fixed 900 px artboard:
+  // the wrapper's height and the cover's sticky offset follow it through --hc.
+  useEffect(() => {
+    const el = wrap.current;
+    const coverEl = el?.firstElementChild as HTMLElement | null;
+    if (!el || !coverEl) return;
+    const sync = () => el.style.setProperty("--hc", `${coverEl.offsetHeight}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(coverEl);
+    return () => ro.disconnect();
+  }, []);
+
   // progress from the scroll position (no scroll hijacking: the page scrolls normally; only the pinned footer reacts)
   useEffect(() => {
     const el = wrap.current;

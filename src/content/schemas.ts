@@ -11,6 +11,7 @@ import type {
   StatementContent,
 } from "./types";
 import type { WorkContent, WorkProject } from "./work-types";
+import { MAGNET_SCALE, PARTNER_SCALE, type CollaborationsContent } from "./collab-types";
 
 /**
  * Zod schemas for everything the dashboard can edit. Each one is annotated with the hand-written contract type
@@ -232,3 +233,36 @@ export function toWorkProject(
   if (!body.success || !category.success) return null;
   return { slug: row.slug, number, name: row.name, category: category.data, ...body.data };
 }
+
+/** Collaborations (magnetic logos). Optional/nullable fields are filled by defaults so older saved content keeps working. */
+const wordmarkIds = ["northwind", "halo", "orbital", "kiln", "tideworks", "mango", "papermoon", "atlas", "fable", "solstice", "brick", "ninelines"] as const;
+const optionalLink = z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? null : v), linkSchema.nullable());
+export const collaborationsSchema: z.ZodType<CollaborationsContent> = z.object({
+  visible: z.boolean(),
+  label: required("Label"),
+  headingLead: text,
+  headingEmphasis: text,
+  magnet: z.object({
+    label: required("Accessible label"),
+    artwork: imageRefSchema.nullable(),
+    background: color,
+    artworkColor: color,
+    tint: z.boolean(),
+    artworkScale: z.number().min(MAGNET_SCALE.min, `At least ${MAGNET_SCALE.min}%`).max(MAGNET_SCALE.max, `At most ${MAGNET_SCALE.max}%`),
+  }),
+  partners: z
+    .array(
+      z.object({
+        id: required("Id"),
+        name: required("Name"),
+        alt: text,
+        logo: imageRefSchema.nullable(),
+        mark: z.enum(wordmarkIds).nullable(),
+        href: optionalLink,
+        visible: z.boolean(),
+        scale: z.number().min(PARTNER_SCALE.min, `At least ${PARTNER_SCALE.min}%`).max(PARTNER_SCALE.max, `At most ${PARTNER_SCALE.max}%`),
+      }),
+    )
+    .max(60, "At most 60 entries")
+    .refine((l) => new Set(l.map((p) => p.id)).size === l.length, "Each entry needs a unique id"),
+}) as z.ZodType<CollaborationsContent>;

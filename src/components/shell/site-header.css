@@ -1,0 +1,56 @@
+/* Site header — "Balanced centre". Always over-image (transparent + soft local scrim), always reduced motion. Scoped to .sh-*. */
+.sh { --h: 72px; position: fixed; inset-inline: 0; top: 0; z-index: 50; color: var(--color-cream); }
+.sh a, .sh button { -webkit-tap-highlight-color: transparent; }
+.sh :focus-visible { outline: 1.5px solid var(--color-yellow); outline-offset: 5px; }
+.sh .t-display { font-size: 22px; line-height: 1; letter-spacing: -0.02em; }
+.sh img { height: 26px; width: auto; }
+.sh-dot { color: var(--color-yellow); }
+/* Reduced motion is permanent for the navigation, whatever the device setting: state changes are instant: no transitions at all (the rest of the site keeps its own motion). */
+.sh, .sh *, .sh *::before, .sh *::after { transition: none !important; animation: none !important; }
+
+/* surface: a short, soft scrim over the picture (no tall gradient); while the mobile menu is open a quiet solid ink behind the row */
+.sh-bg { position: absolute; inset-inline: 0; top: 0; height: var(--h); pointer-events: none; }
+.sh-bg::before, .sh-bg::after { content: ""; position: absolute; inset-inline: 0; top: 0; }
+.sh-bg::before { height: calc(var(--h) + 22px); background: linear-gradient(to bottom, rgba(15,15,14,.58), rgba(15,15,14,0)); }
+.sh-bg::after { height: var(--h); background: var(--color-ink); opacity: 0; }
+.sh.is-open .sh-bg::before { opacity: 0; } .sh.is-open .sh-bg::after { opacity: 1; }
+
+.sh-row { position: relative; z-index: 2; box-sizing: content-box; height: var(--h); padding: env(safe-area-inset-top) var(--gutter) 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.sh-logo { justify-self: start; display: flex; align-items: center; min-height: 44px; text-shadow: 0 0 12px rgba(15,15,14,.65), 0 1px 2px rgba(15,15,14,.5); }
+.sh-links { justify-self: center; display: flex; align-items: center; gap: 44px; }
+.sh-end { justify-self: end; display: flex; align-items: center; }
+
+/* 14 / 500 text links; a one-pixel underline is drawn on hover/focus without moving anything; the current section is a short red underline */
+.sh-link, .sh-menubtn { position: relative; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: 14px; font-weight: 500; letter-spacing: .02em; color: rgba(243,232,204,.86); cursor: pointer; background: none; border: 0; padding: 0; text-shadow: 0 0 12px rgba(15,15,14,.65), 0 1px 2px rgba(15,15,14,.5); }
+.sh-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 9px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; }
+.sh-link:hover, .sh-link:focus-visible, .sh-menubtn:hover, .sh-menubtn:focus-visible, .sh-link[aria-current="location"] { color: var(--color-cream); }
+.sh-link:hover::after, .sh-link:focus-visible::after { transform: scaleX(1); }
+.sh-link[aria-current="location"]::before { content: ""; position: absolute; left: 50%; bottom: 5px; width: 14px; height: 2px; margin-left: -7px; background: var(--color-red); }
+.sh-end .sh-link[aria-current="location"]::before { left: calc(50% - 8px); }
+.sh-arrow { flex: none; }
+.sh-link:hover .sh-arrow, .sh-link:focus-visible .sh-arrow { transform: translate(1.5px, -1.5px); }
+
+/* the Menu control exists on phones only */
+.sh-menubtn { display: none; }
+.sh-ico { position: relative; display: inline-block; width: 18px; height: 7px; flex: none; }
+.sh-ico::before, .sh-ico::after { content: ""; position: absolute; left: 0; right: 0; height: 1.5px; background: currentColor; }
+.sh-ico::before { top: 0; } .sh-ico::after { top: 6px; }
+.is-open .sh-ico::before { top: 2.75px; transform: rotate(45deg); } .is-open .sh-ico::after { top: 2.75px; transform: rotate(-45deg); }
+.sh-sheet, .sh-scrim { display: none; }
+
+@media (max-width: 767px) {
+  .sh { --h: 60px; }
+  .sh .t-display { font-size: 20px; }
+  .sh-row { display: flex; justify-content: space-between; }
+  .sh-links { display: none; }
+  .sh-end { gap: 22px; }
+  .sh-menubtn { display: inline-flex; gap: 12px; margin-right: -2px; }
+  .sh-scrim { display: block; position: fixed; inset: 0; z-index: 0; background: rgba(15,15,14,.5); opacity: 0; visibility: hidden; }
+  .sh.is-open .sh-scrim { opacity: 1; visibility: visible; }
+  .sh-sheet { display: block; position: fixed; top: calc(var(--h) + env(safe-area-inset-top)); left: 0; right: 0; z-index: 1; background: var(--color-ink); padding: 6px var(--gutter) calc(18px + env(safe-area-inset-bottom)); opacity: 0; visibility: hidden; transform: translateY(-6px); }
+  .sh.is-open .sh-sheet { opacity: 1; visibility: visible; transform: none; }
+  .sh-sheet-nav { display: flex; flex-direction: column; align-items: flex-start; }
+  .sh-slink { display: inline-flex; align-items: center; gap: 10px; min-height: 54px; font-size: 20px; font-weight: 500; letter-spacing: -.005em; color: rgba(243,232,204,.78); }
+  .sh-slink[aria-current="location"] { color: var(--color-cream); }
+  .sh-slink[aria-current="location"]::after { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--color-red); }
+}
