@@ -55,6 +55,8 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
   const swiped = useRef(false);
   const reduced = useMedia("(prefers-reduced-motion: reduce)", true); // server / no-JS = unpinned
   const live = !reduced && n > 1;
+  const narrow = useMedia("(max-width: 1023px)", false);
+  const scrollMode = live && narrow; // phone / tablet: the section pins and the scroll position moves the cards
   const rootRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null); // the stage
@@ -110,6 +112,17 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
       const hh = Math.max(css, header ? header.getBoundingClientRect().bottom : 0); // never let the stage sit under a taller-than-expected header
       hhRef.current = hh;
       root.style.setProperty("--wk-hh", `${hh}px`);
+      if (window.matchMedia("(max-width: 1023px)").matches) {
+        // Phone / tablet: the artboard is 672 high and as wide as the screen needs (never a narrow strip centred on a wide screen), so everything starts at the page gutter.
+        const sc = clamp(Math.min(pin.clientHeight / 672, pin.clientWidth / 390), 0.75, 1.4); // never narrower than the 390 px artboard the controls were drawn for
+        const bw = pin.clientWidth / sc;
+        box.style.width = `${bw.toFixed(2)}px`;
+        root.style.setProperty("--wk-sc", sc.toFixed(5));
+        root.style.setProperty("--wk-bw", `${bw.toFixed(2)}px`);
+        box.style.transform = `translate(0px, ${((pin.clientHeight - 672 * sc) / 2).toFixed(2)}px) scale(${sc.toFixed(5)})`;
+        return;
+      }
+      box.style.width = "";
       const sc = Math.min(pin.clientWidth / box.offsetWidth, pin.clientHeight / box.offsetHeight, 1.25);
       const x = (pin.clientWidth - box.offsetWidth * sc) / 2;
       const y = (pin.clientHeight - box.offsetHeight * sc) / 2;
@@ -124,7 +137,7 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
     fonts?.ready.then(fit);
     fonts?.addEventListener?.("loadingdone", fit);
     return () => { ro.disconnect(); window.removeEventListener("resize", fit); fonts?.removeEventListener?.("loadingdone", fit); };
-  }, [n]);
+  }, [n, narrow]);
 
   // Position animation: one eased glide (≈0.65 s per project) from the current position to the target project.
   const targetRef = useRef(0);
@@ -150,12 +163,40 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
     const to = clamp(j, 0, n - 1);
     targetRef.current = to;
     if (!live) { apply(to); return; }
+    if (scrollMode && trackRef.current && pinRef.current) {
+      const ex = Math.max(1, trackRef.current.offsetHeight - pinRef.current.offsetHeight);
+      window.scrollTo({ top: window.scrollY + trackRef.current.getBoundingClientRect().top - hhRef.current + (to / Math.max(1, n - 1)) * ex, behavior: "smooth" });
+      return;
+    }
     animateTo(to);
   };
   const step = (k: number) => goTo(targetRef.current + k);
 
+  // Phone / tablet: scroll position → card position (continuous, like a swipe that follows the page).
+  useEffect(() => {
+    if (!scrollMode || opening) return;
+    const tr = trackRef.current, pin = pinRef.current;
+    if (!tr || !pin) return;
+    let raf = 0;
+    const paint = () => {
+      raf = 0;
+      const ex = Math.max(1, tr.offsetHeight - pin.offsetHeight);
+      const p = clamp((hhRef.current - tr.getBoundingClientRect().top) / ex, 0, 1);
+      const v = p * (n - 1);
+      window.cancelAnimationFrame(animRef.current);
+      targetRef.current = Math.round(v);
+      apply(v);
+    };
+    const kick = () => { if (!raf) raf = window.requestAnimationFrame(paint); };
+    paint();
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", kick);
+    return () => { window.removeEventListener("scroll", kick); window.removeEventListener("resize", kick); window.cancelAnimationFrame(raf); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollMode, opening, n]);
+
   useWheelSteps({
-    active: live && !opening,
+    active: live && !opening && !scrollMode,
     over: overCards,
     settle: true,
     canStep: (dir) => (dir > 0 ? targetRef.current < n - 1 : targetRef.current > 0),
@@ -168,6 +209,8 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
     targetRef.current = 0;
     window.cancelAnimationFrame(animRef.current);
     apply(0);
+    const tr = trackRef.current;
+    if (scrollMode && tr && tr.getBoundingClientRect().top < hhRef.current) window.scrollTo({ top: window.scrollY + tr.getBoundingClientRect().top - hhRef.current });
   };
   const count = (id: "all" | WorkProject["category"]) => (id === "all" ? all.length : all.filter((p) => p.category === id).length);
   const filterLabel = categories.find((c) => c.id === filter)?.label ?? "";
@@ -186,7 +229,7 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
     if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
     else if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
   };
-  const onDown = (e: PointerEvent) => { downX.current = e.clientX; swiped.current = false; };
+  const onDown = (e: PointerEvent) => { if (scrollMode) return; downX.current = e.clientX; swiped.current = false; };
   const onUp = (e: PointerEvent) => {
     if (downX.current == null) return;
     const dx = e.clientX - downX.current;
@@ -199,7 +242,7 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
   return (
     <div ref={rootRef} className="wk">
       <section id="work-archive" className="wk-in" aria-label="Selected work">
-        <div ref={trackRef} className="wk-track">
+        <div ref={trackRef} className="wk-track" style={{ "--wk-n": n } as CSSProperties}>
           <div ref={pinRef} className="wk-pin">
             <div ref={boxRef} className="wk-box">
             <div className="wk-head">

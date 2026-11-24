@@ -62,6 +62,10 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
   const reduced = useMedia(REDUCED, false);
   const mobile = variant === "M" || !wide;
   const scrollLinked = variant === "A" && !mobile && !reduced; // reduced motion: no pinned scene, immediate selection
+  const mobScroll = mobile && !reduced; // phone / tablet: the section pins and the scroll position drives the lens (no drag)
+  const mTrackRef = useRef<HTMLDivElement>(null);
+  const mPinRef = useRef<HTMLDivElement>(null);
+  const [pinH, setPinH] = useState(0);
 
   const rootRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -115,7 +119,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
 
   // ── variant A: measure each name at the label size so long names can be fitted to their arc ──
   useEffect(() => {
-    if (!scrollLinked) return;
+    if (!scrollLinked && !mobile) return;
     const measure = () => {
       const fam = rootRef.current ? getComputedStyle(rootRef.current).fontFamily : "sans-serif";
       const ctx = document.createElement("canvas").getContext("2d");
@@ -126,7 +130,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
     measure();
     document.fonts?.ready.then(measure);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scrollLinked]);
+  }, [scrollLinked, mobile]);
 
   // ── stage size ──
   useEffect(() => {
@@ -195,9 +199,40 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollLinked, N]);
 
+  // ── phone / tablet: pinned section, scroll → lens (continuous, like a finger drag) ──
+  useEffect(() => {
+    if (!mobScroll) return;
+    const track = mTrackRef.current, pin = mPinRef.current;
+    if (!track || !pin) return;
+    let raf = 0;
+    const measure = () => setPinH(pin.clientHeight);
+    const paint = () => {
+      raf = 0;
+      const ex = Math.max(1, track.offsetHeight - pin.offsetHeight);
+      const p = clamp((hh() - track.getBoundingClientRect().top) / ex, 0, 1);
+      cancelAnimationFrame(anim.current);
+      apply(p * (N - 1));
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    const onResize = () => { measure(); kick(); };
+    measure();
+    paint();
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", onResize);
+    const ro = new ResizeObserver(onResize);
+    ro.observe(pin);
+    return () => { window.removeEventListener("scroll", kick); window.removeEventListener("resize", onResize); ro.disconnect(); cancelAnimationFrame(raf); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobScroll, N]);
+
   // ── selection commands ──
   const goService = (j: number) => {
     j = clamp(j, 0, N - 1);
+    if (mobScroll && mTrackRef.current && mPinRef.current) {
+      const ex = Math.max(1, mTrackRef.current.offsetHeight - mPinRef.current.offsetHeight);
+      window.scrollTo({ top: window.scrollY + mTrackRef.current.getBoundingClientRect().top - hh() + (j / (N - 1)) * ex, behavior: "smooth" });
+      return;
+    }
     if (scrollLinked) {
       const track = trackRef.current;
       if (!track) return;
@@ -212,7 +247,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
     tweenTo(k0 + d);
   };
   const step = (dir: number) => {
-    if (scrollLinked) goService(clamp(sel + dir, 0, N - 1));
+    if (scrollLinked || mobScroll) goService(clamp(sel + dir, 0, N - 1));
     else tweenTo(Math.round(kfRef.current) + dir);
   };
 
@@ -221,7 +256,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
   const moved = useRef(false);
   const pAng = (e: RPointerEvent) => (Math.atan2(e.clientY - (drag.current?.cy ?? 0), e.clientX - (drag.current?.cx ?? 0)) * 180) / Math.PI;
   const dragStart = (e: RPointerEvent<HTMLDivElement>) => {
-    if (scrollLinked || e.button > 0) return;
+    if (scrollLinked || mobScroll || e.button > 0) return;
     const r = e.currentTarget.getBoundingClientRect();
     const lens = e.currentTarget.querySelector("[data-orb-lens]")?.getBoundingClientRect();
     drag.current = { on: true, id: e.pointerId, cx: lens ? lens.left + lens.width / 2 : r.left + r.width / 2, cy: lens ? lens.top + lens.height / 2 : r.top + r.height / 2, last: 0, x0: e.clientX, k0: kfRef.current, acc: 0, moved: false };
@@ -314,63 +349,6 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
     </div>
   );
 
-  // ── mobile: curved selector above the lens ──
-  if (mobile) {
-    const MW = Math.min(box.w || 390, 540);
-    const ls = Math.min(300, MW - 70) / 800; // lens scale (800 units)
-    return (
-      <section ref={rootRef} id={id} aria-label="Services" className="orb-root orb-m" data-variant="M" data-mobile-design="pending-approval">
-        <p ref={live} className="lens-sr" aria-live="polite" />
-        {head}
-        <div className="orb-mstage" ref={stageRef} onPointerDown={dragStart} onPointerMove={dragMove} onPointerUp={dragEnd} onPointerCancel={dragEnd}>
-          <div role="group" aria-label="Services" className="orb-msel" onKeyDown={onKey}>
-            <svg className="orb-mark" width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><path d="M0 0H16L8 12Z" fill="#F3E8CC" /></svg>
-            {items.map((v, i) => {
-              const dk = i - kf;
-              const a = (dk * 30 * Math.PI) / 180;
-              const vis = Math.abs(dk) < 2.6;
-              return (
-                <button
-                  key={v.id}
-                  type="button"
-                  data-orb-label=""
-                  aria-pressed={i === sel}
-                  className="orb-lbl"
-                  onClick={() => click(i)}
-                  style={{
-                    left: "50%", top: 30 + 360 * (1 - Math.cos(a)) * 0.55,
-                    transform: `translate(calc(-50% + ${(360 * Math.sin(a)).toFixed(1)}px), 0)`,
-                    fontSize: i === sel ? 26 : 19, opacity: vis ? clamp(1.15 - Math.abs(dk) * 0.4, 0.2, 1) : 0, pointerEvents: vis ? "auto" : "none",
-                    color: i === sel ? "#F3E8CC" : "rgba(243,232,204,.78)", zIndex: 10 - Math.round(Math.abs(dk)),
-                  } as CSSProperties}
-                >
-                  {v.name}
-                </button>
-              );
-            })}
-          </div>
-          <div data-orb-lens="" className="orb-mlens" style={{ width: 800 * ls, height: 800 * ls }}>
-            <div style={{ position: "absolute", left: 0, top: 0, width: 800, height: 800, transform: `scale(${ls})`, transformOrigin: "0 0" }}>{dial}</div>
-          </div>
-        </div>
-        <div className="orb-mctl">{arrow(-1, "Previous service")}<span className="orb-count">{two(sel + 1)} / {two(N)}</span>{arrow(1, "Next service")}</div>
-        {desc}
-      </section>
-    );
-  }
-
-  // ── variant A body: names written along circles outside the lens rim; the selected one rises into a straight title ──
-  const sideBy = box.w >= WIDE; // description left, heading right
-  const short = !sideBy && box.h < 640;
-  const aDescH = short ? 112 : 176;
-  const headH = short ? 44 : 60;
-  const sA = sideBy
-    ? clamp(Math.min(1, (box.h - 24) / AH, (box.w - 676) / AW), 0.4, 1)
-    : clamp(Math.min(box.w / AW, (box.h - aDescH - headH - 14) / AH), 0.3, 1);
-  const boxLeft = (box.w - AW * sA) / 2;
-  const boxTop = sideBy ? (box.h - AH * sA) / 2 : headH + 4;
-  const sideW = Math.max(0, box.w / 2 - (RB + 18) * sA - 64 - 16); // free width between the gutter and the orbit's outermost label
-  const fsK = sideBy ? 1 : clamp(11.5 / (FS * sA), 1, 1.25); // keep curved names legible on short screens
   const fitLen = 0.84 * ((360 / N) * Math.PI / 180) * RA; // longest name allowed on its arc
   const lerp = (a: number, c: number, t: number) => a + (c - a) * t;
   const ease3 = (t: number) => t * t * (3 - 2 * t);
@@ -381,9 +359,9 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
     const [x1, y1] = pt(-LH), [x2, y2] = pt(LH);
     return Math.abs(kappa) < 1e-4 ? `M${x1.toFixed(2)} ${y1.toFixed(2)} L${x2.toFixed(2)} ${y2.toFixed(2)}` : `M${x1.toFixed(2)} ${y1.toFixed(2)} A${(1 / Math.abs(kappa)).toFixed(2)} ${(1 / Math.abs(kappa)).toFixed(2)} 0 0 ${kappa > 0 ? 1 : 0} ${x2.toFixed(2)} ${y2.toFixed(2)}`;
   };
-  const poses = items.map((v, i) => {
+  const makePoses = (fsK: number, useLift: boolean) => items.map((v, i) => {
     const th = ((((i - kf) * S) % 360) + 540) % 360 - 180; // (-180, 180], 0 = 12 o'clock
-    const L = clamp(lift[i] ?? 0, 0, 1);
+    const L = useLift ? clamp(lift[i] ?? 0, 0, 1) : 0; // phone / tablet: names stay on the ring (never lifted)
     const w0 = widths[i] ?? v.name.length * FS * 0.52;
     const fsI = FS * fsK * Math.min(1, fitLen / (w0 * fsK));
     const fs = lerp(fsI, FS_ACT, L);
@@ -400,6 +378,88 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
         const fill = `rgba(243,232,204,${lerp(0.78, 1, L).toFixed(3)})`; // cream: quieter on the ring, full strength when lifted
     return { v, i, fs, wght, wT, fill, tPath: pathD(tx, ty, tAlpha, tKappa), bPath: pathD(bx, by, bAlpha, -1 / RB), bx: top ? tx : bx, by: top ? ty : by, ba: top ? tAlpha : bAlpha, w: w0 * (fs / FS) * (1 + 0.1 * L) };
   });
+
+  // ── mobile: curved selector above the lens ──
+  if (mobile) {
+    const room = mobScroll && pinH ? pinH - 250 : Infinity; // pinned: height left by the heading, count and description
+    const mS = clamp(Math.min((box.w || 390) / AW, room / AH), 0.3, 1); // ring layout scale (same geometry as the desktop lens)
+    const mFsK = clamp(11.5 / (FS * mS), 1, 1.3); // keep the curved names legible on small screens
+    const mPoses = makePoses(mFsK, false);
+    const inner = (
+      <>
+        {head}
+        <div className="orb-mstage" ref={stageRef} style={{ height: AH * mS }}>
+          <div className="orb-box" style={{ width: AW, height: AH, left: (box.w - AW * mS) / 2, top: 0, transform: `scale(${mS})` } as CSSProperties}>
+            <svg className="orb-arcs" width={AW} height={AH} viewBox={`0 0 ${AW} ${AH}`} aria-hidden="true" style={{ position: "absolute", left: 0, top: 0, overflow: "visible", pointerEvents: "none" }}>
+              <defs>
+                {mPoses.map((q) => (
+                  <g key={q.v.id}>
+                    <path id={`${uid}-t${q.i}`} d={q.tPath} />
+                    <path id={`${uid}-b${q.i}`} d={q.bPath} />
+                  </g>
+                ))}
+              </defs>
+              {mPoses.map((q) => (
+                <g key={q.v.id}>
+                  <text className="orb-arc" fontSize={q.fs} fill={q.fill} opacity={q.wT} style={{ fontWeight: q.wght }}>
+                    <textPath href={`#${uid}-t${q.i}`} startOffset="50%" textAnchor="middle">{q.v.name}</textPath>
+                  </text>
+                  {q.wT < 1 && (
+                    <text className="orb-arc" fontSize={q.fs} fill={q.fill} opacity={1 - q.wT} style={{ fontWeight: q.wght }}>
+                      <textPath href={`#${uid}-b${q.i}`} startOffset="50%" textAnchor="middle">{q.v.name}</textPath>
+                    </text>
+                  )}
+                </g>
+              ))}
+              <path d={`M${ACX - 6} ${ACY - RA + 1} L${ACX + 6} ${ACY - RA + 1} L${ACX} ${ACY - RA + 10} Z`} fill="#F3E8CC" opacity={0.9} />
+            </svg>
+            <div role="group" aria-label="Services" onKeyDown={onKey} style={{ position: "absolute", inset: 0 }}>
+              {mPoses.map((q) => (
+                <button
+                  key={q.v.id}
+                  type="button"
+                  data-orb-label=""
+                  aria-pressed={q.i === sel}
+                  className="orb-hit"
+                  onClick={() => click(q.i)}
+                  style={{ left: q.bx, top: q.by, width: q.w + 20, height: Math.max(30, q.fs * 1.7), transform: `translate(-50%,-72%) rotate(${q.ba}deg)` } as CSSProperties}
+                >
+                  {q.v.name}
+                </button>
+              ))}
+            </div>
+            <div data-orb-lens="" style={{ position: "absolute", left: ACX - 400, top: ACY - 400, width: 800, height: 800, transform: `scale(${ALD / 800})`, transformOrigin: "50% 50%", pointerEvents: "none" }}>{dial}</div>
+          </div>
+        </div>
+        <div className="orb-mctl">{arrow(-1, "Previous service")}<span className="orb-count">{two(sel + 1)} / {two(N)}</span>{arrow(1, "Next service")}</div>
+        {desc}
+      </>
+    );
+    return (
+      <section ref={rootRef} id={id} aria-label="Services" className="orb-root orb-m" data-variant="M" data-pin={mobScroll ? "1" : undefined} data-mobile-design="pending-approval">
+        <p ref={live} className="lens-sr" aria-live="polite" />
+        {mobScroll ? (
+          <div ref={mTrackRef} className="orb-mtrack">
+            <div ref={mPinRef} className="orb-mpin">{inner}</div>
+          </div>
+        ) : inner}
+      </section>
+    );
+  }
+
+  // ── variant A body: names written along circles outside the lens rim; the selected one rises into a straight title ──
+  const sideBy = box.w >= WIDE; // description left, heading right
+  const short = !sideBy && box.h < 640;
+  const aDescH = short ? 112 : 176;
+  const headH = short ? 44 : 60;
+  const sA = sideBy
+    ? clamp(Math.min(1, (box.h - 24) / AH, (box.w - 676) / AW), 0.4, 1)
+    : clamp(Math.min(box.w / AW, (box.h - aDescH - headH - 14) / AH), 0.3, 1);
+  const boxLeft = (box.w - AW * sA) / 2;
+  const boxTop = sideBy ? (box.h - AH * sA) / 2 : headH + 4;
+  const sideW = Math.max(0, box.w / 2 - (RB + 18) * sA - 64 - 16); // free width between the gutter and the orbit's outermost label
+  const fsK = sideBy ? 1 : clamp(11.5 / (FS * sA), 1, 1.25); // keep curved names legible on short screens
+  const poses = makePoses(fsK, true);
   const bodyA = (
     <div ref={trackRef} className="orb-track">
       <div className="orb-stage" ref={stageRef} data-pinned="1" data-short={short ? "1" : "0"} data-wide={sideBy ? "1" : "0"}>

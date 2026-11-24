@@ -134,6 +134,41 @@ export function Minds({ content }: { content: MindsContent }) {
       off();
     };
   }, [n]);
+  // Phone / tablet accordion: every row starts shut; the first time the list scrolls into view, Mind 04 drops open by itself (unless the visitor already tapped a row).
+  // Desktop keeps its initially open column.
+  const touched = useRef(false);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const mq = window.matchMedia(DESKTOP);
+    let io: IntersectionObserver | null = null;
+    const arm = () => {
+      io?.disconnect();
+      io = null;
+      if (mq.matches) {
+        setSel((s) => (s < 0 ? initial : s));
+        return;
+      }
+      if (touched.current) return;
+      setSel(-1);
+      io = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((e) => e.isIntersecting) || touched.current) return;
+          touched.current = true;
+          io?.disconnect();
+          setSel(Math.min(3, n - 1));
+        },
+        { rootMargin: "0px 0px -35% 0px", threshold: 0.2 },
+      );
+      io.observe(list);
+    };
+    arm();
+    mq.addEventListener("change", arm);
+    return () => {
+      mq.removeEventListener("change", arm);
+      io?.disconnect();
+    };
+  }, [n, initial]);
   useEntrance(rootRef, { mediaQuery: "(max-width: 1023.98px)" }); // mobile accordion only: unchanged one-shot staggered lift (see minds.css)
 
   return (
@@ -153,7 +188,7 @@ export function Minds({ content }: { content: MindsContent }) {
             const plateId = `${uid}-p${i}`;
             return (
               <li key={item.id} className={`mind ${open ? "mind-open" : ""}`} style={style}>
-                <button type="button" className="mind-cover" aria-expanded={open} aria-controls={plateId} onClick={() => setSel(i)}>
+                <button type="button" className="mind-cover" aria-expanded={open} aria-controls={plateId} onClick={() => { touched.current = true; setSel(i); }}>
                   <span className="mind-num t-meta" aria-hidden="true">
                     {item.number}
                   </span>
