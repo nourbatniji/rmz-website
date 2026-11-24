@@ -111,7 +111,41 @@ function FieldBody({ field, value, onChange, path, errors }: { field: Field; val
         </FieldShell>
       );
     case "image":
-      return <ImageField label={field.label} help={field.help} error={error} value={(v as Obj | null | undefined) ?? null} onChange={set} />;
+      return <ImageField label={field.label} help={field.help} error={error} value={(v as Obj | null | undefined) ?? null} onChange={set} noAlt={field.noAlt} />;
+    case "toggle": {
+      const on = v === true;
+      return (
+        <FieldShell label={field.label} help={field.help} error={error} htmlFor={id}>
+          <button
+            id={id}
+            type="button"
+            role="switch"
+            aria-checked={on}
+            onClick={() => set(!on)}
+            className={`inline-flex h-8 w-fit items-center gap-2 rounded-full border px-3 text-xs font-semibold ${on ? "border-ok/40 bg-ok/10 text-ok" : "border-fg/25 text-fg/60 hover:bg-fg/5"}`}
+          >
+            <span aria-hidden className={`h-2 w-2 rounded-full ${on ? "bg-ok" : "bg-fg/30"}`} />
+            {on ? (field.onLabel ?? "On") : (field.offLabel ?? "Off")}
+          </button>
+        </FieldShell>
+      );
+    }
+    case "range": {
+      const num = typeof v === "number" && Number.isFinite(v) ? v : (field.def ?? field.min);
+      return (
+        <FieldShell label={`${field.label}: ${num}${field.unit ?? ""}`} help={field.help} error={error} htmlFor={id}>
+          <div className={`grid items-center gap-3 ${field.preview ? "sm:grid-cols-[minmax(0,1fr)_150px]" : ""}`}>
+            <div className="flex items-center gap-2">
+              <input id={id} type="range" min={field.min} max={field.max} step={field.step ?? 1} value={num} onChange={(e) => set(Number(e.target.value))} className="w-full accent-accent" />
+              <button type="button" className={iconBtnCls} aria-label={`Reset ${field.label}`} title="Reset to default" disabled={num === (field.def ?? field.min)} onClick={() => set(field.def ?? field.min)}>
+                ↺
+              </button>
+            </div>
+            {field.preview && <SizePreview kind={field.preview} value={value} scale={num} />}
+          </div>
+        </FieldShell>
+      );
+    }
     case "video":
       return <VideoField label={field.label} help={field.help} error={error} value={(v as Obj | null | undefined) ?? null} onChange={set} />;
     case "sequence":
@@ -189,18 +223,32 @@ function FieldBody({ field, value, onChange, path, errors }: { field: Field; val
               {items.map((it, i) => {
                 const hasErr = Object.keys(errors).some((k) => k.startsWith(`${p}.${i}.`) || k === `${p}.${i}`);
                 const status = typeof it.copyStatus === "string" ? it.copyStatus : null;
+                const hidden = !!field.hideKey && it[field.hideKey] === false;
+                const thumb = field.thumb?.(it) ?? null;
                 return (
                   <SortableItem key={i} id={String(i)} label={field.title(it, i)}>
                     {({ setNodeRef, style, handle }) => (
-                      <details ref={setNodeRef as React.Ref<HTMLDetailsElement>} style={style} open={hasErr || undefined} data-item={typeof it.serviceId === "string" ? it.serviceId : typeof it.id === "string" ? it.id : undefined} className={`rounded-lg border ${hasErr ? "border-bad/70" : "border-fg/15"} bg-white`}>
+                      <details ref={setNodeRef as React.Ref<HTMLDetailsElement>} style={style} open={hasErr || undefined} data-item={typeof it.serviceId === "string" ? it.serviceId : typeof it.id === "string" ? it.id : undefined} className={`rounded-lg border ${hasErr ? "border-bad/70" : "border-fg/15"} bg-white ${hidden ? "opacity-70" : ""}`}>
                         <summary className="flex cursor-pointer list-none items-center gap-2 px-2 py-2 text-sm">
                           {!field.fixedOrder && handle}
                           <span aria-hidden className="text-fg/40">
                             ▸
                           </span>
+                          {field.thumb && (
+                            <span aria-hidden className="flex h-7 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-fg/10 bg-ink/90">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              {thumb ? <img src={thumb} alt="" className="max-h-full max-w-full object-contain" /> : <span className="text-[9px] text-cream/50">none</span>}
+                            </span>
+                          )}
                           <span className="font-semibold">{field.title(it, i)}</span>
+                          {hidden && <span className="rounded-full bg-fg/10 px-2 py-0.5 text-[11px] font-semibold text-fg/60">Hidden</span>}
                           {status && <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${CHIP[status] ?? ""}`}>{status}</span>}
                           <span className="ml-auto flex gap-1" onClick={(e) => e.stopPropagation()}>
+                            {field.hideKey && (
+                              <button type="button" className={`${iconBtnCls} w-auto px-2`} aria-label={hidden ? "Show on the website" : "Hide from the website"} onClick={(e) => { e.preventDefault(); set(items.map((x, j) => (j === i ? { ...x, [field.hideKey as string]: hidden } : x))); }}>
+                                {hidden ? "Show" : "Hide"}
+                              </button>
+                            )}
                             {!field.fixed && (
                               <button type="button" className={iconBtnCls} aria-label="Remove" disabled={!canRemove} onClick={(e) => { e.preventDefault(); set(items.filter((_, j) => j !== i)); }}>
                                 ✕
@@ -227,4 +275,45 @@ function FieldBody({ field, value, onChange, path, errors }: { field: Field; val
       );
     }
   }
+}
+
+/** Live preview next to a size slider: a partner logo at its relative size (dark ground, as on the site) or the RMZ square with its artwork. Reflects the unsaved value. */
+function SizePreview({ kind, value, scale }: { kind: "partner" | "magnet"; value: Obj; scale: number }) {
+  if (kind === "partner") {
+    const logo = value.logo as Obj | null | undefined;
+    const src = typeof logo?.src === "string" ? logo.src : "";
+    return (
+      <div aria-hidden className="flex h-20 items-center justify-center overflow-hidden rounded-md border border-fg/15 bg-ink">
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="" style={{ width: `${Math.round(scale * 0.7)}px`, maxWidth: "92%", maxHeight: "92%" }} className="object-contain" />
+        ) : (
+          <span className="px-2 text-center text-[10px] text-cream/50">Upload artwork to preview</span>
+        )}
+      </div>
+    );
+  }
+  const art = value.artwork as Obj | null | undefined;
+  const src = typeof art?.src === "string" ? art.src : "";
+  const bg = typeof value.background === "string" ? value.background : "#D52518";
+  const ink = typeof value.artworkColor === "string" ? value.artworkColor : "#F3E8CC";
+  const tint = value.tint === true;
+  return (
+    <div aria-hidden className="flex h-20 items-center justify-center rounded-md border border-fg/15 bg-ink">
+      <div className="box-border grid h-14 w-14 place-items-center p-1.5" style={{ background: bg }}>
+        {src ? (
+          tint ? (
+            <span style={{ width: `${scale}%`, height: `${scale}%`, background: ink, WebkitMask: `url(${src}) center / contain no-repeat`, mask: `url(${src}) center / contain no-repeat` }} />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={src} alt="" style={{ width: `${scale}%`, height: `${scale}%` }} className="object-contain" />
+          )
+        ) : (
+          <span style={{ color: ink, fontSize: `${Math.round(15 * (scale / 100))}px` }} className="font-black leading-none tracking-tight">
+            RMZ
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }

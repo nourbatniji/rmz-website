@@ -2,6 +2,8 @@ import "server-only";
 import type { z } from "zod";
 import { devHomepageContent as dev } from "@/content/dev/homepage";
 import { devWorkContent as devWork } from "@/content/dev/work";
+import { devClosingContent } from "@/content/dev/closing";
+import type { CollaborationsContent } from "@/content/collab-types";
 import * as s from "@/content/schemas";
 import { SECTION_KEYS, type SectionKey } from "@/lib/admin/section-meta";
 
@@ -18,6 +20,7 @@ export const sectionSchemas: Record<SectionKey, z.ZodType<unknown>> = {
   lens: s.lensSchema,
   minds: s.mindsSchema,
   workIntro: s.workIntroSchema,
+  collaborations: s.collaborationsSchema,
 };
 
 /** Built-in content (the dev files). Used when the database has nothing valid for a section, and by "Reset to default". */
@@ -39,11 +42,26 @@ export function defaultSection(key: SectionKey): unknown {
       return dev.lens;
     case "minds":
       return dev.minds;
+    case "collaborations":
+      return defaultCollaborations();
     case "workIntro": {
       const { label, headingLead, headingEmphasis, intro, categories, emptyTitle, emptyBody, contact } = devWork;
       return { label, headingLead, headingEmphasis, intro, categories, emptyTitle, emptyBody, contact };
     }
   }
+}
+
+/** The approved prototype as the default: the twelve built-in placeholder marks, the red RMZ square with its lettering. */
+export function defaultCollaborations(): CollaborationsContent {
+  const c = devClosingContent.collective;
+  return {
+    visible: true,
+    label: c.label,
+    headingLead: c.headingLead,
+    headingEmphasis: c.headingEmphasis,
+    magnet: { label: "RMZ — gather the collaborations", artwork: null, background: "#D52518", artworkColor: "#F3E8CC", tint: false, artworkScale: 100 },
+    partners: c.partners.map((p) => ({ id: p.mark, name: p.name, alt: p.name, logo: null, mark: p.mark, href: null, visible: true, scale: 100 })),
+  };
 }
 
 export const ALL_SECTION_KEYS = SECTION_KEYS;
