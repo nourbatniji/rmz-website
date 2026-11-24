@@ -166,8 +166,8 @@ export function ProjectList({ initial, categories, initialStatus = "all" }: { in
         {note && <span className={`ml-2 font-medium ${note.tone === "error" ? "text-bad" : note.tone === "ok" ? "text-ok" : "text-fg/60"}`}>{note.text}</span>}
       </p>
 
-      <div className={`${card} overflow-hidden`}>
-        <div className={`hidden gap-3 border-b border-fg/8 bg-fg/[0.03] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-fg/50 lg:grid ${COLS}`}>
+      <div className={card}>
+        <div className={`hidden gap-3 rounded-t-xl border-b border-fg/8 bg-fg/[0.03] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-fg/50 lg:grid ${COLS}`}>
           <span />
           <span />
           <span>Project</span>
