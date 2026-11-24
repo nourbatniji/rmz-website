@@ -8,6 +8,7 @@ import type { WorkContent, WorkProject } from "@/content/work-types";
 import { pointerOverCards } from "@/lib/use-pinned-skip";
 import { useWheelSteps } from "@/lib/use-wheel-steps";
 import { useMedia } from "@/lib/use-media";
+import { artBackground } from "./art";
 import "./work.css";
 
 /**
@@ -277,14 +278,7 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
                       aria-hidden={isF ? undefined : true}
                       aria-label={`Open project ${p.number} ${p.name}`}
                     >
-                      {p.image ? (
-                        <div className="bimg wk-ph real">
-                          {/* eslint-disable-next-line @next/next/no-img-element -- fixed-ratio card frame */}
-                          <img src={p.image.src} alt="" loading="lazy" decoding="async" />
-                        </div>
-                      ) : (
-                        <div className="bimg wk-ph flat" />
-                      )}
+                      <div className="bimg wk-ph" style={{ background: artBackground(p.palette, j, 0) }} />
                       <div className="bcap">
                         <span className="t-display" style={{ fontSize: 18 }}>
                           <span className="wk-y" style={{ fontSize: 11, letterSpacing: "0.1em", marginRight: 8 }}>{p.number}</span>

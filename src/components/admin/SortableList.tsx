@@ -3,7 +3,7 @@
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useId, type CSSProperties, type ReactNode, type Ref } from "react";
+import type { CSSProperties, ReactNode, Ref } from "react";
 
 export { arrayMove };
 
@@ -12,8 +12,6 @@ export { arrayMove };
  * and by touch. `ids` must be unique and in the current display order.
  */
 export function SortableList({ ids, onReorder, layout = "list", children }: { ids: string[]; onReorder: (from: number, to: number) => void; layout?: "list" | "grid"; disabled?: boolean; children: ReactNode }) {
-  // A fixed id per list: without it dnd-kit numbers its helper elements from a global counter, which differs between the server render and the browser (hydration error).
-  const dndId = useId();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
   const onDragEnd = (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
@@ -22,7 +20,7 @@ export function SortableList({ ids, onReorder, layout = "list", children }: { id
     if (from >= 0 && to >= 0) onReorder(from, to);
   };
   return (
-    <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={ids} strategy={layout === "grid" ? rectSortingStrategy : verticalListSortingStrategy}>
         {children}
       </SortableContext>

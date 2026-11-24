@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { PreviewHighlight } from "@/components/admin/PreviewHighlight";
 import { HomePage } from "@/components/home/HomePage";
 import { isSectionKey } from "@/lib/admin/section-meta";
 import { requireAdmin } from "@/lib/admin/session";
@@ -16,10 +15,5 @@ export default function PreviewPage({ searchParams }: { searchParams: Promise<{ 
 async function Draft({ searchParams }: { searchParams: Promise<{ section?: string }> }) {
   await requireAdmin();
   const { section } = await searchParams;
-  return (
-    <>
-      <HomePage draft only={section && isSectionKey(section) ? section : undefined} />
-      <PreviewHighlight />
-    </>
-  );
+  return <HomePage draft only={section && isSectionKey(section) ? section : undefined} />;
 }

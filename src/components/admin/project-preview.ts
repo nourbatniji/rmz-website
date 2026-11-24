@@ -36,9 +36,5 @@ export function toPreviewProject(v: { name: string; slug: string; category: stri
     credits,
     copyStatus: b.copyStatus === "approved" ? "approved" : "placeholder",
     layout: Array.isArray(b.layout) ? (b.layout as { id: string; show: boolean }[]) : undefined,
-    hidden: strings(b.hidden),
-    texts: b.texts && typeof b.texts === "object" ? (Object.fromEntries(Object.entries(b.texts as Obj).filter(([, t]) => typeof t === "string" && t.trim())) as Record<string, string>) : undefined,
-    video: b.video && typeof b.video === "object" && typeof (b.video as Obj).src === "string" && (b.video as Obj).src ? { src: (b.video as Obj).src as string } : null,
-    images: b.images && typeof b.images === "object" ? (Object.fromEntries(Object.entries(b.images as Obj).filter(([, im]) => im && typeof (im as Obj).src === "string" && (im as Obj).src)) as WorkProject["images"]) : undefined,
   };
 }

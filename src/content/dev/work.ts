@@ -78,17 +78,6 @@ const ROWS: [string, WorkCategory, string][] = [
 
 const CREDIT_ROLES = ["Creative direction", "Art direction", "Design", "Production"];
 
-/** Demo photographs (olive-oil case-study stills) so the project pages show real pictures until each project's own are uploaded in the dashboard. */
-const PHOTOS = [
-  { src: "/media/dev/work/hero.jpg", alt: "Demo photograph: bottle against a terracotta block with olive branches" },
-  { src: "/media/dev/work/pour.jpg", alt: "Demo photograph: olive oil poured over olives" },
-  { src: "/media/dev/work/bottle.jpg", alt: "Demo photograph: wrapped bottle on a block" },
-];
-const photo = (i: number) => PHOTOS[((i % 3) + 3) % 3];
-const SLOTS = ["idea.image", "execution.image1", "execution.image2", "execution.image3", "strip.image1", "strip.image2", "strip.image3", "showcase.image1", "showcase.image2"];
-const slotImages = (seed: number): NonNullable<WorkProject["images"]> =>
-  Object.fromEntries(SLOTS.map((id, k) => [id, photo(seed + k + (id === "execution.image1" ? 0 : 1))]));
-
 const projects: WorkProject[] = ROWS.map(([name, category, year], i) => ({
   slug: name.toLowerCase(),
   number: String(i + 1).padStart(2, "0"),
@@ -98,8 +87,7 @@ const projects: WorkProject[] = ROWS.map(([name, category, year], i) => ({
   year,
   client: null,
   palette: PALETTES[i],
-  image: photo(i),
-  images: slotImages(i),
+  image: null,
   ...COPY[category],
   credits: CREDIT_ROLES.map((role) => ({ role, name: null })),
   copyStatus: "placeholder",

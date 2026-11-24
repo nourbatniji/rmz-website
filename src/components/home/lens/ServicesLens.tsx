@@ -6,7 +6,6 @@ import type { LensContent, ServiceTaxonomyItem } from "@/content/types";
 import { useEntrance } from "@/lib/use-entrance";
 import { useMedia } from "@/lib/use-media";
 import { LensScene } from "./lens-scenes";
-import { slotOfService } from "./scene-slots";
 
 /**
  * ServicesLens — "HOME - SERVICES SECTION" (canvas, 1440 × 900): seven services as focal lengths on a lens ring.
@@ -256,24 +255,6 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
     if (live.current) live.current.textContent = `Selected: ${items[n].name}, ${items[n].focal}`;
     kick();
   };
-  // Inside the admin preview frame, the editor tells us which service it just opened; show that one.
-  const selectRef = useRef(select);
-  useEffect(() => {
-    selectRef.current = select;
-  });
-  const idsKey = items.map((i) => i.id).join("|");
-  useEffect(() => {
-    if (window.parent === window) return;
-    const onMsg = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin || e.source !== window.parent) return;
-      const d = e.data as { type?: string; id?: string } | null;
-      if (d?.type !== "rmz-open-service" || typeof d.id !== "string") return;
-      const i = idsKey.split("|").indexOf(d.id);
-      if (i >= 0) selectRef.current(i);
-    };
-    window.addEventListener("message", onMsg);
-    return () => window.removeEventListener("message", onMsg);
-  }, [idsKey]);
   const go = (i: number) => {
     if (moved.current) return; // a drag just ended: ignore the synthetic click
     select(i);
@@ -418,7 +399,7 @@ export function ServicesLens({ content, services }: { content: LensContent; serv
       >
         {items.map((v, i) => (
           <div key={v.id} data-sc={i} aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: i === shown ? 1 : 0, transition: T("opacity 90ms linear") }}>
-            <LensScene slot={slotOfService(v.id, i)} imgs={content.images} />
+            <LensScene kind={v.scene} imgs={content.images} />
           </div>
         ))}
       </div>
