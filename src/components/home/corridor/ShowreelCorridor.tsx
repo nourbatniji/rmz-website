@@ -29,7 +29,7 @@ const WALL_Z = -1500; // front wall depth
 const WALL_YC = 110 + WALL_H / 2; // front wall centre (scene y)
 const ORIGIN_Y = 480; // perspective origin (48 % of the 1000-high stage)
 const PERSPECTIVE = 1000;
-const MOBILE_QUERY = "(max-width: 760px)";
+const MOBILE_QUERY = "(max-width: 1023px)"; // phones and tablets use the stacked arrival layout
 // Scroll timeline in px: approach, then the stationary text reveal, then a readable hold (then release).
 const DESKTOP = { approach: 1600, reveal: 450 };
 const MOBILE = { approach: 2500, reveal: 400 };

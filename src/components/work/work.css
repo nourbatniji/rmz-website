@@ -98,13 +98,13 @@
 /* ── Mobile (< 1024px) ────────────────────────────────────────────────── */
 @media (max-width: 1023px) {
   .wk-box { width: 390px; height: 672px; }
-  .wk-head { left: 20px; right: 20px; top: 20px; }
+  .wk-head { left: calc(var(--gutter) / var(--wk-sc, 1)); right: calc(var(--gutter) / var(--wk-sc, 1)); top: 20px; }
   .wk-h2 { font-size: 56px; }
   .wk-intro { display: none; }
-  .wk-chips { flex-wrap: nowrap; overflow-x: auto; margin-top: 18px; margin-right: -20px; padding-right: 20px; scrollbar-width: none; }
+  .wk-chips { flex-wrap: nowrap; overflow-x: auto; margin-top: 18px; margin-right: calc(var(--gutter) / var(--wk-sc, 1) * -1); padding-right: calc(var(--gutter) / var(--wk-sc, 1)); scrollbar-width: none; }
   .wk-chips::-webkit-scrollbar { display: none; }
-  .wk-empty { left: 20px; right: 20px; top: 200px; }
-  .wk-stage { left: 0; width: 390px; top: 160px; height: 512px; perspective: 900px; perspective-origin: 50% 40%; --cx: 50%; --ty: 90px; --cw: 281px; --dx: 234px; }
+  .wk-empty { left: calc(var(--gutter) / var(--wk-sc, 1)); right: calc(var(--gutter) / var(--wk-sc, 1)); top: 200px; }
+  .wk-stage { left: 0; width: 100%; top: 160px; height: 512px; perspective: 900px; perspective-origin: 50% 40%; --cx: 50%; --ty: 90px; --cw: clamp(281px, calc(var(--wk-bw, 390px) * 0.78), 600px); --dx: calc(var(--cw) * 0.83); }
   .wk-bs { transform: translateX(calc(var(--d) * var(--dx))) translateZ(calc(var(--ad) * -120px)) rotateY(calc(var(--d) * -26deg)); }
   .wk-bs.op { transform: translateX(0) translateZ(260px) rotateY(0); }
   .wk-ctl { gap: 10px; bottom: 14px; }
@@ -117,6 +117,11 @@
   .wk-list > div > span:last-child { font-size: 18px; }
   .wk-desk { display: none !important; }
       .wk-next { padding: 20px; }
+}
+/* Phone / tablet, motion allowed: the stage pins and scrolling through the track moves the cards (WorkArchive: scrollMode). */
+@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+  .wk-track { height: calc(100svh - var(--wk-hh, var(--header-h)) + (var(--wk-n, 1) - 1) * 340px); }
+  .wk-pin { position: sticky; top: var(--wk-hh, var(--header-h)); }
 }
 @media (min-width: 1024px) { .wk-mob { display: none !important; } }
 

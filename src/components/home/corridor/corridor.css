@@ -13,7 +13,7 @@
   scroll-margin-top: -16px; /* cancels the global +16px so #work lands exactly under the header = walk start */
   --cor-total: 2500px; /* scroll distance of approach + reveal + hold (desktop: 1600 + 450 + 450) */
 }
-@media (max-width: 760px) { .cor-root { --cor-total: 3350px; } /* mobile: 2500 + 400 + 450 */ }
+@media (max-width: 1023px) { .cor-root { --cor-total: 3350px; } /* mobile: 2500 + 400 + 450 */ }
 .cor-nm { font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.4; margin: 0; }
 .cor-nk { font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; margin: 0; }
 .cor-nl { font-weight: 300; font-size: 15px; line-height: 1.55; margin: 0; }
@@ -63,13 +63,15 @@
 .cor-btn:focus-visible { outline: 2px solid #ffca26; outline-offset: 3px; }
 .cor-vid { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-@media (max-width: 760px) {
-  .cor-kicker { left: 20px; top: 20px; }
-  .cor-lead { left: 20px; right: 20px; bottom: 28px; flex-direction: column; align-items: flex-start; gap: 14px; }
-  .cor-lead h2 { font-size: clamp(34px, 10vw, 48px); }
+@media (max-width: 1023px) {
+  .cor-kicker { left: var(--gutter); top: 20px; }
+  .cor-lead { left: var(--gutter); right: var(--gutter); bottom: 78px; /* clear of the controls row */
+    flex-direction: column; align-items: flex-start; gap: 14px; }
+  .cor-lead h2 { font-size: clamp(34px, 10vw, 64px); }
   .cor-lead p { max-width: 320px; font-size: 14.5px; }
-  .cor-ctl { right: 20px; bottom: 14px; gap: 16px; }
+  .cor-ctl { right: var(--gutter); bottom: 14px; gap: 16px; }
 }
+@media (min-width: 640px) and (max-width: 1023px) { .cor-lead p { max-width: 440px; font-size: 16px; } }
 
 /* Reduced motion: no pin, no walk — the completed composition is shown directly. */
 .cor-static .cor-track { height: auto; }

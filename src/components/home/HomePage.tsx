@@ -1,7 +1,7 @@
 import { Collective } from "@/components/home/collective/Collective";
 import { SiteHeader } from "@/components/shell/SiteHeader";
 import type { SectionKey } from "@/lib/admin/section-meta";
-import { Footer } from "@/components/home/footer/Footer";
+import { FooterUnfold } from "@/components/home/footer/FooterUnfold";
 import { AboutScrubber } from "@/components/home/about/AboutScrubber";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
 import { HeroThreeWorlds } from "@/components/home/hero/HeroThreeWorlds";
@@ -56,8 +56,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       <ServicesOrbit content={lens} services={services} />
       <Minds content={minds} />
       {archive}
-      <Collective content={collective} />
-      <Footer content={footer} />
+      <FooterUnfold cover={<Collective content={collective} />} content={footer} />
     </main>
   );
 }

@@ -16,7 +16,7 @@ import "./footer.css";
 const d = (ms: number) => ({ "--d": `${ms}ms` }) as CSSProperties;
 const external = (href: string) => /^https?:/.test(href);
 
-export function Footer({ content }: { content: FooterContent }) {
+export function Footer({ content, id = "contact" }: { content: FooterContent; id?: string }) {
   const rootRef = useRef<HTMLElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
@@ -51,7 +51,7 @@ export function Footer({ content }: { content: FooterContent }) {
   ];
 
   return (
-    <footer ref={rootRef} id="contact" className="ft-root" aria-label={content.label}>
+    <footer ref={rootRef} id={id} className="ft-root" aria-label={content.label}>
       {/* ── Desktop artboard ── */}
       <div ref={wrap} className="ft-dwrap">
         <div ref={box} className="ft-dbox">
