@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { HeroContent } from "@/content/types";
+import { loaderGate } from "@/components/brand/page-loader/loader-gate";
 import { pingPongProgress } from "./config";
 import { PrismEngine } from "./prism-engine";
 import "./hero-worlds.css";
@@ -98,6 +99,9 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
   const mid = useMedia("(min-width: 640px)", true);
   const reduced = useMedia("(prefers-reduced-motion: reduce)", false);
   const tabHidden = useTabHidden();
+  // True while the homepage loader cover is up (server snapshot false: the hero's own server render never depends on it). Nothing of the opening or the auto-change
+  // countdown may run behind the cover; see "Loader handoff" below. Always false on the lab route and in the admin preview (no cover exists there).
+  const holding = useSyncExternalStore(loaderGate.subscribe, loaderGate.isHolding, () => false);
   const ribCount = wide ? 30 : mid ? 20 : 12;
 
   const [turns, setTurns] = useState(0);
@@ -137,6 +141,13 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
     setPhase("done");
   };
 
+  /** The loader gave up waiting (its bounded timeout): the usable static hero — no opening, no delayed entrance of the copy. */
+  const abandonOpening = () => {
+    if (phaseRef.current === "done") return;
+    setIntro(false);
+    finishOpening();
+  };
+
   const turn = (delta: number, manual: boolean) => {
     finishOpening(); // a selection during the opening finishes it first, then is honoured
     settle.current = TRANSITION_MS;
@@ -167,6 +178,7 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
       if (sessionStorage.getItem(sessionKey)) skip = true;
     } catch { /* storage blocked etc.: play (still harmless) */ }
     const fontsOk = () => !document.fonts || document.fonts.status === "loaded";
+    const held = loaderGate.isHolding(); // the loader cover is up: its own bounded timeout owns the waiting, so the hero's local timers start only after it leaves
     if (phaseRef.current === "pending") {
       if (skip) {
         setPhase("done"); // eslint-disable-line react-hooks/set-state-in-effect
@@ -176,16 +188,21 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
         if (fontsOk()) setPhase("measure");
         else {
           // fonts not ready yet: give them a moment, otherwise show the normal hero (the measurement needs the real glyphs)
-          Promise.race([document.fonts.ready, new Promise((r) => window.setTimeout(r, 700))]).then(() => {
+          Promise.race([document.fonts.ready, held ? loaderGate.whenReleased() : new Promise((r) => window.setTimeout(r, 700))]).then(() => {
             if (phaseRef.current !== "pending") return;
-            setPhase(fontsOk() ? "measure" : "done");
+            if (loaderGate.outcome() === "timeout") abandonOpening();
+            else setPhase(fontsOk() ? "measure" : "done");
           });
         }
       }
     }
     // Static fallback: if anything stalls before the decision, show the normal hero (poster).
-    const wd = window.setTimeout(() => { if (phaseRef.current === "pending" || phaseRef.current === "measure") setPhase("done"); }, 2500);
-    return () => { window.clearTimeout(wd); };
+    let wd = 0;
+    let unsub = () => {};
+    const armWatchdog = () => { wd = window.setTimeout(() => { if (phaseRef.current === "pending" || phaseRef.current === "measure") setPhase("done"); }, 2500); };
+    if (held) unsub = loaderGate.subscribe(() => { if (!loaderGate.isHolding()) { unsub(); armWatchdog(); } });
+    else armWatchdog();
+    return () => { window.clearTimeout(wd); unsub(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- decided once on mount; sessionKey is a constant for a given page
   }, []);
 
@@ -224,16 +241,26 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
 
   // Armed → running once the first image has painted (the engine's existing readiness). Two frames are allowed to paint the start pose first. If the image is not
   // ready within READY_WAIT_MS the normal hero is shown instead — no loader, no gate.
+  // Loader handoff: while the cover is up the hero stays armed (start pose, nothing running, no ready-timeout). When the cover has left, this effect runs again and starts
+  // the opening exactly once — `phase` only ever moves forward — or, if the loader was dismissed by its timeout, the static hero is shown instead (next effect).
   useEffect(() => {
-    if (phase !== "armed") return;
+    if (phase !== "armed" || holding || loaderGate.isHolding()) return;
+    if (loaderGate.outcome() === "timeout") { abandonOpening(); return; }
     let r1 = 0, r2 = 0, to = 0;
     if (ready) {
-      r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setPhase("running")); });
+      r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => { if (phaseRef.current === "armed") setPhase("running"); }); });
     } else {
       to = window.setTimeout(() => { if (phaseRef.current === "armed") setPhase("done"); }, READY_WAIT_MS);
     }
     return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); window.clearTimeout(to); };
-  }, [phase, ready]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- abandonOpening only touches refs/setState
+  }, [phase, ready, holding]);
+
+  useEffect(() => {
+    if (holding || loaderGate.outcome() !== "timeout") return;
+    abandonOpening(); // the loader gave up waiting: the usable static hero (poster, word, copy), no opening
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- abandonOpening only touches refs/setState
+  }, [holding]);
 
   useEffect(() => {
     if (phase !== "running") return;
@@ -297,7 +324,7 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
   };
 
   useEffect(() => {
-    const engine = new PrismEngine(banners, () => setReady(true));
+    const engine = new PrismEngine(banners, () => setReady(true), { deferSequences: loaderGate.isHolding() });
     engineRef.current = engine;
     const wall = wallRef.current!;
     const ro = new ResizeObserver(() => engine.resize(wall.clientWidth, wall.clientHeight, window.devicePixelRatio || 1));
@@ -320,6 +347,30 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
     };
   }, [banners]);
 
+  // First-view readiness for the loader (no-ops when no loader is up): the renderer has painted, and the first hero image is decoded. Failure counts as settled — a missing
+  // image shows the existing poster/placeholder and must never keep the loader up. Only then do the remaining frames (non-essential) start loading, in their usual order.
+  useEffect(() => {
+    if (ready) loaderGate.signal("renderer");
+  }, [ready]);
+  useEffect(() => {
+    const src = banners[0]?.poster?.src;
+    let live = true;
+    const settle = () => {
+      if (!live) return;
+      loaderGate.signal("image");
+      engineRef.current?.startSequences();
+    };
+    if (!src) {
+      settle();
+      return () => { live = false; };
+    }
+    const im = new Image();
+    im.decoding = "async";
+    im.src = src;
+    (im.decode ? im.decode() : new Promise<void>((res, rej) => { im.onload = () => res(); im.onerror = rej; })).then(settle, settle);
+    return () => { live = false; };
+  }, [banners]);
+
   useEffect(() => {
     const grid = gridRef.current.map((row) => row.slice(0, ribCount));
     engineRef.current?.setCanvases(grid);
@@ -337,11 +388,11 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
   }, [prismFace]);
 
   useEffect(() => {
-    if (paused || tabHidden || phase !== "done") return; // the countdown starts once the opening has completed
+    if (paused || tabHidden || holding || loaderGate.isHolding() || phase !== "done") return; // the countdown starts once the opening has completed (and the loader cover has left)
     const id = window.setTimeout(() => turn(1, false), AUTO_MS + settle.current);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `turn` only touches refs/setState
-  }, [turns, paused, tabHidden, phase]);
+  }, [turns, paused, tabHidden, phase, holding]);
 
   const go = (target: number) => {
     let d = (target - face + FACES) % FACES;
