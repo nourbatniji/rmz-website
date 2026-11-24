@@ -58,10 +58,10 @@
 .ft-mhead { position: relative; margin-top: 28px; }
 .ft-mhl { font-size: clamp(44px, 14.8vw, 104px); }
 .ft-mhl .ft-iv { display: block; }
-.ft-mhead .ft-mcta { position: absolute; right: 0; bottom: -12px; top: auto; left: auto; width: clamp(104px, 29vw, 160px); height: clamp(104px, 29vw, 160px); gap: 2px; transform: rotate(-8deg); }
-.ft-mhead .ft-mcta b { font-size: clamp(15px, 4.1vw, 22px); }
+.ft-mhead .ft-mcta { position: absolute; right: 0; bottom: -34px; top: auto; left: auto; width: clamp(88px, 25vw, 160px); height: clamp(88px, 25vw, 160px); gap: 2px; transform: rotate(-8deg); }
+.ft-mhead .ft-mcta b { font-size: clamp(13px, 3.6vw, 22px); }
 .ft-mhead .ft-mcta i { font-size: clamp(18px, 5vw, 26px); }
-.ft-mem { display: inline-block; margin-top: 36px; font-size: clamp(20px, 5.4vw, 40px); white-space: normal; overflow-wrap: anywhere; line-height: 1; }
+.ft-mem { display: inline-block; margin-top: 56px; font-size: clamp(15px, 4.7vw, 40px); white-space: normal; overflow-wrap: anywhere; line-height: 1; }
 .ft-macc { margin-top: 36px; border-bottom: 1px solid rgb(243 232 204 / 0.2); }
 .ft-mrow { border-top: 1px solid rgb(243 232 204 / 0.2); }
 .ft-mbtn { all: unset; box-sizing: border-box; display: flex; width: 100%; align-items: center; justify-content: space-between; height: 64px; cursor: pointer; font-weight: 900; font-size: 24px; letter-spacing: -0.03em; text-transform: uppercase; color: #f3e8cc; transition: color 0.25s ease; }

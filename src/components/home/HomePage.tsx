@@ -1,7 +1,7 @@
 import { Collaborations } from "@/components/home/collaborations/Collaborations";
 import { SiteHeader } from "@/components/shell/SiteHeader";
 import type { SectionKey } from "@/lib/admin/section-meta";
-import { Footer } from "@/components/home/footer/Footer";
+import { FooterUnfold } from "@/components/home/footer/FooterUnfold";
 import { AboutScrubber } from "@/components/home/about/AboutScrubber";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
 import { HeroThreeWorlds } from "@/components/home/hero/HeroThreeWorlds";
@@ -57,8 +57,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       <ServicesOrbit content={lens} services={services} />
       <Minds content={minds} />
       {archive}
-      <Collaborations content={collaborations} />
-      <Footer content={footer} />
+      <FooterUnfold cover={<Collaborations content={collaborations} />} content={footer} />
     </main>
   );
 }

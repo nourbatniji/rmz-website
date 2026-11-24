@@ -513,10 +513,10 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
                       if (state === "out" && e.animationName === "hw-out") setLeaving((l) => (l.includes(i) ? l.filter((x) => x !== i) : l));
                     }}
                   >
-                    <span className="hw-line t-display text-[clamp(38px,11.4vw,50px)] text-cream md:text-[clamp(46px,5.3vw,84px)]" style={{ ["--l" as string]: 0 }}>
+                    <span className="hw-line t-display text-[clamp(38px,11.4vw,50px)] text-cream md:text-[clamp(46px,5.3vw,84px)] md:max-lg:text-[clamp(58px,8.2vw,76px)]" style={{ ["--l" as string]: 0 }}>
                       <span>{p.lead}</span>
                     </span>
-                    <span className="hw-line t-italic mt-1.5 text-[clamp(46px,13.6vw,60px)] text-red md:mt-2 md:text-[clamp(58px,6.7vw,104px)]" style={{ ["--l" as string]: 1 }}>
+                    <span className="hw-line t-italic mt-1.5 text-[clamp(46px,13.6vw,60px)] text-red md:mt-2 md:text-[clamp(58px,6.7vw,104px)] md:max-lg:text-[clamp(74px,10.4vw,96px)]" style={{ ["--l" as string]: 1 }}>
                       <span>{p.emphasis}</span>
                       <span className="hw-ghost" aria-hidden="true">{p.emphasis}</span>
                     </span>
@@ -525,7 +525,7 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
               })}
             </h1>
             </div>
-            <p style={{ ["--rd" as string]: 0 }} className="t-body hw-rise mt-5 max-w-[420px] text-[15px] text-cream md:mt-7 md:text-[18px]">{hero.tagline || DESCRIPTION}</p>
+            <p style={{ ["--rd" as string]: 0 }} className="t-body hw-rise mt-5 max-w-[420px] text-[15px] text-cream md:mt-7 md:text-[18px] md:max-lg:max-w-[520px] md:max-lg:text-[21px]">{hero.tagline || DESCRIPTION}</p>
             <a
               href={hero.ctaHref || CTA_HREF}
               style={{ ["--rd" as string]: 1 }}

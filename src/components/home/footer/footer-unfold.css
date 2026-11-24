@@ -1,0 +1,52 @@
+/* Closing sequence — Collaborations curtain + folded footer that unfolds once uncovered. Prefix: fu- (desktop ≥ 1024 px only) */
+.fu-wrap { position: relative; background: #0f0f0e; }
+.fu-track { display: none; }
+.fu-anchor { display: block; height: 0; }
+
+@media (min-width: 1024px) {
+  .fu-wrap {
+    --hc: calc(var(--sc, 1) * 900px);
+    --hf: calc(var(--sc, 1) * 400px);
+    height: calc(var(--hc) + var(--hf) + 130svh);
+  }
+  .fu-cover { position: sticky; z-index: 2; top: min(0px, calc(100svh - var(--hf) - var(--hc))); box-shadow: 0 26px 60px rgb(0 0 0 / 0.6); }
+  .fu-track { display: block; position: relative; z-index: 1; margin-top: calc(var(--hf) * -1); height: calc(var(--hf) * 2 + 130svh); }
+  .fu-stage { position: sticky; top: calc(100svh - var(--hf)); height: var(--hf); overflow: hidden; background: #0f0f0e; color: #f3e8cc; font-family: var(--font-sans); }
+  .fu-anchor { display: block; position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; pointer-events: none; }
+  .fu-stack { display: none; }
+  .fu-wrap.is-static { height: calc(var(--hc) + var(--hf)); }
+  .fu-wrap.is-static .fu-track { height: calc(var(--hf) * 2); }
+}
+
+.fu-stage a { color: inherit; text-decoration: none; }
+.fu-stage a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+
+/* 1440 × 400 artboard, scaled to the width by useFit */
+.fu-box { position: absolute; left: 0; top: 0; width: 1440px; height: 400px; transform-origin: 0 0; box-sizing: border-box; border-top: 1px solid rgb(243 232 204 / 0.2); }
+.fu-top { position: absolute; left: 64px; right: 64px; top: 22px; z-index: 6; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+.fu-up { border: 1px solid; border-radius: 999px; padding: 8px 18px; }
+.fu-persp { position: absolute; inset: 0; z-index: 1; perspective: 2200px; perspective-origin: 50% 50%; }
+.fu-strip { position: absolute; left: 0; width: 360px; transform-style: preserve-3d; }
+.fu-bar { position: absolute; left: 64px; right: 64px; bottom: 16px; z-index: 6; display: flex; justify-content: space-between; font-weight: 600; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; }
+.fu-bar span { opacity: 0.75; }
+
+.fu-p { position: absolute; top: 0; width: 360px; transform-style: preserve-3d; transform-origin: 0 50%; }
+.fu-p0 { left: 0; }
+.fu-p .fu-p { left: 100%; }
+.fu-fc { position: absolute; inset: 0; overflow: hidden; box-sizing: border-box; padding: 78px 40px 54px; display: flex; flex-direction: column; background: #f3e8cc; color: #0f0f0e; box-shadow: inset 2px 0 0 rgb(0 0 0 / 0.22); }
+.fu-gh { position: absolute; right: -20px; bottom: -100px; font-weight: 900; font-size: 400px; line-height: 1; letter-spacing: -0.05em; pointer-events: none; }
+.fu-pc { position: relative; display: flex; flex-direction: column; flex: 1; }
+.fu-sh { position: absolute; inset: 0; pointer-events: none; }
+.fu-k { margin: 0 0 14px; font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #d52518; }
+.fu-lead { margin: 0; font-weight: 300; font-size: 16px; line-height: 1.5; }
+.fu-mail { margin-top: auto; align-self: flex-start; font-weight: 900; font-size: 23px; line-height: 1.02; letter-spacing: -0.02em; text-transform: uppercase; border-bottom: 3px solid #0f0f0e; padding-bottom: 4px; }
+.fu-nav { font-weight: 900; font-size: 27px; line-height: 1.12; letter-spacing: -0.02em; text-transform: uppercase; }
+.fu-lk { display: block; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.fu-lk:hover { transform: translateX(12px); }
+.fu-sv { font-weight: 300; font-size: 18px; line-height: 1.85; }
+.fu-sv span { display: block; }
+.fu-soc { font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; border-top: 1px solid rgb(15 15 14 / 0.4); }
+.fu-so { display: flex; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid rgb(15 15 14 / 0.4); transition: padding 0.3s; }
+.fu-so:hover { padding-left: 10px; }
+
+@media (prefers-reduced-motion: reduce) { .fu-stage *, .fu-stage *::before { transition: none !important; } }

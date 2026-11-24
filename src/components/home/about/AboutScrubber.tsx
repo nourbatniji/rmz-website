@@ -42,6 +42,8 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
   const rootRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const mTrackRef = useRef<HTMLDivElement>(null);
+  const mStageRef = useRef<HTMLDivElement>(null);
   const [cur, setCur] = useState(0);
 
   useEffect(() => {
@@ -117,6 +119,79 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
     };
   }, [n]);
 
+  // Mobile / tablet (< 1024 px, motion allowed): the same scroll-linked idea, but the image is a stack of cards: as the page scrolls the next one slides in over the
+  // current one and covers it; the text under it cross-fades. Arrows jump one project. Reduced motion / no JS keep the plain list.
+  useEffect(() => {
+    const root = rootRef.current, track = mTrackRef.current, stage = mStageRef.current;
+    if (!root || !track || !stage || n < 1) return;
+    const rail = root.querySelector<HTMLElement>("[data-ab-mrail]");
+    const cards = [...root.querySelectorAll<HTMLElement>("[data-ab-mcard]")];
+    const txts = [...root.querySelectorAll<HTMLElement>("[data-ab-mtxt]")];
+    const bar = root.querySelector<HTMLElement>("[data-ab-mbar]");
+    const count = root.querySelector<HTMLElement>("[data-ab-mcount]");
+    const prevBtn = root.querySelector<HTMLElement>("[data-ab-mprev]");
+    const nextBtn = root.querySelector<HTMLElement>("[data-ab-mnext]");
+    const desktop = window.matchMedia(DESKTOP), reduced = window.matchMedia(REDUCED);
+    let raf = 0;
+
+    const live = () => !desktop.matches && !reduced.matches;
+    const hh = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 84;
+    const extra = () => Math.max(1, track.offsetHeight - stage.offsetHeight);
+    const scOf = () => clamp(clamp((hh() - track.getBoundingClientRect().top) / extra()) * n - 0.5, 0, n - 1); // first card fully shown at the start, last at the end
+
+    const paint = () => {
+      raf = 0;
+      if (!live() || !rail) return;
+      const sc = scOf();
+      // One big image at a time: the next card slides in from the right over the current one and covers it; the covered card steps back and dims.
+      const cw = cards[0]?.offsetWidth ?? 0;
+      cards.forEach((c, i) => {
+        const dd = sc - i; // < 0: not arrived yet; > 0: covered
+        const u = clamp(-dd), sm = u * u * (3 - 2 * u); // 0 = landed, 1 = fully off to the right
+        const covered = clamp(dd);
+        c.style.zIndex = String(10 + i);
+        c.style.transform = `translate3d(${(sm * cw).toFixed(1)}px, 0, 0) scale(${(1 - 0.06 * covered).toFixed(3)})`;
+        c.style.filter = `brightness(${(1 - 0.4 * covered).toFixed(2)})`;
+        c.style.visibility = u >= 0.999 || covered >= 1 ? "hidden" : "visible";
+      });
+      txts.forEach((t, i) => {
+        const top = clamp(1 - (Math.abs(sc - i) - 0.15) / 0.25);
+        t.style.opacity = top.toFixed(3);
+        t.style.visibility = top < 0.01 ? "hidden" : "visible";
+        t.style.pointerEvents = top > 0.5 ? "auto" : "none";
+        if (top > 0.5) t.removeAttribute("aria-hidden"); else t.setAttribute("aria-hidden", "true");
+      });
+      if (bar) bar.style.width = `${(((sc + 1) / n) * 100).toFixed(2)}%`;
+      if (count) count.textContent = `${two(Math.round(sc) + 1)} / ${two(n)}`;
+    };
+    const kick = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(paint); };
+    const jump = (i: number) => {
+      const top = window.scrollY + track.getBoundingClientRect().top - hh() + ((i + 0.5) / n) * extra();
+      window.scrollTo({ top, behavior: "smooth" });
+    };
+    const onPrev = () => jump(clamp(Math.round(scOf()) - 1, 0, n - 1));
+    const onNext = () => jump(clamp(Math.round(scOf()) + 1, 0, n - 1));
+    prevBtn?.addEventListener("click", onPrev);
+    nextBtn?.addEventListener("click", onNext);
+    paint();
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", kick);
+    desktop.addEventListener("change", kick);
+    reduced.addEventListener("change", kick);
+    const ro = new ResizeObserver(kick);
+    ro.observe(stage);
+    return () => {
+      prevBtn?.removeEventListener("click", onPrev);
+      nextBtn?.removeEventListener("click", onNext);
+      window.removeEventListener("scroll", kick);
+      window.removeEventListener("resize", kick);
+      desktop.removeEventListener("change", kick);
+      reduced.removeEventListener("change", kick);
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [n]);
+
   const pending = "Image pending";
   const cta = { href: "#services", label: "What we do ↓" };
 
@@ -177,7 +252,55 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
         </div>
       </div>
 
-      {/* ── Plain list: mobile, reduced motion, no JavaScript ── */}
+      {/* ── Scroll-linked swipe (mobile / tablet, motion allowed) ── */}
+      <div className="ab-mob">
+        <div ref={mTrackRef} className="ab-mtrack">
+          <div ref={mStageRef} className="ab-mstage">
+            <div className="ab-mtop">
+              <div className="ab-mrow">
+                <p className="ab-label">{content.label}</p>
+                <p className="ab-label" data-ab-mcount aria-hidden="true">
+                  {two(1)} / {two(n)}
+                </p>
+              </div>
+              <div className="ab-mbar" aria-hidden="true">
+                <i data-ab-mbar />
+              </div>
+            </div>
+            <div className="ab-mcards">
+              <div className="ab-mrail" data-ab-mrail>
+                {items.map((item) => (
+                  <div key={item.id} data-ab-mcard className="ab-mcard" style={{ "--c": item.placeholderColor } as CSSProperties}>
+                    <StepImage item={item} pending={pending} />
+                    <span className="ab-mnum">{item.number}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="ab-mtxts">
+              {items.map((item, i) => (
+                <div key={item.id} data-ab-mtxt className="ab-mtxt" style={{ opacity: i === 0 ? 1 : 0 }} aria-hidden={i === 0 ? undefined : true}>
+                  <p className="ab-kicker">
+                    {item.category}
+                    {item.copyStatus === "placeholder" && <span className="ab-prov">Provisional copy</span>}
+                  </p>
+                  <h3 className="ab-title">{item.name}</h3>
+                  <p className="ab-body">{item.description}</p>
+                </div>
+              ))}
+            </div>
+            <div className="ab-mctl">
+              <a className="ab-cta" href={cta.href}>
+                {cta.label}
+              </a>
+              <button type="button" className="ab-marr" data-ab-mprev aria-label="Previous project">←</button>
+              <button type="button" className="ab-marr" data-ab-mnext aria-label="Next project">→</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Plain list: reduced motion, no JavaScript ── */}
       <div className="ab-static">
         <p className="ab-label">{content.label}</p>
         <ol className="ab-list">
@@ -200,7 +323,7 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
         </a>
       </div>
       <noscript>
-        <style>{`.ab-flip{display:none!important}.ab-static{display:block!important}`}</style>
+        <style>{`.ab-flip,.ab-mob{display:none!important}.ab-static{display:block!important}`}</style>
       </noscript>
     </section>
   );
