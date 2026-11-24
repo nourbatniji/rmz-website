@@ -4,53 +4,40 @@ import { useState } from "react";
 import { Heading, Logo, optical, useMedia, type CollabProps } from "./shared";
 
 /**
- * C — TYPOGRAPHIC ROSTER. The client names set as a quiet list; the selected name is brighter with a small red mark, and its logo appears in one reserved stage beside the list
- * (all logos are stacked in the stage, so switching only changes opacity — nothing moves). The first entry is selected by default. Hover or focus previews, click or tap selects.
- * Phones: the stage stays at the top of the section while the list scrolls under it; tap a name to select.
+ * C — THE TYPOGRAPHIC EXCHANGE. A spacious, static composition of logos. On hover or keyboard focus a logo slides up through a vertical mask and the client's name (in the project's
+ * editorial italic) slides in from below inside the same reserved footprint; leaving reverses it, and neighbours never move. On touch the logos stay visible by default and a tap
+ * optionally swaps one (tap again to return). The name is always available to assistive technology and never depends on hover. Reduced motion swaps instantly.
  */
-export function CollabC({ label, headingLead, headingEmphasis, partnerLine, placeholderNote, partners }: CollabProps) {
-  const [sel, setSel] = useState(0);
-  const [peek, setPeek] = useState(-1);
+export function CollabC({ label, headingLead, headingEmphasis, partners }: CollabProps) {
   const phone = useMedia("(max-width: 767px)");
-  const show = peek >= 0 ? peek : sel;
-  const cur = partners[show];
+  const [on, setOn] = useState<number[]>([]);
+  const set = (i: number, v: boolean) => setOn((s) => (v ? (s.includes(i) ? s : [...s, i]) : s.filter((x) => x !== i)));
   return (
     <section className="cb cb-c" aria-labelledby="cb-c-h">
       <div className="cb-wrap">
         <Heading label={label} lead={headingLead} emphasis={headingEmphasis} />
-        <div className="cb-c-body">
-          <div className="cb-c-stage" aria-live="polite">
-            <div className="cb-c-logos">
-              {partners.map((p, i) => (
-                <div key={p.name} className="cb-c-logo" style={{ opacity: i === show ? 1 : 0 }} aria-hidden={i !== show}>
-                  <Logo p={p} width={optical(p, phone ? 9000 : 26000, phone ? 120 : 200, phone ? 230 : 420, phone ? 84 : 150)} />
+        <ul className="cb-ex-grid">
+          {partners.map((p, i) => (
+            <li key={p.name} className="cb-ex-li">
+              <div
+                role="group"
+                tabIndex={0}
+                aria-label={p.name}
+                className={`cb-ex-cell${on.includes(i) ? " is-name" : ""}`}
+                onPointerEnter={(e) => e.pointerType === "mouse" && set(i, true)}
+                onPointerLeave={(e) => e.pointerType === "mouse" && set(i, false)}
+                onFocus={() => set(i, true)}
+                onBlur={() => set(i, false)}
+                onPointerUp={(e) => { if (e.pointerType !== "mouse") set(i, !on.includes(i)); }}
+              >
+                <div className="cb-ex-mask">
+                  <div className="cb-ex-logo"><Logo p={p} width={optical(p, phone ? 5200 : 8800, phone ? 96 : 130, phone ? 170 : 290, phone ? 64 : 88)} /></div>
+                  <div className="cb-ex-name" aria-hidden="true">{p.name}</div>
                 </div>
-              ))}
-            </div>
-            <p className="cb-c-role">{cur.role}</p>
-            <p className="cb-c-line">{cur.copyStatus === "placeholder" ? partnerLine : " "}</p>
-          </div>
-          <ul className="cb-c-list" role="listbox" aria-label="Collaborations">
-            {partners.map((p, i) => (
-              <li key={p.name} role="presentation">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={i === sel}
-                  className={`cb-c-row${i === sel ? " sel" : ""}${i === peek ? " peek" : ""}`}
-                  onPointerEnter={(e) => e.pointerType === "mouse" && setPeek(i)}
-                  onPointerLeave={(e) => e.pointerType === "mouse" && setPeek(-1)}
-                  onFocus={() => setPeek(i)}
-                  onBlur={() => setPeek(-1)}
-                  onClick={() => setSel(i)}
-                >
-                  {p.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="cb-note">{placeholderNote}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

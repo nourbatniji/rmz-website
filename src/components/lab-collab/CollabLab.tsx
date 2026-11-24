@@ -6,27 +6,25 @@ import type { CollectiveContent } from "@/content/closing-types";
 import { CollabA } from "./CollabA";
 import { CollabB } from "./CollabB";
 import { CollabC } from "./CollabC";
-import { CollabD } from "./CollabD";
 import { useMedia } from "./shared";
 import "./collab-lab.css";
 
 /** Lab only (/lab/collaborations): four structurally different Collaborations prototypes between the REAL preceding (work archive) and following (footer) sections. */
 
-type V = "A" | "B" | "C" | "D";
+type V = "A" | "B" | "C";
 type Cfg = { v: V; few: boolean; reduce: boolean };
 const VARIANTS: { id: V; name: string }[] = [
-  { id: "A", name: "Editorial index" },
-  { id: "B", name: "Ribbon" },
-  { id: "C", name: "Typographic roster" },
-  { id: "D", name: "Featured + roster" },
+  { id: "A", name: "Switchboard" },
+  { id: "B", name: "Turning wall" },
+  { id: "C", name: "Typographic exchange" },
 ];
 const FEW = 5;
-const isV = (x: string | null): x is V => x === "A" || x === "B" || x === "C" || x === "D";
+const isV = (x: string | null): x is V => x === "A" || x === "B" || x === "C";
 
 function Stage({ content, before, after, cfg }: { content: CollectiveContent; before: ReactNode; after: ReactNode; cfg: Cfg }) {
   const sys = useMedia("(prefers-reduced-motion: reduce)");
   const partners = useMemo(() => (cfg.few ? content.partners.slice(0, FEW) : content.partners), [content.partners, cfg.few]);
-  const props = { label: content.label, headingLead: content.headingLead, headingEmphasis: content.headingEmphasis, hint: content.hint, partnerLine: content.partnerLine, placeholderNote: content.placeholderNote, partners, reduced: sys || cfg.reduce };
+  const props = { label: content.label, headingLead: content.headingLead, headingEmphasis: content.headingEmphasis, partners, reduced: sys || cfg.reduce };
   useEffect(() => {
     document.documentElement.dataset.cbReduce = cfg.reduce ? "1" : "0";
     return () => { delete document.documentElement.dataset.cbReduce; };
@@ -46,7 +44,6 @@ function Stage({ content, before, after, cfg }: { content: CollectiveContent; be
         {cfg.v === "A" && <CollabA {...props} />}
         {cfg.v === "B" && <CollabB {...props} />}
         {cfg.v === "C" && <CollabC {...props} />}
-        {cfg.v === "D" && <CollabD {...props} />}
       </div>
       <div className="cb-ctx cb-ctx-after" aria-hidden="true" inert><div className="cb-ctx-in">{after}</div></div>
     </main>
@@ -106,6 +103,7 @@ function Review({ content, before, after, initialV, initialFew, initialReduce }:
         </div>
       )}
       <div className="lab-bar" role="toolbar" aria-label="Collaborations lab controls (lab only)">
+        <p className="lab-warn">Lab placeholders: the logos are placeholder wordmarks, not real RMZ clients — real SVG/PNG artwork plugs into the same components (<code>partners[].logo</code>).</p>
         <Seg label="Direction" items={VARIANTS.map((x) => ({ id: x.id, text: `${x.id} · ${x.name}`, on: v === x.id, fn: () => pick(x.id) }))} />
         <Seg label="View" items={[{ id: "s", text: "Jump to section", on: false, fn: toSection }]} />
         <Seg label="Logos" items={[{ id: "a", text: `All ${content.partners.length}`, on: !few, fn: () => setFew(false) }, { id: "f", text: `Few ${FEW}`, on: few, fn: () => setFew(true) }]} />

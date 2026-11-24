@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { useSyncExternalStore } from "react";
 import type { CollectivePartner } from "@/content/closing-types";
 import { WORDMARKS, Wordmark } from "@/components/home/collective/wordmarks";
 
@@ -11,10 +11,8 @@ export type CollabProps = {
   label: string;
   headingLead: string;
   headingEmphasis: string;
-  hint: string;
-  partnerLine: string;
-  placeholderNote: string;
   partners: Partner[];
+  /** reduced motion (system setting or the lab toggle): every direction shows a complete static roster */
   reduced: boolean;
 };
 
@@ -47,51 +45,6 @@ export function useMedia(query: string, server = false) {
     },
     () => window.matchMedia(query).matches,
     () => server,
-  );
-}
-
-/** Hover (mouse) / keyboard focus reveal a partner; a tap or Enter/Space pins it, a second one clears it. */
-export function useSelect() {
-  const [hover, setHover] = useState(-1);
-  const [pin, setPin] = useState(-1);
-  const active = hover >= 0 ? hover : pin;
-  const bind = (i: number) => ({
-    onPointerEnter: (e: React.PointerEvent) => { if (e.pointerType === "mouse") setHover(i); },
-    onPointerLeave: (e: React.PointerEvent) => { if (e.pointerType === "mouse") setHover(-1); },
-    onFocus: () => setHover(i),
-    onBlur: () => setHover(-1),
-    onClick: () => setPin((v) => (v === i ? -1 : i)),
-    onKeyDown: (e: React.KeyboardEvent) => {
-      if (e.key === " " || e.key === "Enter") { e.preventDefault(); setPin((v) => (v === i ? -1 : i)); }
-      if (e.key === "Escape") { setPin(-1); setHover(-1); }
-    },
-  });
-  return { active, pin, setPin, bind };
-}
-
-/**
- * One partner entry. A partner with a destination is a real link; one without is NOT styled or announced as a link (no pointer cursor, no underline) —
- * it is a keyboard-focusable group so that its details can still be revealed by focus.
- */
-export function Entry({ p, i, bind, className = "", pressed, quiet = false, children }: { p: Partner; i: number; bind: (i: number) => Record<string, unknown>; className?: string; pressed?: boolean; quiet?: boolean; children: ReactNode }) {
-  const props = bind(i);
-  if (p.href) return <a href={p.href} className={`cb-entry is-link ${className}`} aria-label={`${p.name}, ${p.role}`} {...props}>{children}</a>;
-  if (quiet) return <div className={`cb-entry ${className}`}>{children}</div>;
-  return (
-    <div role="group" tabIndex={0} className={`cb-entry ${className}`} aria-label={`${p.name}, ${p.role}${p.copyStatus === "placeholder" ? " (placeholder)" : ""}`} data-pressed={pressed ? "1" : undefined} {...props}>
-      {children}
-    </div>
-  );
-}
-
-/** The single reserved caption area: name, role and (only when it exists) the extra line. Always the same height — nothing below it moves. */
-export function Caption({ cur, hint, line }: { cur: Partner | null; hint: string; line: string }) {
-  return (
-    <div className="cb-cap" aria-live="polite">
-      <p className="cb-cap-name" style={{ opacity: cur ? 1 : 0.5 }}>{cur ? cur.name : hint}</p>
-      <p className="cb-cap-role">{cur?.role ?? " "}</p>
-      <p className="cb-cap-line">{cur && cur.copyStatus === "placeholder" ? line : " "}</p>
-    </div>
   );
 }
 
