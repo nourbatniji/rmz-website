@@ -4,19 +4,18 @@ import { useEffect, useMemo, useRef } from "react";
 import { Heading, Logo, aspectOf, optical, useMedia, type Partner } from "./shared";
 
 /**
- * MAGNETIC COLLABORATIONS (lab prototype). Readable partner logos sit around a small red RMZ square that acts as a magnet.
- *  · Desktop: moving the pointer inside the field moves the square a limited distance; only the two nearest logos respond — a small, damped pull towards the square and a slight tilt —
- *    and a hairline red connector joins the square to each. Leaving settles everything back.
- *  · Click / tap / Enter / Space on the square: the logos gather into a compact, non-overlapping cluster around it, hold briefly, and return. One deliberate moment, never automatic,
- *    repeated activations are ignored until it has finished.
- *  · Phones: drag the square (dragging is captured only when it starts on the square; the rest of the field scrolls normally); a tap gathers; a drag never triggers the gather.
- * Everything is driven by ONE requestAnimationFrame loop that writes transforms only, runs only while something is moving and the section is on screen, and cleans up after itself.
- * Reduced motion: the static composition; no attraction, tilt or gathering travel.
+ * MAGNETIC COLLABORATIONS (lab prototype). Readable partner logos sit around a small red RMZ square — above, below and diagonally — that acts as a magnet.
+ *  · Pointer (desktop) / finger dragging the square (phones): the square follows across the whole field, kept inside it and out of the logos (collisions are resolved locally,
+ *    a logo's box simply pushes the square round it). Only the nearest TWO logos respond, by distance: a soft pull of up to 32 px towards the square and a slight tilt, and a short
+ *    hairline connector fades in between the square's and the logo's edges once the pull is meaningful. Different logos take turns as the square travels.
+ *  · Click / tap / Enter / Space on the square: the logos gather into a compact, non-overlapping cluster around it, hold, and return (unchanged). Repeats never stack.
+ * ONE requestAnimationFrame loop, frame-rate-independent damping (the square is prompt, the logos follow with a soft lag, no overshoot), transforms only; it runs only while something moves
+ * and the section is on screen. Reduced motion: the static composition.
  */
 
 type Pt = [number, number];
-// Slot centres as fractions of the field (x, y). Slightly irregular, balanced on both sides of the square, the centre kept clear.
-const DESKTOP: Pt[] = [[0.075, 0.3], [0.2, 0.7], [0.19, 0.16], [0.325, 0.5], [0.325, 0.84], [0.275, 0.2], [0.925, 0.26], [0.795, 0.74], [0.8, 0.14], [0.675, 0.5], [0.68, 0.86], [0.7, 0.22]];
+// Slot centres as fractions of the field (x, y): one balanced field around the square — rows above and below, two diagonal-side marks — with its surroundings kept clear.
+const DESKTOP: Pt[] = [[0.13, 0.2], [0.285, 0.83], [0.325, 0.19], [0.355, 0.52], [0.5, 0.86], [0.52, 0.16], [0.885, 0.2], [0.715, 0.83], [0.725, 0.2], [0.645, 0.52], [0.115, 0.82], [0.9, 0.82]];
 const PHONE: Pt[] = [[0.2, 0.1], [0.5, 0.13], [0.8, 0.1], [0.17, 0.3], [0.17, 0.5], [0.17, 0.7], [0.83, 0.3], [0.83, 0.5], [0.83, 0.7], [0.2, 0.9], [0.5, 0.87], [0.8, 0.9]];
 
 const smooth = (dt: number, tau: number) => 1 - Math.exp(-dt / tau);
@@ -34,9 +33,12 @@ export function MagneticCollab({ label, headingLead, headingEmphasis, partners, 
   const phone = useMedia("(max-width: 767px)");
   const n = partners.length;
   const slots = useMemo(() => (phone ? PHONE : DESKTOP).slice(0, n), [phone, n]);
+  // Optical sizing: equal visual weight by area, and a legibility boost for the stacked / compact marks (their lettering is small inside a near-square box).
   const sizes = useMemo(() => partners.map((p) => {
-    const w = phone ? optical(p, 2900, 66, 94, 52) : optical(p, 3900, 80, 150, 60);
-    return { w, h: Math.round(w / aspectOf(p)) };
+    const a = aspectOf(p);
+    const boost = 1 + clamp(1.9 - a, 0, 1) * 0.85;
+    const w = phone ? optical(p, 3400 * boost, 70, 96, 64) : optical(p, 4700 * boost, 96, 158, 78);
+    return { w, h: Math.round(w / a) };
   }), [partners, phone]);
 
   const section = useRef<HTMLElement>(null);
@@ -44,27 +46,49 @@ export function MagneticCollab({ label, headingLead, headingEmphasis, partners, 
   const magnet = useRef<HTMLButtonElement>(null);
   const items = useRef<(HTMLLIElement | null)[]>([]);
   const lines = useRef<(SVGLineElement | null)[]>([]);
-  const api = useRef<{ activate: () => void } | null>(null);
 
   useEffect(() => {
     const fieldEl = field.current, magEl = magnet.current;
-    const itemEls = items.current;
+    const itemEls = items.current, lineEls = lines.current;
     if (!fieldEl || !magEl) return;
-    api.current = { activate: () => {} };
     if (reduced) return; // static composition: nothing is ever moved
-    const mag = 28; // half the square
+    const mag = phone ? 26 : 28; // half the square
+    const MAXPULL = phone ? 26 : 32, REACH = 240, CLEAR = 12, TAU_M = 0.07, TAU_L = 0.16;
     const S = {
       w: 0, h: 0, tx: 0, ty: 0, mx: 0, my: 0,
-      wt: new Float32Array(n), wc: new Float32Array(n), dx: new Float32Array(n), dy: new Float32Array(n), rot: new Float32Array(n),
+      dx: new Float32Array(n), dy: new Float32Array(n), rot: new Float32Array(n), vis: new Float32Array(n),
       pair: [-1, -1] as [number, number], phase: "idle" as "idle" | "in" | "hold" | "out", t: 0, p: 0, drag: false, visible: false, raf: 0, last: 0, cluster: [] as Pt[], csc: 1,
     };
-    // limits keep the square clear of the logos at rest (desktop: ±60 × ±30; phone: it may travel in the gap between the logo columns)
-    const lim = phone ? { x: 30, y: 62, maxD: 9 } : { x: 60, y: 30, maxD: 14 };
     const rest = (i: number): Pt => [slots[i][0] * S.w, slots[i][1] * S.h];
-
     const measure = () => { const r = fieldEl.getBoundingClientRect(); S.w = r.width; S.h = r.height; };
+    /** Edge-to-edge gap between the square at (px,py) and logo i at rest. */
+    const gapTo = (i: number, px: number, py: number) => {
+      const [rx, ry] = rest(i);
+      return Math.hypot(Math.max(Math.abs(px - rx) - (mag + sizes[i].w / 2), 0), Math.max(Math.abs(py - ry) - (mag + sizes[i].h / 2), 0));
+    };
+    /** The square follows the pointer anywhere in the field but never covers a logo. Collisions are resolved locally: if the pointer is over a logo's (expanded) box, the square takes the
+     *  nearest free spot on the edge of that box (checked against all the others), and the field's edge keeps it inside. If no free spot exists it simply stays where it is. */
+    const pad = mag + 16;
+    const resolve = (fx: number, fy: number): Pt => {
+      const m = mag + 6;
+      const free = (x: number, y: number) => {
+        if (x < m - 0.5 || x > S.w - m + 0.5 || y < m - 0.5 || y > S.h - m + 0.5) return false;
+        for (let i = 0; i < n; i++) { const [cx, cy] = rest(i); if (Math.abs(x - cx) < sizes[i].w / 2 + pad - 0.5 && Math.abs(y - cy) < sizes[i].h / 2 + pad - 0.5) return false; }
+        return true;
+      };
+      const px = clamp(fx, m, S.w - m), py = clamp(fy, m, S.h - m);
+      if (free(px, py)) return [px, py];
+      let best: Pt | null = null, bd = Infinity;
+      for (let i = 0; i < n; i++) {
+        const [cx, cy] = rest(i); const ex = sizes[i].w / 2 + pad, ey = sizes[i].h / 2 + pad;
+        const cand: Pt[] = [[cx - ex, clamp(py, cy - ey, cy + ey)], [cx + ex, clamp(py, cy - ey, cy + ey)], [clamp(px, cx - ex, cx + ex), cy - ey], [clamp(px, cx - ex, cx + ex), cy + ey]];
+        for (const [x, y] of cand) { if (!free(x, y)) continue; const d = Math.hypot(x - px, y - py); if (d < bd) { bd = d; best = [x, y]; } }
+      }
+      return best ?? [S.w / 2 + S.tx, S.h / 2 + S.ty];
+    };
+    const setTarget = (fx: number, fy: number) => { const [px, py] = resolve(fx, fy); S.tx = px - S.w / 2; S.ty = py - S.h / 2; };
+
     const buildCluster = () => {
-      // Two halves (by rest height) of the logos packed in rows above and below the square: no overlap, every logo identifiable.
       const idx = [...Array(n).keys()].sort((a, b) => slots[a][1] - slots[b][1] || slots[a][0] - slots[b][0]);
       const half = Math.ceil(n / 2), top = idx.slice(0, half), bot = idx.slice(half);
       const rowsPer = phone ? 2 : 1;
@@ -86,6 +110,10 @@ export function MagneticCollab({ label, headingLead, headingEmphasis, partners, 
       };
       place(rowsOf(top), -1);
       place(rowsOf(bot), 1);
+      // the cluster must also fit the field's height: scale everything down a little if it would not
+      const ext = Math.max(...out.map((c, i) => Math.abs(c[1]) + (sizes[i].h * sc) / 2));
+      const room = S.h / 2 - 8;
+      if (ext > room) { sc *= room / ext; place(rowsOf(top), -1); place(rowsOf(bot), 1); }
       S.cluster = out; S.csc = sc;
     };
 
@@ -93,90 +121,95 @@ export function MagneticCollab({ label, headingLead, headingEmphasis, partners, 
       S.raf = 0;
       const dt = Math.min(0.05, (now - (S.last || now)) / 1000); S.last = now;
       const gathering = S.phase !== "idle";
-      // magnet: follows its target (the centre while gathering), damped
+      // the square: prompt, frame-rate independent (the centre while gathering)
       const tx = gathering ? 0 : S.tx, ty = gathering ? 0 : S.ty;
-      const km = smooth(dt, gathering ? 0.16 : 0.13);
+      const km = smooth(dt, TAU_M);
       S.mx += (tx - S.mx) * km; S.my += (ty - S.my) * km;
-      // gather phases
       if (S.phase !== "idle") {
         S.t += dt;
         if (S.phase === "in") { S.p = ease(S.t / 0.6); if (S.t >= 0.6) { S.phase = "hold"; S.t = 0; S.p = 1; } }
         else if (S.phase === "hold") { S.p = 1; if (S.t >= 0.65) { S.phase = "out"; S.t = 0; } }
         else { S.p = 1 - ease(S.t / 0.85); if (S.t >= 0.85) { S.phase = "idle"; S.t = 0; S.p = 0; } }
       }
-      // nearest two (with hysteresis) respond to the square — only once it has actually been moved
       const mxp = S.w / 2 + S.mx, myp = S.h / 2 + S.my;
-      const dist = (i: number) => { const [rx, ry] = rest(i); return Math.hypot(rx - mxp, ry - myp); };
-      const mv = Math.hypot(S.mx, S.my);
-      const active = !gathering && S.p === 0 ? clamp((mv - 3) / 10, 0, 1) : 0;
+      const away = Math.hypot(S.mx, S.my);
+      const act = !gathering && S.p === 0 ? clamp((away - 6) / 18, 0, 1) : 0;
+      // the nearest two (by edge gap), with a small hysteresis so the choice never feels stuck
+      const gaps = new Float32Array(n); for (let i = 0; i < n; i++) gaps[i] = gapTo(i, mxp, myp);
       let [a, b] = S.pair;
-      if (a < 0 || b < 0) { const order = [...Array(n).keys()].sort((i, j) => dist(i) - dist(j)); a = order[0]; b = order[1]; }
+      if (a < 0 || b < 0) { const order = [...Array(n).keys()].sort((i, j) => gaps[i] - gaps[j]); a = order[0]; b = order[1]; }
       else {
-        const challenger = [...Array(n).keys()].filter((i) => i !== a && i !== b).sort((i, j) => dist(i) - dist(j))[0];
-        if (challenger !== undefined) { const far = dist(a) > dist(b) ? a : b; if (dist(challenger) + 14 < dist(far)) { if (far === a) a = challenger; else b = challenger; } }
+        const others = [...Array(n).keys()].filter((i) => i !== a && i !== b).sort((i, j) => gaps[i] - gaps[j]);
+        for (const c of others.slice(0, 2)) { const far = gaps[a] > gaps[b] ? a : b; if (gaps[c] + 8 < gaps[far]) { if (far === a) a = c; else b = c; } }
       }
       S.pair = [a, b];
-      let busy = gathering || mv > 0.4 || S.drag || Math.hypot(tx - S.mx, ty - S.my) > 0.3;
-      const kw = smooth(dt, 0.2);
+      let busy = gathering || S.drag || Math.hypot(tx - S.mx, ty - S.my) > 0.3;
+      const kl = smooth(dt, TAU_L);
       for (let i = 0; i < n; i++) {
-        S.wt[i] = (i === a || i === b ? 1 : 0) * active;
-        S.wc[i] += (S.wt[i] - S.wc[i]) * kw;
         const [rx, ry] = rest(i);
-        const vx = mxp - rx, vy = myp - ry, d = Math.hypot(vx, vy) || 1;
-        // never pull a logo closer than 14 px to the square (edge to edge, along the line between them)
-        const e1 = edge(rx, ry, sizes[i].w / 2, sizes[i].h / 2, mxp, myp), e2 = edge(mxp, myp, mag, mag, rx, ry);
-        const gap = Math.hypot(e1[0] - e2[0], e1[1] - e2[1]);
-        const pull = Math.min(lim.maxD, d * 0.1, Math.max(0, gap - 14)) * S.wc[i];
-        let ax = (vx / d) * pull, ay = (vy / d) * pull;
-        let rot = S.wc[i] * clamp(vy * 0.05, -6, 6) * (vx >= 0 ? 1 : -1);
-        let sc = 1;
-        if (S.p > 0 || S.phase !== "idle") {
+        let tdx = 0, tdy = 0, trot = 0;
+        if ((i === a || i === b) && act > 0) {
+          const vx = mxp - rx, vy = myp - ry, d = Math.hypot(vx, vy) || 1;
+          const f = ease(1 - gaps[i] / REACH);
+          const pull = Math.min(MAXPULL * f, Math.max(0, gaps[i] - CLEAR)) * act; // distance-based; never closer than CLEAR to the square
+          tdx = (vx / d) * pull; tdy = (vy / d) * pull;
+          trot = f * act * clamp(vy * 0.06, -7, 7) * (vx >= 0 ? 1 : -1);
+        }
+        S.dx[i] += (tdx - S.dx[i]) * kl; S.dy[i] += (tdy - S.dy[i]) * kl; S.rot[i] += (trot - S.rot[i]) * kl;
+        let ax = S.dx[i], ay = S.dy[i], rot = S.rot[i], sc = 1;
+        if (S.p > 0 || gathering) {
           const c = S.cluster[i] ?? [0, 0];
           const gx = S.w / 2 + S.mx + c[0] - rx, gy = S.h / 2 + S.my + c[1] - ry;
           ax = ax * (1 - S.p) + gx * S.p; ay = ay * (1 - S.p) + gy * S.p; rot *= 1 - S.p; sc = 1 + (S.csc - 1) * S.p;
         }
-        S.dx[i] = ax; S.dy[i] = ay; S.rot[i] = rot;
-        if (S.wc[i] > 0.002 || Math.abs(S.wt[i] - S.wc[i]) > 0.002) busy = true;
+        if (Math.abs(S.dx[i]) + Math.abs(S.dy[i]) + Math.abs(S.rot[i]) > 0.04) busy = true;
         const el = itemEls[i];
         if (el) el.style.transform = `translate(-50%, -50%) translate3d(${ax.toFixed(2)}px, ${ay.toFixed(2)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+        // a short, faint connector only once the pull is meaningful; it ends on the visible edges of the square and of the logo, and fades on its own as the logo lets go
+        const ln = lineEls[i];
+        if (ln) {
+          const disp = Math.hypot(S.dx[i], S.dy[i]);
+          const meaning = S.p > 0 ? 0 : clamp((disp - 5) / 12, 0, 1) * (1 - clamp((gaps[i] - 50) / 40, 0, 1));
+          if (meaning < 0.02) ln.style.opacity = "0";
+          else {
+            const lx = rx + S.dx[i], ly = ry + S.dy[i];
+            const s0 = edge(mxp, myp, mag + 1, mag + 1, lx, ly), e0 = edge(lx, ly, sizes[i].w / 2 + 3, sizes[i].h / 2 + 3, mxp, myp);
+            ln.setAttribute("x1", s0[0].toFixed(1)); ln.setAttribute("y1", s0[1].toFixed(1)); ln.setAttribute("x2", e0[0].toFixed(1)); ln.setAttribute("y2", e0[1].toFixed(1));
+            ln.style.opacity = (0.8 * meaning).toFixed(3);
+          }
+        }
       }
       magEl.style.transform = `translate3d(${S.mx.toFixed(2)}px, ${S.my.toFixed(2)}px, 0)`;
-      // hairline connectors to the two responding logos (hidden while gathering)
-      [a, b].forEach((i, k) => {
-        const ln = lines.current[k]; if (!ln) return;
-        const w = S.p > 0 ? 0 : S.wc[i];
-        if (w < 0.01) { ln.style.opacity = "0"; return; }
-        const [rx, ry] = rest(i); const lx = rx + S.dx[i], ly = ry + S.dy[i];
-        const s = edge(mxp, myp, mag + 3, mag + 3, lx, ly), e = edge(lx, ly, sizes[i].w / 2 + 5, sizes[i].h / 2 + 5, mxp, myp);
-        ln.setAttribute("x1", s[0].toFixed(1)); ln.setAttribute("y1", s[1].toFixed(1)); ln.setAttribute("x2", e[0].toFixed(1)); ln.setAttribute("y2", e[1].toFixed(1)); ln.style.opacity = (0.85 * w).toFixed(3);
-      });
-      if (!busy) { for (let i = 0; i < n; i++) { const el = itemEls[i]; if (el) el.style.transform = ""; } magEl.style.transform = ""; lines.current.forEach((l) => l && (l.style.opacity = "0")); S.last = 0; return; }
+      if (!busy) {
+        for (let i = 0; i < n; i++) { const el = itemEls[i]; if (el) el.style.transform = ""; const ln = lineEls[i]; if (ln) ln.style.opacity = "0"; S.dx[i] = S.dy[i] = S.rot[i] = 0; }
+        magEl.style.transform = ""; S.mx = S.tx; S.my = S.ty; if (S.tx || S.ty) magEl.style.transform = `translate3d(${S.mx}px, ${S.my}px, 0)`; S.last = 0; return;
+      }
       if (S.visible) S.raf = requestAnimationFrame(frame);
     };
     const kick = () => { if (!S.raf && S.visible) { S.last = 0; S.raf = requestAnimationFrame(frame); } };
 
-    // pointer inside the field (mouse): the square follows a little
+    // pointer inside the field (mouse): the square follows it across the whole field
     const onMove = (e: PointerEvent) => {
       if (e.pointerType !== "mouse" || S.drag) return;
       const r = fieldEl.getBoundingClientRect();
-      S.tx = clamp((e.clientX - (r.left + r.width / 2)) * 0.2, -lim.x, lim.x);
-      S.ty = clamp((e.clientY - (r.top + r.height / 2)) * 0.28, -lim.y, lim.y);
+      setTarget(e.clientX - r.left, e.clientY - r.top);
       kick();
     };
     const onLeave = (e: PointerEvent) => { if (e.pointerType !== "mouse") return; S.tx = 0; S.ty = 0; kick(); };
-    // drag from the square (touch / pen; also works with a mouse)
-    let down: { id: number; x: number; y: number; t: number; moved: boolean; ox: number; oy: number } | null = null;
+    // drag from the square (touch / pen; a mouse can drag it too)
+    let down: { id: number; x: number; y: number; moved: boolean; ox: number; oy: number } | null = null;
     let suppress = false;
     const onDown = (e: PointerEvent) => {
       if (e.pointerType === "mouse" && e.button !== 0) return;
-      down = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), moved: false, ox: S.tx, oy: S.ty };
+      const r = fieldEl.getBoundingClientRect();
+      // offset between the finger and the square's centre, so it does not jump under the finger
+      down = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, ox: e.clientX - (r.left + S.w / 2 + S.mx), oy: e.clientY - (r.top + S.h / 2 + S.my) };
       magEl.setPointerCapture(e.pointerId);
     };
     const onDragMove = (e: PointerEvent) => {
       if (!down || e.pointerId !== down.id) return;
-      const mvx = e.clientX - down.x, mvy = e.clientY - down.y;
-      if (!down.moved && Math.hypot(mvx, mvy) > 8) { down.moved = true; S.drag = true; magEl.dataset.drag = "1"; }
-      if (down.moved) { S.tx = clamp(down.ox + mvx, -lim.x, lim.x); S.ty = clamp(down.oy + mvy, -lim.y, lim.y); kick(); }
+      if (!down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) { down.moved = true; S.drag = true; magEl.dataset.drag = "1"; }
+      if (down.moved) { const r = fieldEl.getBoundingClientRect(); setTarget(e.clientX - down.ox - r.left, e.clientY - down.oy - r.top); kick(); }
     };
     const onUp = (e: PointerEvent) => {
       if (!down || e.pointerId !== down.id) return;
@@ -190,7 +223,6 @@ export function MagneticCollab({ label, headingLead, headingEmphasis, partners, 
       if (S.phase !== "idle") return; // repeated activations never stack
       measure(); buildCluster(); S.phase = "in"; S.t = 0; kick();
     };
-    api.current = { activate: gather };
     magEl.addEventListener("click", gather);
     magEl.addEventListener("pointerdown", onDown);
     magEl.addEventListener("pointermove", onDragMove);
@@ -209,6 +241,7 @@ export function MagneticCollab({ label, headingLead, headingEmphasis, partners, 
       magEl.removeEventListener("click", gather); magEl.removeEventListener("pointerdown", onDown); magEl.removeEventListener("pointermove", onDragMove); magEl.removeEventListener("pointerup", onUp); magEl.removeEventListener("pointercancel", onUp);
       fieldEl.removeEventListener("pointermove", onMove); fieldEl.removeEventListener("pointerleave", onLeave);
       for (let i = 0; i < n; i++) { const el = itemEls[i]; if (el) el.style.transform = ""; }
+      lineEls.forEach((l) => l && (l.style.opacity = "0"));
       magEl.style.transform = "";
     };
   }, [reduced, phone, n, slots, sizes]);
@@ -218,7 +251,7 @@ export function MagneticCollab({ label, headingLead, headingEmphasis, partners, 
       <div className="mg-wrap">
         <Heading label={label} lead={headingLead} emphasis={headingEmphasis} />
         <div ref={field} className="mg-field">
-          <svg className="mg-lines" aria-hidden="true"><line ref={(e) => { lines.current[0] = e; }} /><line ref={(e) => { lines.current[1] = e; }} /></svg>
+          <svg className="mg-lines" aria-hidden="true">{partners.map((p, i) => <line key={p.name} ref={(e) => { lines.current[i] = e; }} />)}</svg>
           <ul className="mg-logos">
             {partners.map((p, i) => {
               const inner = <Logo p={p} width={sizes[i].w} />;
