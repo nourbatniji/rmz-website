@@ -21,6 +21,7 @@ export const sectionSchemas: Record<SectionKey, z.ZodType<unknown>> = {
   minds: s.mindsSchema,
   workIntro: s.workIntroSchema,
   collaborations: s.collaborationsSchema,
+  footer: s.footerSchema,
 };
 
 /** Built-in content (the dev files). Used when the database has nothing valid for a section, and by "Reset to default". */
@@ -44,6 +45,8 @@ export function defaultSection(key: SectionKey): unknown {
       return dev.minds;
     case "collaborations":
       return defaultCollaborations();
+    case "footer":
+      return devClosingContent.footer;
     case "workIntro": {
       const { label, headingLead, headingEmphasis, intro, categories, emptyTitle, emptyBody, contact } = devWork;
       return { label, headingLead, headingEmphasis, intro, categories, emptyTitle, emptyBody, contact };

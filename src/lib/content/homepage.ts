@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import type { CollaborationsContent } from "@/content/collab-types";
+import type { FooterContent } from "@/content/closing-types";
 import type { HomepageContent, ServiceTaxonomyItem } from "@/content/types";
 import { defaultSection, sectionSchemas, type SectionKey } from "./sections";
 import { readSections } from "./store";
@@ -35,6 +36,13 @@ export async function getCollaborationsContent(opts?: { draft?: boolean }): Prom
   const rows = await readSections(!!opts?.draft);
   const parsed = sectionSchemas.collaborations.safeParse(rows.collaborations);
   return (parsed.success ? parsed.data : defaultSection("collaborations")) as CollaborationsContent;
+}
+
+/** Footer / contact for the homepage: published content, or the draft in the admin preview. Falls back to the built-in footer if nothing valid is saved. */
+export async function getFooterSection(opts?: { draft?: boolean }): Promise<FooterContent> {
+  const rows = await readSections(!!opts?.draft);
+  const parsed = sectionSchemas.footer.safeParse(rows.footer);
+  return (parsed.success ? parsed.data : defaultSection("footer")) as FooterContent;
 }
 
 export function getHomepageContent(opts?: { draft?: boolean }): Promise<HomepageContent> {

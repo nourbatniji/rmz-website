@@ -143,7 +143,7 @@ export function PreviewFrame({ section, reloadKey, note, src, label = "Updates a
         <span className="ml-auto text-fg/45">{label}</span>
       </div>
       {note && <p className="rounded-md border border-warn/30 bg-warn/10 px-2.5 py-1.5 text-xs text-warn">{note}</p>}
-      <div ref={scroller} data-scale={scale} className={`flex w-full min-w-0 justify-center rounded-lg border-2 transition-colors bg-fg/[0.06] ${activePath ? "border-[#ffca26] shadow-[0_0_0_3px_rgba(255,202,38,0.25)]" : "border-fg/15"} ${fill ? "items-start overflow-y-auto overflow-x-hidden overscroll-contain" : "items-center overflow-hidden"}`} style={{ height: maxPx }}>
+      <div ref={scroller} data-scale={scale} className={`flex w-full min-w-0 justify-center rounded-lg border-2 transition-colors bg-fg/[0.06] ${activePath ? "border-[#ffca26] shadow-[0_0_0_3px_rgba(255,202,38,0.25)]" : "border-fg/15"} ${fill ? "items-start overflow-y-auto overflow-x-hidden overscroll-contain" : "items-center overflow-hidden"}`} style={{ height: fill ? maxPx : Math.min(maxPx, Math.ceil(shownH * scale) + 24) }}>
         {width > 0 && (
         <div className="relative shrink-0 overflow-hidden shadow-[0_6px_24px_rgba(0,0,0,0.18)] ring-1 ring-black/10" style={{ width: designWidth * scale, height: shownH * scale }}>
           <iframe

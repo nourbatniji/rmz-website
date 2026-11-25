@@ -11,6 +11,7 @@ import type {
   StatementContent,
 } from "./types";
 import type { WorkContent, WorkProject } from "./work-types";
+import type { FooterContent } from "./closing-types";
 import { MAGNET_SCALE, PARTNER_SCALE, type CollaborationsContent } from "./collab-types";
 
 /**
@@ -266,3 +267,30 @@ export const collaborationsSchema: z.ZodType<CollaborationsContent> = z.object({
     .max(60, "At most 60 entries")
     .refine((l) => new Set(l.map((p) => p.id)).size === l.length, "Each entry needs a unique id"),
 }) as z.ZodType<CollaborationsContent>;
+
+/** Footer / contact (closing sequence). Every field is rendered by the footer; `placeholderNote` may be empty (then nothing is shown). */
+const timeZone = z.string().trim().min(1, "Time zone is required").refine((v) => {
+  try {
+    new Intl.DateTimeFormat("en-GB", { timeZone: v });
+    return true;
+  } catch {
+    return false;
+  }
+}, "Use an IANA time zone such as Africa/Cairo");
+const footerLink = z.object({ label: required("Label"), href: linkSchema });
+export const footerSchema: z.ZodType<FooterContent> = z.object({
+  label: required("Label"),
+  place: required("Place"),
+  timeZone,
+  headlineLines: z.tuple([text, text]),
+  headlineEmphasis: text,
+  cta: z.object({ top: required("Top word"), bottom: required("Bottom word"), href: linkSchema }),
+  email: z.string().trim().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Enter an email address"),
+  studio: z.object({ heading: required("Heading"), body: text }),
+  explore: z.object({ heading: required("Heading"), links: z.array(footerLink).max(10) }),
+  services: z.object({ heading: required("Heading"), items: z.array(required("Item")).max(12) }),
+  elsewhere: z.object({ heading: required("Heading"), links: z.array(z.object({ label: required("Label"), href: z.union([z.literal(""), linkSchema]) })).max(10) }),
+  copyright: text,
+  placeholderNote: text,
+  toTop: required("Back-to-top text"),
+});

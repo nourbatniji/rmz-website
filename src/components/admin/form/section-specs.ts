@@ -1,7 +1,6 @@
 import { COPY_STATUS_FULL, type Field, type Obj } from "./spec";
 import type { SectionKey } from "@/lib/admin/section-meta";
 
-const SERVICE_IDS = ["branding", "creative-strategy", "content-production", "social-media", "design", "paid-media", "web-experiences"];
 const MIND_IDS = Array.from({ length: 8 }, (_, i) => `mind-0${i + 1}`);
 const cs = (values: string[]) => COPY_STATUS_FULL.filter((o) => values.includes(o.value));
 
@@ -33,6 +32,7 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       kind: "list",
       name: "nav",
       label: "Header links",
+      help: "The link named Contact (or, if there is none, the last one) is shown as the button on the right of the header; the others sit in the centre and in the menu.",
       min: 1,
       max: 6,
       title: (it) => str(it, "label", "Link"),
@@ -43,29 +43,55 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       ],
     },
   ],
+  // Hero: only what HeroThreeWorlds actually renders. Not shown (kept untouched in the saved content): `headline` (old fallback if a banner has no headline pair), `intro` and `scrollHint`
+  // (no longer displayed), and each banner's `number` (only used by the empty-artwork placeholder).
   hero: [
-    headline(),
-    { kind: "text", name: "intro", label: "Intro paragraph", multiline: true, rows: 3 },
-    { kind: "text", name: "scrollHint", label: "Scroll hint" },
-    { kind: "text", name: "tagline", label: "Description under the headline", help: "Shown inside the picture, under the banner headline." },
-    { kind: "text", name: "ctaLabel", label: "Link text" },
-    { kind: "text", name: "ctaHref", label: "Link target", help: "#work for a section, /path for a page, https://… for another site." },
+    {
+      kind: "group",
+      label: "Shared by all banners",
+      help: "Appears inside the picture, under the headline of whichever banner is showing.",
+      fields: [
+        { kind: "text", name: "tagline", label: "Tagline (under the headline)", multiline: true, rows: 2 },
+        { kind: "text", name: "ctaLabel", label: "Link text", help: "The link under the tagline." },
+        { kind: "text", name: "ctaHref", label: "Link target", help: "#work for a section, /path for a page, https://… for another site." },
+      ],
+    },
     {
       kind: "list",
       name: "banners",
-      label: "Banners",
+      label: "Banners (in homepage order)",
+      help: "Banner 1 is the first one visitors see. Its poster is also the picture inside the word of the opening animation. Open a banner to see it in the preview.",
       fixed: true,
       fixedOrder: true,
       min: 1,
-      title: (it, i) => `${str(it, "number", String(i + 1))} · ${str(it, "label", "Banner")}`,
+      thumb: (it) => (it.poster && typeof (it.poster as Obj).src === "string" ? ((it.poster as Obj).src as string) : null),
+      title: (it, i) => `Banner ${i + 1} · ${str(it, "phraseEmphasis", str(it, "label", "Banner"))}`,
       item: [
-        { kind: "text", name: "label", label: "Chip label" },
-        { kind: "text", name: "phraseLead", label: "Headline — bold cream line", help: "e.g. A DIFFERENT" },
-        { kind: "text", name: "phraseEmphasis", label: "Headline — red italic line", help: "e.g. perspective." },
-        { kind: "color", name: "accent", label: "Chip colour" },
-        { kind: "text", name: "description", label: "Description for screen readers", multiline: true, rows: 2 },
-        { kind: "image", name: "poster", label: "Poster (first frame)", help: "Shown immediately and as the fallback." },
-        { kind: "sequence", name: "sequence", label: "Image sequence" },
+        {
+          kind: "group",
+          label: "Headline",
+          fields: [
+            { kind: "text", name: "phraseLead", label: "First line (bold, cream)", help: "e.g. A DIFFERENT" },
+            { kind: "text", name: "phraseEmphasis", label: "Second line (red italic)", help: "e.g. perspective." },
+          ],
+        },
+        {
+          kind: "group",
+          label: "Selector",
+          fields: [
+            { kind: "text", name: "label", label: "Selector label", help: "The word at the bottom-left that switches to this banner, e.g. Identity." },
+            { kind: "color", name: "accent", label: "Selector underline colour" },
+          ],
+        },
+        {
+          kind: "group",
+          label: "Artwork",
+          fields: [
+            { kind: "image", name: "poster", label: "Poster (first frame)", help: "Shown immediately and as the fallback. For banner 1 it is also the image inside the opening animation." },
+            { kind: "sequence", name: "sequence", label: "Image sequence", help: "The frames that play as the page scrolls (forwards and in reverse)." },
+          ],
+        },
+        { kind: "text", name: "description", label: "Description for screen readers", multiline: true, rows: 2, help: "Not visible. Describe what the artwork shows." },
       ],
     },
   ],
@@ -89,7 +115,8 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
     {
       kind: "list",
       name: "items",
-      label: "Cards",
+      label: "Steps",
+      help: "The steps of the scroll-linked About section, in order.",
       min: 3,
       max: 12,
       title: (it) => `${str(it, "number", "··")} · ${str(it, "name", "Card")}`,
@@ -105,12 +132,12 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         placeholderColor: "#F86015",
       }),
       item: [
-        { kind: "text", name: "number", label: "Number label", help: "Two digits, e.g. 01. Renumber after reordering." },
+        { kind: "text", name: "number", label: "Step number", help: "Two digits, e.g. 01. Renumber after reordering." },
         { kind: "text", name: "name", label: "Project name" },
         { kind: "text", name: "category", label: "Category line" },
-        { kind: "text", name: "description", label: "Back-face description", multiline: true, rows: 4, help: "Keep it short: about five lines fit." },
+        { kind: "text", name: "description", label: "Description", multiline: true, rows: 4, help: "Two or three short sentences." },
         { kind: "select", name: "copyStatus", label: "Copy status", options: cs(["approved", "placeholder"]) },
-        { kind: "image", name: "image", label: "Front image" },
+        { kind: "image", name: "image", label: "Image" },
         { kind: "text", name: "imagePosition", label: "Image crop focus", placeholder: "50% 50%", help: "x% y% — which part of the image stays visible when cropped." },
         { kind: "color", name: "placeholderColor", label: "Placeholder colour", help: "Only used while there is no image." },
       ],
@@ -140,10 +167,6 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         { kind: "text", name: "emphasis", label: "Italic part" },
       ],
     },
-    { kind: "text", name: "intro", label: "Intro", multiline: true, rows: 3 },
-    { kind: "text", name: "hintDesktop", label: "Hint (desktop)" },
-    { kind: "text", name: "hintMobile", label: "Hint (mobile)" },
-    { kind: "select", name: "initialSelectedId", label: "Service selected on load", options: SERVICE_IDS.map((v) => ({ value: v, label: v })) },
     {
       kind: "list",
       name: "items",
@@ -251,6 +274,104 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         { kind: "text", name: "href", label: "Destination link (optional)", nullable: true, placeholder: "https://…", help: "When set, the logo is a real link. Leave empty for a plain logo." },
         { kind: "toggle", name: "visible", label: "Show on the website", onLabel: "Shown", offLabel: "Hidden" },
         { kind: "range", name: "scale", label: "Visual size", min: 50, max: 160, unit: "%", def: 100, preview: "partner", help: "Relative to the automatic size that balances all logos. The layout keeps logos apart whatever you choose." },
+      ],
+    },
+  ],
+  footer: [
+    {
+      kind: "group",
+      label: "Headline",
+      fields: [
+        { kind: "text", name: "label", label: "Small label (e.g. Contact)", help: "Also the footer's accessible name." },
+        { kind: "strings", name: "headlineLines", label: "Headline lines (the second line is followed by the red italic word)", fixed: true },
+        { kind: "text", name: "headlineEmphasis", label: "Red italic word" },
+      ],
+    },
+    {
+      kind: "group",
+      name: "cta",
+      label: "Big contact link",
+      fields: [
+        { kind: "text", name: "top", label: "Top word", help: "e.g. Say" },
+        { kind: "text", name: "bottom", label: "Bottom word", help: "e.g. hello" },
+        { kind: "text", name: "href", label: "Link target", help: "mailto:you@example.com, /path or https://…" },
+      ],
+    },
+    { kind: "text", name: "email", label: "Email address", help: "Shown as a link in the footer." },
+    {
+      kind: "group",
+      label: "Place and clock",
+      fields: [
+        { kind: "text", name: "place", label: "Place", help: "e.g. Cairo, Egypt. Shown with a live clock." },
+        { kind: "text", name: "timeZone", label: "Clock time zone", help: "An IANA name such as Africa/Cairo." },
+      ],
+    },
+    {
+      kind: "group",
+      name: "studio",
+      label: "Studio text",
+      fields: [
+        { kind: "text", name: "heading", label: "Heading" },
+        { kind: "text", name: "body", label: "Text", multiline: true, rows: 4 },
+      ],
+    },
+    {
+      kind: "group",
+      name: "explore",
+      label: "Link list: Explore",
+      fields: [
+        { kind: "text", name: "heading", label: "Heading" },
+        {
+          kind: "list",
+          name: "links",
+          label: "Links",
+          max: 10,
+          title: (it) => str(it, "label", "Link"),
+          blank: () => ({ label: "New link", href: "/#work" }),
+          item: [
+            { kind: "text", name: "label", label: "Label" },
+            { kind: "text", name: "href", label: "Link", help: "/#work for a homepage section, /path for a page, https://… for another site." },
+          ],
+        },
+      ],
+    },
+    {
+      kind: "group",
+      name: "services",
+      label: "List: What we do",
+      help: "A plain list of words. It is separate from the “Service names” section.",
+      fields: [
+        { kind: "text", name: "heading", label: "Heading" },
+        { kind: "strings", name: "items", label: "Items", max: 12 },
+      ],
+    },
+    {
+      kind: "group",
+      name: "elsewhere",
+      label: "Link list: Elsewhere (social)",
+      fields: [
+        { kind: "text", name: "heading", label: "Heading" },
+        {
+          kind: "list",
+          name: "links",
+          label: "Links",
+          max: 10,
+          title: (it) => str(it, "label", "Link"),
+          blank: () => ({ label: "New profile", href: "" }),
+          item: [
+            { kind: "text", name: "label", label: "Label" },
+            { kind: "text", name: "href", label: "Link", help: "The full profile address, https://… Leave empty until you have it: a profile without an address is not shown on the website." },
+          ],
+        },
+      ],
+    },
+    {
+      kind: "group",
+      label: "Small print",
+      fields: [
+        { kind: "text", name: "copyright", label: "Copyright line" },
+        { kind: "text", name: "placeholderNote", label: "Small note under the social links", help: "Optional. Empty by default: nothing is shown." },
+        { kind: "text", name: "toTop", label: "Back-to-top text" },
       ],
     },
   ],

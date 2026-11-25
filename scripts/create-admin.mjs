@@ -1,18 +1,31 @@
 // Create (or reset the password of) an admin user.
-//   pnpm admin:create you@example.com "a long password" "Your Name"
+//   pnpm admin:create                      (recommended: asks for the email, name and password; the password is typed hidden and never appears in arguments or history)
+//   pnpm admin:create you@example.com "a long password" "Your Name"   (still works, but the password lands in your shell history)
 import { config } from "dotenv";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import pg from "pg";
+import { ask, askHidden, requireTty } from "./prompt.mjs";
 
 // .env.local (if present) wins over .env, same as Next.js, so a test database URL there is used instead of the real one.
 config({ path: ".env.local", quiet: true });
 config({ quiet: true });
 
-const [, , emailArg, password, name] = process.argv;
+let [, , emailArg, password, name] = process.argv;
+if (!emailArg && !password) {
+  requireTty();
+  emailArg = await ask("Admin email: ");
+  name = (await ask("Display name (optional): ")) || undefined;
+  password = await askHidden("Password (12+ characters, hidden): ");
+  const again = await askHidden("Repeat the password: ");
+  if (password !== again) {
+    console.error("The two passwords do not match. Nothing was changed.");
+    process.exit(1);
+  }
+}
 const email = emailArg?.trim().toLowerCase();
 if (!email || !password) {
-  console.error('Usage: pnpm admin:create <email> "<password>" ["Name"]');
+  console.error('Usage: pnpm admin:create   (interactive)   or   pnpm admin:create <email> "<password>" ["Name"]');
   process.exit(1);
 }
 if (password.length < 12) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { realSocial } from "./social";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -122,6 +123,7 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
   const kc = mix("#ffca26", "#d52518", m);
   const [mailUser, mailHost] = content.email.split("@");
 
+  const social = realSocial(content.elsewhere.links);
   const bodies: ReactNode[] = [
     <>
       <p className="fu-k">{content.studio.heading}</p>
@@ -140,12 +142,12 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
       <p className="fu-k">{content.services.heading}</p>
       <div className="fu-sv">{content.services.items.map((s) => <span key={s}>{s}</span>)}</div>
     </>,
-    <>
+    social.length ? <>
       <p className="fu-k">{content.elsewhere.heading}</p>
       <div className="fu-soc">
-        {content.elsewhere.links.map((l) => <a key={l.label} className="fu-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}
+        {social.map((l) => <a key={l.label} className="fu-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}
       </div>
-    </>,
+    </> : null,
   ];
 
   const panel = (i: number): ReactNode => (
@@ -177,7 +179,7 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
             </div>
             <div className="fu-bar" style={{ color: fg }}>
               <span>{content.copyright}</span>
-              <span>{content.placeholderNote}</span>
+              {content.placeholderNote ? <span>{content.placeholderNote}</span> : <span />}
             </div>
           </div>
         </footer>
