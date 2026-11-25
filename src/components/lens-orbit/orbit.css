@@ -105,3 +105,9 @@
 .orb-m .orb-h i { display: block; font-size: 1.08em; line-height: 1.02; }
 .orb-m[data-pin="1"] .orb-mstage { margin-top: auto; margin-bottom: auto; }
 .orb-m[data-pin="1"] .orb-mpin { padding-bottom: 20px; }
+
+/* world prototype: until the first entrance begins no service is presented */
+[data-world-idle="1"] .orb-desc, [data-world-idle="1"] .orb-count { opacity: 0; }
+.orb-desc, .orb-count { transition: opacity 0.25s ease; }
+/* Shared-world imagery (homepage): the same sequence mapped across 2 × the previous world distance (3 × the original; holds and movements scale together, see WORLD_TL); phones keep their own, shorter track. */
+.orb-track[data-long="1"] { --orb-extra: clamp(5340px, 780svh, 7380px); }

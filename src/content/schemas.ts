@@ -13,6 +13,7 @@ import type {
 import type { WorkContent, WorkProject } from "./work-types";
 import type { ContactContent, FooterContent } from "./closing-types";
 import { MAGNET_SCALE, PARTNER_SCALE, type CollaborationsContent } from "./collab-types";
+import { WORLD_ZOOM } from "./lens-world-defaults";
 
 /**
  * Zod schemas for everything the dashboard can edit. Each one is annotated with the hand-written contract type
@@ -110,6 +111,14 @@ export const servicesSchema = z.object({
   items: z.array(z.object({ id: required("Id"), name: required("Name") })).min(1),
 });
 
+const unit = z.number().min(0, "Between 0 and 1").max(1, "Between 0 and 1");
+const lensViewSchema = z.object({
+  target: z.object({ x: unit, y: unit }),
+  zoom: z.number().min(WORLD_ZOOM.min, `At least ${WORLD_ZOOM.min}×`).max(WORLD_ZOOM.max, `At most ${WORLD_ZOOM.max}×`),
+  focal: z.object({ x: unit, y: unit }),
+  image: imageRefSchema.nullable(),
+});
+
 export const lensSchema: z.ZodType<LensContent> = z.object({
   kicker: text,
   heading: headline,
@@ -125,13 +134,15 @@ export const lensSchema: z.ZodType<LensContent> = z.object({
         ringMark: required("Ring mark"),
         description: required("Description"),
         details: z.tuple([required("Detail"), required("Detail"), required("Detail")]),
-        scene: z.enum(["triptych", "detail", "fullframe", "collage", "devices", "contactsheet", "reach"]),
+        scene: z.enum(["triptych", "detail", "fullframe", "collage", "devices", "contactsheet", "reach"]).default("detail"), // legacy, hidden
+        world: lensViewSchema.optional(),
         href: linkSchema.nullable(),
         copyStatus: z.enum(["approved", "provisional"]),
       }),
     )
     .min(1),
-  images: z.partialRecord(z.enum(["a", "b", "c", "d", "e", "f", "g", "h", "i"]), imageRefSchema.nullable()),
+  images: z.partialRecord(z.enum(["a", "b", "c", "d", "e", "f", "g", "h", "i"]), imageRefSchema.nullable()).default({}), // legacy, hidden
+  overview: imageRefSchema.nullable().optional(),
 });
 
 export const mindsSchema: z.ZodType<MindsContent> = z.object({

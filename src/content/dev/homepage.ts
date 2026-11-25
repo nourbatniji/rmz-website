@@ -1,4 +1,5 @@
-import type { HeroBanner, HomepageContent } from "../types";
+import type { HeroBanner, HomepageContent, LensServiceItem } from "../types";
+import { CALIBRATION_OVERVIEW, CALIBRATION_VIEWS } from "../lens-world-defaults";
 
 /**
  * Banner 1 (hero): 50 frames (2880 × 1800 WebP, public/media/hero/rabbit/frame_001.webp … frame_050.webp) of a rabbit magician pulling a man's head from a top hat in a red room.
@@ -127,7 +128,7 @@ export const devHomepageContent: HomepageContent = {
     hintDesktop: "click or drag the ring · use ↑ ↓ on the list",
     hintMobile: "drag the ring or swipe the lens",
     initialSelectedId: "content-production",
-    items: [
+    items: ([
       { serviceId: "branding", focal: "24mm", ringMark: "24", scene: "detail", href: null, copyStatus: "provisional",
         description: "Identity, naming and the visual system a brand lives in, built to work wherever it appears.",
         details: ["Naming and verbal identity", "Logo and visual system", "Guidelines and toolkit"] },
@@ -149,8 +150,10 @@ export const devHomepageContent: HomepageContent = {
       { serviceId: "web-experiences", focal: "Tele", ringMark: "TELE", scene: "devices", href: null, copyStatus: "provisional",
         description: "Websites and interactive work, designed and built for the screen they will be seen on.",
         details: ["Websites", "Interactive features", "UX and UI design"] },
-    ],
-    // MISSING: nine scene images (canvas assets are not exportable). Set any slot to { src, alt: "", width, height }.
+    ] as LensServiceItem[]).map((it) => ({ ...it, world: CALIBRATION_VIEWS[it.serviceId] })),
+    // Shared-world imagery: ONE overview + a dedicated image per service (TEMPORARY calibration artwork, see lens-world-defaults.ts).
+    overview: CALIBRATION_OVERVIEW,
+    // Legacy nine scene slots (no longer drawn); kept so older saved content stays valid.
     images: { a: null, b: null, c: null, d: null, e: null, f: null, g: null, h: null, i: null },
   },
   // Minds: the people behind the work (NOT services). No approved names, roles, biographies or portraits exist yet, so all

@@ -147,6 +147,16 @@ export type LensSceneKey = "triptych" | "detail" | "fullframe" | "collage" | "de
 /** Image slots used by the lens scenes. `null`/missing → labelled development placeholder. */
 export type LensImageKey = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i";
 
+/** Where one service sits in the shared world: a point on the overview image, how far to zoom in, and the service's own image. All coordinates are 0–1 of the image. */
+export type LensView = {
+  target: { x: number; y: number };
+  /** Camera zoom on arrival, relative to the whole overview (the dedicated image must show the window of this size around the target). */
+  zoom: number;
+  /** Point of the dedicated image kept in view when it is cropped to a square. */
+  focal: { x: number; y: number };
+  image: ImageRef | null;
+};
+
 export type LensServiceItem = {
   /** References `ServiceTaxonomyItem.id`: the name and order come from the shared taxonomy. */
   serviceId: string;
@@ -157,7 +167,10 @@ export type LensServiceItem = {
   /** Section-specific copy (not shared with the fins). */
   description: string;
   details: [string, string, string];
+  /** Legacy (coded scenes, no longer drawn): kept in saved content for compatibility. */
   scene: LensSceneKey;
+  /** Shared-world view of this service. Missing in older saved content: the built-in view is used. */
+  world?: LensView;
   /** Service page URL. `null` until service pages exist: the "Explore service" link is then not rendered. */
   href: string | null;
   copyStatus: "approved" | "provisional";
@@ -174,7 +187,10 @@ export type LensContent = {
   initialSelectedId: string;
   /** One entry per service, in taxonomy order. */
   items: LensServiceItem[];
+  /** Legacy nine shared scene slots (no longer drawn): kept in saved content for compatibility. */
   images: Partial<Record<LensImageKey, ImageRef | null>>;
+  /** The one overview image that represents all seven services. Missing/empty: the built-in overview is used. */
+  overview?: ImageRef | null;
 };
 
 /**

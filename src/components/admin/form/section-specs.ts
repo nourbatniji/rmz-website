@@ -1,5 +1,6 @@
 import { COPY_STATUS_FULL, type Field, type Obj } from "./spec";
 import type { SectionKey } from "@/lib/admin/section-meta";
+import { CALIBRATION_OVERVIEW, CALIBRATION_VIEWS, FALLBACK_VIEW, WORLD_ZOOM } from "@/content/lens-world-defaults";
 
 const MIND_IDS = Array.from({ length: 8 }, (_, i) => `mind-0${i + 1}`);
 const cs = (values: string[]) => COPY_STATUS_FULL.filter((o) => values.includes(o.value));
@@ -168,6 +169,13 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       ],
     },
     {
+      kind: "image",
+      name: "overview",
+      label: "Overview image (all seven services)",
+      noAlt: true,
+      help: "ONE image that shows all seven services together. The lens opens on it and returns to it between services. Square, about 3200 × 3200 px, works best.",
+    },
+    {
       kind: "list",
       name: "items",
       label: "Services",
@@ -181,29 +189,24 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         { kind: "text", name: "description", label: "Description", multiline: true, rows: 3 },
         { kind: "strings", name: "details", label: "Three bullet points", fixed: true },
         {
-          kind: "select",
-          name: "scene",
-          label: "Scene drawn in the lens",
-          options: [
-            { value: "detail", label: "Detail" },
-            { value: "triptych", label: "Triptych" },
-            { value: "contactsheet", label: "Contact sheet" },
-            { value: "collage", label: "Collage" },
-            { value: "fullframe", label: "Full frame" },
-            { value: "reach", label: "Reach" },
-            { value: "devices", label: "Devices" },
+          kind: "group",
+          name: "world",
+          label: "Image in the shared world",
+          help: "How the lens arrives at this service: it zooms into the overview at the target point, then shows this service's own image.",
+          fallback: (it, root) => {
+            const v = CALIBRATION_VIEWS[String(it.serviceId)] ?? FALLBACK_VIEW;
+            return { ...v, image: (root.overview as Obj | null | undefined)?.src ? null : v.image } as Obj;
+          },
+          fields: [
+            { kind: "image", name: "image", label: "Service image", noAlt: true, help: "Shown full size once the lens has zoomed in. It must show the same scene as the highlighted window on the overview, only in more detail. Square works best." },
+            { kind: "range", name: "zoom", label: "Zoom into the overview", min: WORLD_ZOOM.min, max: WORLD_ZOOM.max, step: 0.1, unit: "×", def: 3, help: "How far the lens zooms in before showing the service image. Higher = a smaller part of the overview." },
+            { kind: "point", name: "target", role: "target", zoomKey: "zoom", label: "Target on the overview", help: "Click the overview where this service lives. The yellow frame is what the lens will show at the chosen zoom.", image: (root) => (root.overview as Obj | null | undefined)?.src as string | undefined ?? CALIBRATION_OVERVIEW.src },
+            { kind: "point", name: "focal", role: "focal", label: "Focal point of the service image", help: "Only used if the image is not square: the part that stays visible when it is cropped.", image: (_root, local) => ((local.image as Obj | null | undefined)?.src as string | undefined) ?? null },
           ],
         },
         { kind: "text", name: "href", label: "Service page link", nullable: true, help: "Leave empty until a service page exists; the “Explore service” link is then hidden." },
         { kind: "select", name: "copyStatus", label: "Copy status", options: cs(["approved", "provisional"]) },
       ],
-    },
-    {
-      kind: "group",
-      name: "images",
-      label: "Scene images",
-      help: "Nine image slots used by the lens scenes. Empty slots show a labelled placeholder.",
-      fields: "abcdefghi".split("").map((k) => ({ kind: "image", name: k, label: `Slot ${k.toUpperCase()}` }) as Field),
     },
   ],
   minds: [
