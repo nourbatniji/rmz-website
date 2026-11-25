@@ -1,12 +1,14 @@
 "use client";
 
-import { realSocial } from "./social";
+import { elsewhereLinks } from "./social";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { FooterContent } from "@/content/closing-types";
 import { useFit } from "@/lib/use-fit";
 import { FooterCompact } from "./FooterCompact";
+import { LogoGhost } from "./LogoGhost";
+import { LogoMark } from "./LogoMark";
 import "./footer-unfold.css";
 
 /**
@@ -33,7 +35,8 @@ const shade = (a: number, b: number) => `linear-gradient(90deg,rgba(0,0,0,${a.to
 const isExternal = (href: string) => /^https?:/.test(href);
 const ext = (href: string) => (isExternal(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
 
-export function FooterUnfold({ cover, content }: { cover: ReactNode; content: FooterContent }) {
+/** `solo`: the footer on its own, already open (project pages) — same paper, same columns, no curtain and no scroll motion. */
+export function FooterUnfold({ cover, content, solo = false }: { cover?: ReactNode; content: FooterContent; solo?: boolean }) {
   const wrap = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const [t, setT] = useState(0);
@@ -74,7 +77,7 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
   // progress from the scroll position (no scroll hijacking: the page scrolls normally; only the pinned footer reacts)
   useEffect(() => {
     const el = wrap.current;
-    if (!el) return;
+    if (!el || solo) return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     let raf = 0;
     const calc = () => {
@@ -112,10 +115,10 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
       window.removeEventListener("resize", req);
       mq.removeEventListener("change", sync);
     };
-  }, []);
+  }, [solo]);
 
   // same easing / angles as the approved "Unfold on scroll" footer
-  const tt = reduced ? 1 : t;
+  const tt = reduced || solo ? 1 : t;
   const k = cl(tt / 0.85);
   const o = k * k * (3 - 2 * k);
   const lerp = (a: number, b: number) => a + (b - a) * o;
@@ -126,15 +129,14 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
   const H = Math.round(lerp(170, 300));
   const ang = [lerp(78, 0), lerp(-156, 0), lerp(156, 0), lerp(-156, 0)];
   const sh = [shade(0.5 * e, 0.28 * e), shade(0.1 * e, 0.27 * e), shade(0.55 * e, 0.27 * e), shade(0.1 * e, 0.29 * e)];
-  const gf = 1 - cl((o - 0.45) / 0.55); // the big RMZ. letters across the folded paper fade out slowly as it opens
   const fg = mix("#f3e8cc", "#0f0f0e", m);
   const kc = mix("#ffca26", "#d52518", m);
   const [mailUser, mailHost] = content.email.split("@");
 
-  const social = realSocial(content.elsewhere.links);
+  const social = elsewhereLinks(content.elsewhere.links);
   const bodies: ReactNode[] = [
     <>
-      <Link href="/#top" className="fu-lg" aria-label="RMZ — home">RMZ<span>.</span></Link>
+      <Link href="/#top" className="fu-lg" aria-label="RMZ — home"><LogoMark /></Link>
       <p className="fu-lead">{content.studio.body}</p>
       <a className="fu-mail" href={`mailto:${content.email}`}>{content.email} ↗</a>
     </>,
@@ -151,7 +153,7 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
     social.length ? <>
       <p className="fu-k">{content.elsewhere.heading}</p>
       <div className="fu-soc">
-        {social.map((l) => <a key={l.label} className="fu-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}
+        {social.map((l) => (l.href.trim() ? <a key={l.label} className="fu-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a> : <span key={l.label} className="fu-so">{l.label}</span>))}
       </div>
     </> : null,
   ];
@@ -159,7 +161,7 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
   const panel = (i: number): ReactNode => (
     <div className={`fu-p${i === 0 ? " fu-p0" : ""}`} style={{ height: H, transform: `rotateY(${ang[i]}deg)` }}>
       <div className="fu-fc">
-        <div className={`fu-gh${i === 3 ? " fu-gh-dot" : ""}`} aria-hidden="true" style={{ opacity: [0.13, 0.1, 0.09, 0.9][i] * gf }}>{["R", "M", "Z", "."][i]}</div>
+        <div className={`fu-gh${i === 3 ? " fu-gh-dot" : ""}`} aria-hidden="true" style={{ opacity: [0.13, 0.1, 0.09, 0.9][i] }}><LogoGhost glyph={(["r", "m", "z", "dot"] as const)[i]} /></div>
         <div className="fu-pc" style={{ opacity: cr, pointerEvents: live ? "auto" : "none" }} inert={!live}>{bodies[i]}</div>
         <div className="fu-sh" aria-hidden="true" style={{ background: sh[i] }} />
       </div>
@@ -168,8 +170,8 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
   );
 
   return (
-    <div ref={wrap} className={`fu-wrap${reduced ? " is-static" : ""}`}>
-      <div className="fu-cover">{cover}</div>
+    <div ref={wrap} className={`fu-wrap${reduced ? " is-static" : ""}${solo ? " fu-solo" : ""}`}>
+      {!solo && <div className="fu-cover">{cover}</div>}
       <div className="fu-track">
         <footer className="fu-stage" aria-label={content.label}>
           <div ref={box} className="fu-box">

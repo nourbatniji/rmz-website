@@ -14,6 +14,9 @@
   .fu-stage { position: sticky; top: calc(100svh - var(--hf)); height: var(--hf); overflow: hidden; background: #0f0f0e; color: #f3e8cc; font-family: var(--font-sans); }
   .fu-anchor { display: block; position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; pointer-events: none; }
   .fu-stack { display: none; }
+  .fu-wrap.fu-solo { height: var(--hf); }
+  .fu-solo .fu-track { margin-top: 0; height: var(--hf); }
+  .fu-solo .fu-stage { position: relative; top: auto; }
   .fu-wrap.is-static { height: calc(var(--hc) + var(--hf)); margin-top: 0; }
   /* closing cover: the logos stay put while the cream contact panel rises over them (see ClosingCover) */
   .cc-t1 { position: relative; z-index: 1; height: calc(var(--hl, 0px) + var(--hf, 0px)); }
@@ -46,15 +49,16 @@
 .fu-p { position: absolute; top: 0; width: 360px; transform-style: preserve-3d; transform-origin: 0 50%; }
 .fu-p0 { left: 0; }
 .fu-p .fu-p { left: 100%; }
-.fu-fc { position: absolute; inset: 0; overflow: hidden; box-sizing: border-box; padding: 54px 40px 64px 64px; display: flex; flex-direction: column; background: #f3e8cc; color: #0f0f0e; }
+.fu-fc { position: absolute; inset: 0; overflow: hidden; box-sizing: border-box; padding: 54px 40px 64px 64px; display: flex; flex-direction: column; background: #f3e8cc; color: #0f0f0e; box-shadow: 1px 0 0 #f3e8cc; /* covers the hairline seam between two panels */ }
 /* faint vertical divider on the left edge of panels 2-4: 90 % of the height, centred */
-.fu-p:not(.fu-p0) > .fu-fc::before { content: ""; position: absolute; left: 0; top: 18%; height: 64%; width: 1px; background: rgb(15 15 14 / 0.045); }
-.fu-gh { position: absolute; right: -10px; bottom: -52px; font-weight: 900; font-size: 210px; line-height: 0.9; letter-spacing: -0.03em; text-transform: uppercase; color: #0f0f0e; pointer-events: none; }
-.fu-gh-dot { color: #ffca26; }
+.fu-p:not(.fu-p0) > .fu-fc::before { content: ""; position: absolute; left: 0; top: 10%; height: 80%; width: 1px; background: rgb(15 15 14 / 0.035); }
+.fu-gh { position: absolute; right: 6px; bottom: -22px; width: 178px; height: 178px; color: #0f0f0e; pointer-events: none; }
+.fu-gh svg { display: block; width: 100%; height: 100%; }
+.fu-gh-dot { color: #ffca26; width: 44px; height: 44px; bottom: 30px; right: 40px; }
 .fu-pc { position: relative; display: flex; flex-direction: column; flex: 1; }
 .fu-sh { position: absolute; inset: 0; pointer-events: none; }
-.fu-lg { align-self: flex-start; font-weight: 900; font-size: 30px; line-height: 1; letter-spacing: -0.03em; text-transform: uppercase; margin-bottom: 14px; }
-.fu-lg span { color: #ffca26; }
+.fu-lg { display: block; align-self: flex-start; color: #0f0f0e; margin-bottom: 14px; }
+.fu-lg svg { display: block; height: 26px; width: auto; }
 .fu-k { margin: 0 0 12px; font-weight: 600; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: #d52518; }
 .fu-lead { margin: 0; max-width: 270px; font-weight: 300; font-size: 12.5px; line-height: 1.55; }
 .fu-mail { margin-top: auto; align-self: flex-start; font-weight: 600; font-size: 12.5px; border-bottom: 1px solid #0f0f0e; padding-bottom: 2px; transition: color 0.25s, border-color 0.25s; }
@@ -62,6 +66,9 @@
 .fu-nav { font-weight: 600; font-size: 13px; line-height: 1.9; }
 .fu-lk { display: block; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s; }
 .fu-lk:hover, .fu-lk:focus-visible { transform: translateX(8px); color: #d52518; }
+.fu-soc { font-weight: 600; font-size: 13px; line-height: 1.9; }
+.fu-so { display: block; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s; }
+a.fu-so:hover, a.fu-so:focus-visible { transform: translateX(8px); color: #d52518; }
 .fu-sv { font-weight: 300; font-size: 13px; line-height: 1.9; }
 .fu-sv span { display: block; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.25s; }
 .fu-sv span:hover { transform: translateX(8px); color: #d52518; }

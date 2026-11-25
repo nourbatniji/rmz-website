@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { FooterContent } from "@/content/closing-types";
+import { LogoMark } from "./LogoMark";
+import { FooterClock } from "./FooterClock";
 import "./footer-compact.css";
 
 /**
@@ -14,9 +16,14 @@ const ext = (href: string) => (external(href) ? { target: "_blank", rel: "noopen
 export function FooterCompact({ content, id = "contact" }: { content: FooterContent; id?: string }) {
   return (
     <footer id={id} className="fc-root" aria-label={content.label}>
+      <div className="fc-top">
+        <span className="fc-lab">{content.label}</span>
+        <FooterClock className="fc-clock" place={content.place} timeZone={content.timeZone} />
+        <Link href="/#top" className="fc-up">{content.toTop}</Link>
+      </div>
       <div className="fc-grid">
         <div className="fc-brand">
-          <Link href="/#top" className="fc-lg" aria-label="RMZ — home">RMZ<span>.</span></Link>
+          <Link href="/#top" className="fc-lg" aria-label="RMZ — home"><LogoMark /></Link>
           <p className="fc-lead">{content.studio.body}</p>
           <a className="fc-mail" href={`mailto:${content.email}`}>{content.email} <span aria-hidden="true">↗</span></a>
         </div>
@@ -36,7 +43,6 @@ export function FooterCompact({ content, id = "contact" }: { content: FooterCont
       <div className="fc-bar">
         <p>{content.copyright}</p>
         <p>{content.placeholderNote}</p>
-        <Link href="/#top" className="fc-up">{content.toTop}</Link>
       </div>
     </footer>
   );

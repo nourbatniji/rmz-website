@@ -55,10 +55,10 @@ export const devClosingContent: ClosingContent = {
     elsewhere: {
       heading: "Elsewhere",
       links: [
-        { label: "Instagram", href: "" },
-        { label: "Behance", href: "" },
-        { label: "LinkedIn", href: "" },
-        { label: "TikTok", href: "" },
+        { label: "Instagram", href: "https://www.instagram.com/" },
+        { label: "Behance", href: "https://www.behance.net/" },
+        { label: "LinkedIn", href: "https://www.linkedin.com/" },
+        { label: "TikTok", href: "https://www.tiktok.com/" },
       ],
     },
     copyright: "© 2026 Rebel Mind Zone · All rights reserved",
