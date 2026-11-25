@@ -178,27 +178,25 @@ export type LensContent = {
 };
 
 /**
- * Featured work focus (canvas board "HOME - ABOUT SECTION"). The canvas board is TITLED About but its approved design is a pinned
- * wall of project cards: each card shows its image on the front and turns (scroll-linked) to its description on the back.
- * There is no About Us copy in the canvas. All entries below are placeholders until verified case summaries and images are supplied.
+ * About Us steps (stored under the `featured` section key for backward compatibility). Each step: title/navigation name, image, description.
+ * `category`, `copyStatus` and `placeholderColor` are legacy values: kept in saved content, no longer shown or edited, never required.
  */
 export type FeaturedWorkItem = {
   id: string;
   /** Two-digit label, e.g. "01". */
   number: string;
-  /** Project name (card title). */
+  /** Step heading, also its title in the step list. */
   name: string;
-  /** Category line, e.g. "Brand identity". */
+  /** Legacy (kicker line, no longer rendered). */
   category: string;
-  /** Back-face description. Must stay short (about five lines in the open card). */
   description: string;
-  /** "placeholder" = temporary content, never final. */
+  /** Legacy (no longer rendered). */
   copyStatus: "approved" | "placeholder";
-  /** Front-face image. `null` until delivered: a labelled development placeholder fill (`placeholderColor`) is shown. */
+  /** Step image. `null` until delivered: a placeholder fill is shown. */
   image: ImageRef | null;
-  /** CSS object-position for the cropped front image. */
+  /** CSS object-position for the cropped image. */
   imagePosition: string;
-  /** Fill of the development placeholder only. */
+  /** Fill shown while there is no image. */
   placeholderColor: string;
 };
 
