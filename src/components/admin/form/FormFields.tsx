@@ -1,10 +1,11 @@
 "use client";
 
-import { useId } from "react";
+import { createContext, useContext, useId } from "react";
 import type { Errors, Field, Obj } from "./spec";
 import { ImageField } from "./ImageField";
 import { SequenceField } from "./SequenceField";
 import { VideoField } from "./VideoField";
+import { PointField } from "./PointField";
 import { arrayMove, SortableItem, SortableList } from "../SortableList";
 
 export const inputCls =
@@ -37,6 +38,9 @@ const CHIP: Record<string, string> = {
   placeholder: "bg-bad/25 text-bad",
 };
 
+/** The whole section value, for fields that need to look beyond their own entry (e.g. the lens target picker reads the section's overview image). */
+export const RootValueContext = createContext<Obj>({});
+
 export function Fields({ fields, value, onChange, path, errors }: { fields: Field[]; value: Obj; onChange: (v: Obj) => void; path: string; errors: Errors }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
@@ -60,6 +64,7 @@ function FieldView(props: { field: Field; value: Obj; onChange: (v: Obj) => void
 
 function FieldBody({ field, value, onChange, path, errors }: { field: Field; value: Obj; onChange: (v: Obj) => void; path: string; errors: Errors }) {
   const id = useId();
+  const root = useContext(RootValueContext);
   const name = "name" in field ? field.name : undefined;
   const p = name ? (path ? `${path}.${name}` : name) : path;
   const v = name ? value[name] : undefined;
@@ -146,6 +151,12 @@ function FieldBody({ field, value, onChange, path, errors }: { field: Field; val
         </FieldShell>
       );
     }
+    case "point": {
+      const pv = v && typeof v === "object" ? (v as { x?: unknown; y?: unknown }) : null;
+      const pt = pv && typeof pv.x === "number" && typeof pv.y === "number" ? { x: pv.x, y: pv.y } : null;
+      const z = field.zoomKey && typeof value[field.zoomKey] === "number" ? (value[field.zoomKey] as number) : undefined;
+      return <PointField label={field.label} help={field.help} error={error} value={pt} onChange={set} image={field.image(root, value)} zoom={z} role={field.role} />;
+    }
     case "video":
       return <VideoField label={field.label} help={field.help} error={error} value={(v as Obj | null | undefined) ?? null} onChange={set} />;
     case "sequence":
@@ -189,7 +200,7 @@ function FieldBody({ field, value, onChange, path, errors }: { field: Field; val
       );
     }
     case "group": {
-      const inner = name ? ((v as Obj | undefined) ?? {}) : value;
+      const inner = name ? ((v as Obj | undefined) ?? field.fallback?.(value, root) ?? {}) : value;
       const setInner = (nv: Obj) => (name ? set(nv) : onChange(nv));
       return (
         <fieldset className="grid grid-cols-[minmax(0,1fr)] gap-4 rounded-lg border border-fg/12 p-4">

@@ -12,10 +12,25 @@ export type Field =
   | (Base & { kind: "image"; name: string; /** The image has no alt box of its own (the entry has a separate alt-text field). */ noAlt?: boolean })
   | (Base & { kind: "toggle"; name: string; onLabel?: string; offLabel?: string })
   | (Base & { kind: "range"; name: string; min: number; max: number; step?: number; unit?: string; /** Shows a live preview beside the slider. */ preview?: "partner" | "magnet"; def?: number })
+  | (Base & {
+      kind: "point";
+      name: string;
+      role: "target" | "focal";
+      /** The image the point is placed on (from the whole section value and this entry); null = none yet. */
+      image: (root: Obj, local: Obj) => string | null;
+      /** Name of the sibling number field holding the zoom (target picker: draws the zoomed window). */
+      zoomKey?: string;
+    })
   | (Base & { kind: "video"; name: string })
   | (Base & { kind: "sequence"; name: string })
   | (Base & { kind: "strings"; name: string; min?: number; max?: number; fixed?: boolean; placeholder?: string; color?: boolean })
-  | (Base & { kind: "group"; name?: string; fields: Field[] })
+  | (Base & {
+      kind: "group";
+      name?: string;
+      fields: Field[];
+      /** Value used (and saved on the first edit) when a named group is missing in older saved content. */
+      fallback?: (parent: Obj, root: Obj) => Obj;
+    })
   | (Base & {
       kind: "list";
       name: string;

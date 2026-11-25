@@ -22,7 +22,7 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
   statement: { label: "Statement", about: "The one-sentence statement and the words that rotate in it.", anchor: "statement", group: "page" },
   featured: { label: "About", about: "The scroll-linked About steps: an image, a title and a short text for each step.", anchor: "featured", group: "page" },
   services: { label: "Service names", about: "The names of the services the studio offers.", anchor: "services", group: "page" },
-  lens: { label: "Services showcase", about: "A description, label and picture for each service.", anchor: "services", group: "page" },
+  lens: { label: "Services showcase", about: "The lens: one overview image for all seven services and, for each service, a target on it, a zoom and its own image, plus its description and labels.", anchor: "services", group: "page" },
   minds: { label: "Team", about: "The eight team members: names, roles, short bios and portraits.", anchor: "minds", group: "page" },
   collaborations: { label: "Collaborations", about: "The partner logos around the red RMZ square: add, hide, resize and reorder logos, and set the square's artwork.", anchor: "collaborations", group: "page" },
   contact: { label: "Contact form", about: "The words around the contact form: heading, field labels and hints, the button and the email address next to it.", anchor: "contact-form", group: "page" },

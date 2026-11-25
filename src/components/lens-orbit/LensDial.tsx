@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type CSSProperties } from "react";
+import { useId, type CSSProperties, type ReactNode } from "react";
 import type { LensContent } from "@/content/types";
 import { LensScene } from "@/components/home/lens/lens-scenes";
 import "@/components/home/lens/services-lens.css"; // the existing lens' own styles (marks, placeholders); the homepage component is NOT modified
@@ -52,9 +52,11 @@ type Props = {
   reduced: boolean;
   /** milliseconds for the blade transition */
   bladeMs: number;
+  /** Prototype only: replaces the interior scene stack (the lens drawing, blades, glass and pointer stay exactly as they are). */
+  interior?: ReactNode;
 };
 
-export function LensDial({ items, images, shown, sel, op, reduced, bladeMs }: Props) {
+export function LensDial({ items, images, shown, sel, op, reduced, bladeMs, interior }: Props) {
   const uid = useId();
   const rot = -sel * STEP;
   const T = (t: string) => (reduced ? "none" : t);
@@ -87,11 +89,15 @@ export function LensDial({ items, images, shown, sel, op, reduced, bladeMs }: Pr
         })}
       </div>
       <div style={{ position: "absolute", left: 39, top: 39, width: 722, height: 722, borderRadius: "50%", overflow: "hidden", background: "#0F0F0E", boxShadow: "0 0 0 5px #1c1b19,0 0 0 6px rgba(243,232,204,.2)" }}>
-        {items.map((v, i) => (
-          <div key={v.id} data-sc={i} aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: i === shown ? 1 : 0, transition: T("opacity 140ms linear") }}>
-            <LensScene kind={v.scene} imgs={images} />
-          </div>
-        ))}
+        {interior ? (
+          <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>{interior}</div>
+        ) : (
+          items.map((v, i) => (
+            <div key={v.id} data-sc={i} aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: i === shown ? 1 : 0, transition: T("opacity 140ms linear") }}>
+              <LensScene kind={v.scene} imgs={images} />
+            </div>
+          ))
+        )}
       </div>
       <svg viewBox="-366 -366 732 732" width="732" height="732" style={{ position: "absolute", display: "block", overflow: "visible", pointerEvents: "none", left: 34, top: 34 }} aria-hidden="true">
         <defs>

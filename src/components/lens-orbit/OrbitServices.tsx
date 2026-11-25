@@ -5,7 +5,10 @@ import type { CSSProperties, KeyboardEvent as RKeyboardEvent, PointerEvent as RP
 import type { LensContent, ServiceTaxonomyItem } from "@/content/types";
 import { useMedia } from "@/lib/use-media";
 import { LensDial, REST } from "./LensDial";
-import { holdCenter, timelineAt } from "./orbit-timeline";
+import { cameraAt, holdCenter, timelineAt, WORLD_TL, type TimelineOpts } from "./orbit-timeline";
+import { WorldScene } from "./world/WorldScene";
+import { overviewPose, poseAt, poseFromKf } from "./world/world-camera";
+import type { WorldConfig } from "./world/world-config";
 import "./orbit.css";
 
 /**
@@ -47,7 +50,12 @@ const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 const two = (n: number) => String(n).padStart(2, "0");
 
-export function OrbitServices({ content, services, variant, id = "services-orbit" }: { content: LensContent; services: ServiceTaxonomyItem[]; variant: OrbitVariant; id?: string }) {
+/** Share of the phone scroll travel used by the opening overview → first service entrance (prototype `world` only). */
+const M_INTRO = 0.1;
+/** …and the share at which the last service is reached, leaving the rest of the phone track as its hold before the section is released. */
+const M_END = 0.92;
+
+export function OrbitServices({ content, services, variant, id = "services-orbit", world }: { content: LensContent; services: ServiceTaxonomyItem[]; variant: OrbitVariant; id?: string; world?: WorldConfig }) {
   const uid = useId();
   const byId = new Map(content.items.map((c) => [c.serviceId, c]));
   const items: Item[] = services.flatMap((s) => {
@@ -57,6 +65,8 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
   const N = items.length;
   const S = 360 / N;
   const rest = (i: number) => REST[i] ?? 0.8;
+  const W = !!world;
+  const TL: TimelineOpts | undefined = W ? WORLD_TL : undefined; // prototype: the lens interior is the shared-world image system and the timeline starts with an entrance (overview first)
 
   const wide = useMedia(MOBILE, true);
   const reduced = useMedia(REDUCED, false);
@@ -72,7 +82,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
   const stageRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ w: 1440, h: 808 });
   const [kf, setKf] = useState(0); // orbit position (steps)
-  const [lift, setLift] = useState<number[]>(() => timelineAt(0, items.length).lift); // variant A: 0 = on the ring, 1 = lifted into the title
+  const [lift, setLift] = useState<number[]>(() => timelineAt(0, items.length, TL).lift); // variant A: 0 = on the ring, 1 = lifted into the title
   const [widths, setWidths] = useState<number[]>(() => items.map((v) => v.name.length * FS * 0.52)); // label lengths at FS
   const [selK, setSelK] = useState(0); // selected step (unwrapped); service = mod(selK, N)
   const selKRef = useRef(0);
@@ -82,6 +92,10 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
   const [shown, setShown] = useState(0); // study visible in the glass
   const [op, setOp] = useState(rest(0)); // iris opening
   const [bladeMs, setBladeMs] = useState(380);
+  const [seg, setSeg] = useState(() => cameraAt(0, items.length, WORLD_TL)); // world: camera segment on the label timeline (variant A)
+  const [introP, setIntroP] = useState(0); // world: opening entrance progress where there is no label timeline (phone scroll / interactive)
+  const [picked, setPicked] = useState(false); // world, interactive + reduced motion: a service has been chosen
+  const introAnim = useRef(0);
   const live = useRef<HTMLParagraphElement>(null);
 
   // ── orbit position → selection (with hysteresis) ──
@@ -100,6 +114,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
 
   // ── lens response: image + iris, once per selection ──
   useEffect(() => {
+    if (W) return; // world: aperture and image come from the camera pose, not from timed steps
     const ids: number[] = [];
     if (reduced) {
       ids.push(window.setTimeout(() => { setShown(sel); setOp(rest(sel)); }, 0)); // immediate: no travel, no aperture animation
@@ -172,9 +187,9 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
     const track = trackRef.current;
     if (!track) return;
     let raf = 0, last = 0;
-    const total = timelineAt(0, N).total;
+    const total = timelineAt(0, N, TL).total;
     const qOf = () => clamp((hh() - track.getBoundingClientRect().top) / extraPx(), 0, 1) * total;
-    const show = (q: number) => { const t = timelineAt(q, N); apply(t.kf); setLift(t.lift); };
+    const show = (q: number) => { const t = timelineAt(q, N, TL); apply(t.kf); setLift(t.lift); if (W) setSeg(cameraAt(q, N, WORLD_TL)); };
     const tick = (now: number) => {
       raf = 0;
       const t = qOf();
@@ -211,7 +226,10 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
       const ex = Math.max(1, track.offsetHeight - pin.offsetHeight);
       const p = clamp((hh() - track.getBoundingClientRect().top) / ex, 0, 1);
       cancelAnimationFrame(anim.current);
-      apply(p * (N - 1));
+      if (W) {
+        setIntroP(clamp(p / M_INTRO, 0, 1));
+        apply(clamp((p - M_INTRO) / (M_END - M_INTRO), 0, 1) * (N - 1));
+      } else apply(p * (N - 1));
     };
     const kick = () => { if (!raf) raf = requestAnimationFrame(paint); };
     const onResize = () => { measure(); kick(); };
@@ -225,18 +243,37 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mobScroll, N]);
 
+  // ── world prototype: first choice where nothing is scroll-linked (interactive variant, reduced motion) ──
+  const pickedRef = useRef(false);
+  const pick = () => {
+    if (pickedRef.current) return;
+    pickedRef.current = true;
+    setPicked(true);
+    if (reduced) { setIntroP(1); return; } // reduced motion: straight to the service image, no camera travel
+    let t0 = -1;
+    const f = (now: number) => {
+      if (t0 < 0) t0 = now;
+      const t = clamp((now - t0) / 700, 0, 1);
+      setIntroP(t);
+      if (t < 1) introAnim.current = requestAnimationFrame(f);
+    };
+    introAnim.current = requestAnimationFrame(f);
+  };
+  useEffect(() => () => cancelAnimationFrame(introAnim.current), []);
+
   // ── selection commands ──
   const goService = (j: number) => {
     j = clamp(j, 0, N - 1);
     if (mobScroll && mTrackRef.current && mPinRef.current) {
       const ex = Math.max(1, mTrackRef.current.offsetHeight - mPinRef.current.offsetHeight);
-      window.scrollTo({ top: window.scrollY + mTrackRef.current.getBoundingClientRect().top - hh() + (j / (N - 1)) * ex, behavior: "smooth" });
+      window.scrollTo({ top: window.scrollY + mTrackRef.current.getBoundingClientRect().top - hh() + (W ? M_INTRO + (j / (N - 1)) * (M_END - M_INTRO) : j / (N - 1)) * ex, behavior: "smooth" });
       return;
     }
+    if (W && !scrollLinked && !mobScroll) pick();
     if (scrollLinked) {
       const track = trackRef.current;
       if (!track) return;
-      const top = window.scrollY + track.getBoundingClientRect().top - hh() + (holdCenter(j, N) / timelineAt(0, N).total) * extraPx(); // lands in the middle of that service's selected hold
+      const top = window.scrollY + track.getBoundingClientRect().top - hh() + (holdCenter(j, N, TL) / timelineAt(0, N, TL).total) * extraPx(); // lands in the middle of that service's selected hold
       window.scrollTo({ top, behavior: reduced ? "auto" : "smooth" });
       return;
     }
@@ -248,8 +285,27 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
   };
   const step = (dir: number) => {
     if (scrollLinked || mobScroll) goService(clamp(sel + dir, 0, N - 1));
-    else tweenTo(Math.round(kfRef.current) + dir);
+    else { if (W) pick(); tweenTo(Math.round(kfRef.current) + dir); }
   };
+
+  // Admin preview only (the page is framed by the editor): the editor says which service is open and the lens travels to it like a click.
+  const goRef = useRef(goService);
+  useEffect(() => { goRef.current = goService; });
+  useEffect(() => {
+    let framed = false;
+    try { framed = window.parent !== window && window.parent.location.origin === window.location.origin; } catch { framed = false; }
+    if (!framed) return;
+    const onMsg = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== window.parent) return;
+      const d = e.data as { type?: string; id?: unknown } | null;
+      if (d?.type !== "rmz-open-service" || typeof d.id !== "string") return;
+      const j = items.findIndex((it) => it.id === d.id);
+      if (j >= 0) goRef.current(j);
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [N]);
 
   // ── drag (B and mobile): angular around the lens (desktop) / horizontal swipe (mobile) ──
   const drag = useRef<{ on: boolean; id: number; cx: number; cy: number; last: number; x0: number; k0: number; acc: number; moved: boolean } | null>(null);
@@ -279,7 +335,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
     d.last = a;
     d.acc += da;
     if (!d.moved && Math.abs(d.acc) > 4) { d.moved = true; moved.current = true; cancelAnimationFrame(anim.current); try { e.currentTarget.setPointerCapture(e.pointerId); } catch {} }
-    if (d.moved) apply(kfRef.current - da / S);
+    if (d.moved) { if (W) pick(); apply(kfRef.current - da / S); }
   };
   const dragEnd = (e: RPointerEvent<HTMLDivElement>) => {
     const d = drag.current;
@@ -336,8 +392,28 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
       </svg>
     </button>
   );
+  // world prototype: ONE pose for the lens interior and its aperture, derived from the same position as the labels
+  let pose = world ? overviewPose(world) : null;
+  let idle = false;
+  if (world) {
+    if (scrollLinked) { pose = poseAt(world, rest, seg.from, seg.to, seg.p); idle = pose.idle; }
+    else if (mobScroll) { pose = introP < 1 ? poseAt(world, rest, -1, 0, introP) : poseFromKf(world, rest, kf); idle = introP <= 0; }
+    else if (!picked) idle = true;
+    else if (reduced) pose = poseAt(world, rest, sel, sel, 1);
+    else pose = introP < 1 ? poseAt(world, rest, -1, 0, introP) : poseFromKf(world, rest, kf);
+  }
+  const urgent = [scrollLinked ? seg.from : sel, scrollLinked ? seg.to : sel + 1, sel - 1].filter((i) => i >= 0 && i < N);
   const dial = (
-    <LensDial items={items} images={content.images} shown={shown} sel={sel} op={op} reduced={reduced} bladeMs={bladeMs} />
+    <LensDial
+      items={items}
+      images={content.images}
+      shown={shown}
+      sel={sel}
+      op={pose ? pose.op : op}
+      reduced={reduced}
+      bladeMs={world ? 0 : bladeMs}
+      interior={world && pose ? <WorldScene cfg={world} pose={pose} urgent={urgent} /> : undefined}
+    />
   );
 
   const head = (
@@ -436,7 +512,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
       </>
     );
     return (
-      <section ref={rootRef} id={id} aria-label="Services" className="orb-root orb-m" data-variant="M" data-pin={mobScroll ? "1" : undefined} data-mobile-design="pending-approval">
+      <section ref={rootRef} data-world-idle={idle ? "1" : undefined} id={id} aria-label="Services" className="orb-root orb-m" data-variant="M" data-pin={mobScroll ? "1" : undefined} data-mobile-design="pending-approval">
         <p ref={live} className="lens-sr" aria-live="polite" />
         {mobScroll ? (
           <div ref={mTrackRef} className="orb-mtrack">
@@ -461,7 +537,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
   const fsK = sideBy ? 1 : clamp(11.5 / (FS * sA), 1, 1.25); // keep curved names legible on short screens
   const poses = makePoses(fsK, true);
   const bodyA = (
-    <div ref={trackRef} className="orb-track">
+    <div ref={trackRef} className="orb-track" data-long={W ? "1" : undefined}>
       <div className="orb-stage" ref={stageRef} data-pinned="1" data-short={short ? "1" : "0"} data-wide={sideBy ? "1" : "0"}>
         {!sideBy && head}
         <div className="orb-meta">
@@ -563,7 +639,7 @@ export function OrbitServices({ content, services, variant, id = "services-orbit
   );
 
   return (
-    <section ref={rootRef} id={id} aria-label="Services" className="orb-root" data-variant={variant}>
+    <section ref={rootRef} data-world-idle={idle ? "1" : undefined} id={id} aria-label="Services" className="orb-root" data-variant={variant}>
       <p ref={live} className="lens-sr" aria-live="polite" />
       {scrollLinked ? (
         <>

@@ -6,7 +6,7 @@ import { discardDraft, publishSection, resetSectionToDefault, saveSectionDraft, 
 import { PAGE_ORDER, SECTION_META, type SectionKey } from "@/lib/admin/section-meta";
 import { EditorBar } from "./EditorBar";
 import { describeFields } from "./form/field-map";
-import { Fields } from "./form/FormFields";
+import { Fields, RootValueContext } from "./form/FormFields";
 import { SECTION_FIELDS } from "./form/section-specs";
 import { stableStringify, type Errors, type Obj } from "./form/spec";
 import { PreviewFrame } from "./PreviewFrame";
@@ -274,7 +274,9 @@ export function SectionEditor({ sectionKey, initial, status }: { sectionKey: Sec
               </ul>
             </div>
           )}
-          <Fields fields={SECTION_FIELDS[sectionKey]} value={data} onChange={edit} path="" errors={errors} />
+          <RootValueContext.Provider value={data}>
+            <Fields fields={SECTION_FIELDS[sectionKey]} value={data} onChange={edit} path="" errors={errors} />
+          </RootValueContext.Provider>
           <nav aria-label="Other sections" className="mt-6 flex items-center gap-3 border-t border-fg/8 pt-3 text-sm">
             {prev ? (
               <Link href={`/admin/website/${prev}`} className="text-fg/65 hover:text-accent">
