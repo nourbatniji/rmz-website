@@ -161,15 +161,16 @@ export const featuredSchema: z.ZodType<FeaturedWorkContent> = z.object({
         id: required("Id"),
         number: required("Number"),
         name: required("Name"),
-        category: required("Category"),
+        // Legacy fields (no longer shown or edited): kept when present, never required.
+        category: z.string().default(""),
         description: required("Description"),
-        copyStatus: z.enum(["approved", "placeholder"]),
+        copyStatus: z.enum(["approved", "placeholder"]).default("approved"),
         image: imageRefSchema.nullable(),
         imagePosition: objectPosition,
-        placeholderColor: color,
+        placeholderColor: color.default("#F86015"),
       }),
     )
-    .min(3, "Add at least 3 cards")
+    .min(3, "Add at least 3 steps")
     .max(12),
 });
 
