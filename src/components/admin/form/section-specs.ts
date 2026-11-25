@@ -32,6 +32,7 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       kind: "list",
       name: "nav",
       label: "Header links",
+      help: "The link named Contact (or, if there is none, the last one) is shown as the button on the right of the header; the others sit in the centre and in the menu.",
       min: 1,
       max: 6,
       title: (it) => str(it, "label", "Link"),
@@ -114,7 +115,8 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
     {
       kind: "list",
       name: "items",
-      label: "Cards",
+      label: "Steps",
+      help: "The steps of the scroll-linked About section, in order.",
       min: 3,
       max: 12,
       title: (it) => `${str(it, "number", "··")} · ${str(it, "name", "Card")}`,
@@ -130,12 +132,12 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         placeholderColor: "#F86015",
       }),
       item: [
-        { kind: "text", name: "number", label: "Number label", help: "Two digits, e.g. 01. Renumber after reordering." },
+        { kind: "text", name: "number", label: "Step number", help: "Two digits, e.g. 01. Renumber after reordering." },
         { kind: "text", name: "name", label: "Project name" },
         { kind: "text", name: "category", label: "Category line" },
-        { kind: "text", name: "description", label: "Back-face description", multiline: true, rows: 4, help: "Keep it short: about five lines fit." },
+        { kind: "text", name: "description", label: "Description", multiline: true, rows: 4, help: "Two or three short sentences." },
         { kind: "select", name: "copyStatus", label: "Copy status", options: cs(["approved", "placeholder"]) },
-        { kind: "image", name: "image", label: "Front image" },
+        { kind: "image", name: "image", label: "Image" },
         { kind: "text", name: "imagePosition", label: "Image crop focus", placeholder: "50% 50%", help: "x% y% — which part of the image stays visible when cropped." },
         { kind: "color", name: "placeholderColor", label: "Placeholder colour", help: "Only used while there is no image." },
       ],
@@ -272,6 +274,104 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         { kind: "text", name: "href", label: "Destination link (optional)", nullable: true, placeholder: "https://…", help: "When set, the logo is a real link. Leave empty for a plain logo." },
         { kind: "toggle", name: "visible", label: "Show on the website", onLabel: "Shown", offLabel: "Hidden" },
         { kind: "range", name: "scale", label: "Visual size", min: 50, max: 160, unit: "%", def: 100, preview: "partner", help: "Relative to the automatic size that balances all logos. The layout keeps logos apart whatever you choose." },
+      ],
+    },
+  ],
+  footer: [
+    {
+      kind: "group",
+      label: "Headline",
+      fields: [
+        { kind: "text", name: "label", label: "Small label (e.g. Contact)", help: "Also the footer's accessible name." },
+        { kind: "strings", name: "headlineLines", label: "Headline lines (the second line is followed by the red italic word)", fixed: true },
+        { kind: "text", name: "headlineEmphasis", label: "Red italic word" },
+      ],
+    },
+    {
+      kind: "group",
+      name: "cta",
+      label: "Big contact link",
+      fields: [
+        { kind: "text", name: "top", label: "Top word", help: "e.g. Say" },
+        { kind: "text", name: "bottom", label: "Bottom word", help: "e.g. hello" },
+        { kind: "text", name: "href", label: "Link target", help: "mailto:you@example.com, /path or https://…" },
+      ],
+    },
+    { kind: "text", name: "email", label: "Email address", help: "Shown as a link in the footer." },
+    {
+      kind: "group",
+      label: "Place and clock",
+      fields: [
+        { kind: "text", name: "place", label: "Place", help: "e.g. Cairo, Egypt. Shown with a live clock." },
+        { kind: "text", name: "timeZone", label: "Clock time zone", help: "An IANA name such as Africa/Cairo." },
+      ],
+    },
+    {
+      kind: "group",
+      name: "studio",
+      label: "Studio text",
+      fields: [
+        { kind: "text", name: "heading", label: "Heading" },
+        { kind: "text", name: "body", label: "Text", multiline: true, rows: 4 },
+      ],
+    },
+    {
+      kind: "group",
+      name: "explore",
+      label: "Link list: Explore",
+      fields: [
+        { kind: "text", name: "heading", label: "Heading" },
+        {
+          kind: "list",
+          name: "links",
+          label: "Links",
+          max: 10,
+          title: (it) => str(it, "label", "Link"),
+          blank: () => ({ label: "New link", href: "/#work" }),
+          item: [
+            { kind: "text", name: "label", label: "Label" },
+            { kind: "text", name: "href", label: "Link", help: "/#work for a homepage section, /path for a page, https://… for another site." },
+          ],
+        },
+      ],
+    },
+    {
+      kind: "group",
+      name: "services",
+      label: "List: What we do",
+      help: "A plain list of words. It is separate from the “Service names” section.",
+      fields: [
+        { kind: "text", name: "heading", label: "Heading" },
+        { kind: "strings", name: "items", label: "Items", max: 12 },
+      ],
+    },
+    {
+      kind: "group",
+      name: "elsewhere",
+      label: "Link list: Elsewhere (social)",
+      fields: [
+        { kind: "text", name: "heading", label: "Heading" },
+        {
+          kind: "list",
+          name: "links",
+          label: "Links",
+          max: 10,
+          title: (it) => str(it, "label", "Link"),
+          blank: () => ({ label: "New profile", href: "https://" }),
+          item: [
+            { kind: "text", name: "label", label: "Label" },
+            { kind: "text", name: "href", label: "Link", help: "The full profile address, https://…" },
+          ],
+        },
+      ],
+    },
+    {
+      kind: "group",
+      label: "Small print",
+      fields: [
+        { kind: "text", name: "copyright", label: "Copyright line" },
+        { kind: "text", name: "placeholderNote", label: "Small note under the social links", help: "Currently a development reminder (“Social links are placeholders…”). Clear it to show nothing." },
+        { kind: "text", name: "toTop", label: "Back-to-top text" },
       ],
     },
   ],
