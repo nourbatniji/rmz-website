@@ -1,5 +1,6 @@
 "use client";
 
+import { realSocial } from "./social";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
@@ -42,12 +43,13 @@ export function Footer({ content, id = "contact" }: { content: FooterContent; id
   }, [content.place, content.timeZone]);
 
   const mail = `mailto:${content.email}`;
+  const social = realSocial(content.elsewhere.links);
   const ext = (href: string) => (external(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
   const sections: { heading: string; body: ReactNode }[] = [
     { heading: content.studio.heading, body: <p className="ft-p">{content.studio.body}</p> },
     { heading: content.explore.heading, body: <nav aria-label={content.explore.heading}>{content.explore.links.map((l) => <a key={l.label} className="ft-lk" href={l.href}>{l.label}</a>)}</nav> },
     { heading: content.services.heading, body: <>{content.services.items.map((s) => <span key={s} className="ft-sv">{s}</span>)}</> },
-    { heading: content.elsewhere.heading, body: <>{content.elsewhere.links.map((l) => <a key={l.label} className="ft-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}</> },
+    ...(social.length ? [{ heading: content.elsewhere.heading, body: <>{social.map((l) => <a key={l.label} className="ft-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}</> }] : []),
   ];
 
   return (
@@ -78,13 +80,15 @@ export function Footer({ content, id = "contact" }: { content: FooterContent; id
             <p className="ft-m ft-or">{content.services.heading}</p>
             {content.services.items.map((s) => <span key={s} className="ft-sv">{s}</span>)}
           </div>
-          <div className="ft-col ft-rise" style={{ ...d(940), left: 1086 }}>
-            <p className="ft-m ft-or">{content.elsewhere.heading}</p>
-            {content.elsewhere.links.map((l) => <a key={l.label} className="ft-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}
-          </div>
+          {social.length > 0 && (
+            <div className="ft-col ft-rise" style={{ ...d(940), left: 1086 }}>
+              <p className="ft-m ft-or">{content.elsewhere.heading}</p>
+              {social.map((l) => <a key={l.label} className="ft-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}
+            </div>
+          )}
           <div className="ft-bar ft-rise" style={d(1050)}>
             <p className="ft-m ft-dim">{content.copyright}</p>
-            <p className="ft-m ft-dim">{content.placeholderNote}</p>
+            {content.placeholderNote && <p className="ft-m ft-dim">{content.placeholderNote}</p>}
             <Link className="ft-m ft-up" href="/#top">{content.toTop}</Link>
           </div>
         </div>
@@ -123,7 +127,7 @@ export function Footer({ content, id = "contact" }: { content: FooterContent; id
           })}
         </div>
         <div className="ft-mbar">
-          <div className="ft-msoc">{content.elsewhere.links.map((l) => <a key={l.label} href={l.href} {...ext(l.href)}>{l.label}</a>)}</div>
+          <div className="ft-msoc">{social.map((l) => <a key={l.label} href={l.href} {...ext(l.href)}>{l.label}</a>)}</div>
           <div className="ft-ft">
             <p className="ft-m ft-dim">{content.copyright}</p>
             <Link className="ft-m ft-up" href="/#top">{content.toTop}</Link>

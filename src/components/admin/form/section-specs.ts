@@ -357,10 +357,10 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
           label: "Links",
           max: 10,
           title: (it) => str(it, "label", "Link"),
-          blank: () => ({ label: "New profile", href: "https://" }),
+          blank: () => ({ label: "New profile", href: "" }),
           item: [
             { kind: "text", name: "label", label: "Label" },
-            { kind: "text", name: "href", label: "Link", help: "The full profile address, https://…" },
+            { kind: "text", name: "href", label: "Link", help: "The full profile address, https://… Leave empty until you have it: a profile without an address is not shown on the website." },
           ],
         },
       ],
@@ -370,7 +370,7 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       label: "Small print",
       fields: [
         { kind: "text", name: "copyright", label: "Copyright line" },
-        { kind: "text", name: "placeholderNote", label: "Small note under the social links", help: "Currently a development reminder (“Social links are placeholders…”). Clear it to show nothing." },
+        { kind: "text", name: "placeholderNote", label: "Small note under the social links", help: "Optional. Empty by default: nothing is shown." },
         { kind: "text", name: "toTop", label: "Back-to-top text" },
       ],
     },

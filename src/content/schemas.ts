@@ -289,7 +289,7 @@ export const footerSchema: z.ZodType<FooterContent> = z.object({
   studio: z.object({ heading: required("Heading"), body: text }),
   explore: z.object({ heading: required("Heading"), links: z.array(footerLink).max(10) }),
   services: z.object({ heading: required("Heading"), items: z.array(required("Item")).max(12) }),
-  elsewhere: z.object({ heading: required("Heading"), links: z.array(footerLink).max(10) }),
+  elsewhere: z.object({ heading: required("Heading"), links: z.array(z.object({ label: required("Label"), href: z.union([z.literal(""), linkSchema]) })).max(10) }),
   copyright: text,
   placeholderNote: text,
   toTop: required("Back-to-top text"),
