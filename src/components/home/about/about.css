@@ -30,7 +30,7 @@
   .ab-mbar i { display: block; height: 3px; width: 0; background: var(--color-red); }
   .ab-mcards { overflow: hidden; margin-right: calc(var(--gutter) * -1); flex: none; }
   .ab-mrail { position: relative; width: var(--ab-cw); height: calc(var(--ab-cw) * 1.25); }
-  .ab-mcard { position: absolute; left: 0; top: 0; overflow: hidden; width: var(--ab-cw); height: calc(var(--ab-cw) * 1.25); background: linear-gradient(150deg, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.34)), var(--c); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45); will-change: transform; }
+  .ab-mcard { position: absolute; left: 0; top: 0; overflow: hidden; width: var(--ab-cw); height: calc(var(--ab-cw) * 1.25); background: linear-gradient(150deg, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.34)), var(--c); box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45); will-change: opacity, transform; }
   .ab-mcard img { display: block; width: 100%; height: 100%; object-fit: cover; }
   .ab-mnum { position: absolute; left: 16px; top: 12px; z-index: 2; font-weight: 900; font-size: 13px; letter-spacing: 0.1em; color: var(--color-ink); }
   .ab-mtxts { display: grid; }
@@ -48,6 +48,40 @@
     .ab-mcards { margin-left: 0; }
     .ab-mrail, .ab-mcard { height: calc(var(--ab-cw) * 1.1); }
     .ab-mtxt .ab-body { font-size: 17px; -webkit-line-clamp: 3; line-clamp: 3; max-width: 56ch; }
+  }
+  /* iPad — exactly the "Selected work tablet 4 — split, cover on scroll" board: image left (4:5), text + controls right, centred together in the stage;
+     the next image slides in over the current one as the page scrolls. */
+  @media (min-width: 640px) {
+    .ab-mstage { display: grid; padding: 28px var(--gutter) 0; gap: 0; column-gap: max(28px, calc(56.25vw - var(--gutter) - var(--ab-cw)));
+      --ab-cw: clamp(260px, min(44.27vw, calc((100svh - var(--header-h) - 200px) / 1.25)), 560px);
+      grid-template-columns: var(--ab-cw) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto minmax(0, 1fr); }
+    .ab-mtop { grid-column: 1 / -1; grid-row: 1; }
+    .ab-mcards { grid-column: 1; grid-row: 2 / 6; align-self: center; margin: 0; overflow: visible; }
+    .ab-mrail { width: var(--ab-cw); height: calc(var(--ab-cw) * 1.25); }
+    .ab-mcard { width: 100%; height: 100%; }
+    .ab-mtxts { grid-column: 2; grid-row: 3; margin: 0; align-self: end; }
+    .ab-mtxt { align-self: end; }
+    .ab-mtxt .ab-kicker { margin-bottom: 10px; }
+    .ab-mtxt .ab-prov { display: table; margin: 6px 0 0; }
+    .ab-mtxt .ab-title { font-size: clamp(40px, 6vw, 56px); line-height: 0.9; }
+    .ab-mtxt .ab-body { margin-top: 14px; font-size: 16px; line-height: 1.55; max-width: none; display: block; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
+    .ab-mstage .ab-mctl { grid-column: 2; grid-row: 4; margin: 28px 0 0; padding: 0; }
+    .ab-mctl .ab-cta { padding: 0 14px; letter-spacing: 0.12em; white-space: nowrap; min-width: 0; }
+    .ab-marr { display: flex; align-items: center; justify-content: center; padding: 0; }
+  }
+  /* Phone — exactly the "Selected work mobile 3 — cover on scroll" board: a card in the desktop frame's 3:4 portrait shape, the next card slides in from the right and
+     covers it (the covered one steps back and dims), text below fades over, controls at the bottom. The card keeps that ratio at every size. */
+  @media (max-width: 639.98px) {
+    .ab-mstage { gap: 0; --ab-cw: clamp(180px, min(100cqw, calc((100svh - var(--header-h) - 305px) / 1.3333)), 600px); } /* the desktop frame's 3:4 portrait shape: ratio fixed, it only shrinks (never crops) on a short screen */
+    .ab-mcards { margin: 18px 0 0; overflow: visible; }
+    .ab-mrail { width: var(--ab-cw); height: calc(var(--ab-cw) * 1.3333); margin: 0 auto; }
+    .ab-mcard { width: 100%; height: 100%; }
+    .ab-mtxts { margin-top: 14px; }
+    .ab-mtxt .ab-kicker { margin-bottom: 10px; }
+    .ab-mtxt .ab-title { font-size: clamp(40px, 12vw, 80px); line-height: 0.9; }
+    .ab-mtxt .ab-body { margin-top: 12px; font-size: 15px; line-height: 1.55; -webkit-line-clamp: 2; line-clamp: 2; }
+    .ab-mctl { padding-top: 14px; }
+    .ab-marr { display: flex; align-items: center; justify-content: center; padding: 0; }
   }
   @media (max-height: 700px) { .ab-mtxt .ab-body { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; } .ab-mtxt .ab-title { font-size: clamp(36px, 11vw, 48px); } }
   .ab-mctl { display: flex; justify-content: flex-end; gap: 8px; margin-top: auto; }

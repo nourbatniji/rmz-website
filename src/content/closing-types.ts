@@ -47,3 +47,24 @@ export type FooterContent = {
 };
 
 export type ClosingContent = { collective: CollectiveContent; footer: FooterContent };
+
+/** Contact form section (the text around the form; the form's fields and behaviour live in code). */
+export type ContactContent = {
+  kicker: string;
+  headingLead: string;
+  headingEmphasis: string;
+  nameLabel: string;
+  nameHint: string;
+  emailLabel: string;
+  emailHint: string;
+  emailError: string;
+  companyLabel: string;
+  companyOptional: string;
+  messageLabel: string;
+  messageHint: string;
+  buttonLabel: string;
+  sendingLabel: string;
+  sentLabel: string;
+  mailPrefix: string; // "or write"
+  email: string; // address shown and linked next to the button
+};

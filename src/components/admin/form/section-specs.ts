@@ -94,6 +94,9 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         { kind: "text", name: "description", label: "Description for screen readers", multiline: true, rows: 2, help: "Not visible. Describe what the artwork shows." },
       ],
     },
+    headline("Fallback headline (not normally shown)"),
+    { kind: "text", name: "intro", label: "Intro paragraph (not shown on the page)", multiline: true, rows: 3, help: "Kept for the content record; the Top banner no longer displays it." },
+    { kind: "text", name: "scrollHint", label: "Scroll hint (not shown on the page)", help: "Kept for the content record; the Top banner no longer displays it." },
   ],
   corridor: [
     { kind: "text", name: "kicker", label: "Kicker" },

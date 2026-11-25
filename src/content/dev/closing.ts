@@ -1,4 +1,4 @@
-import type { ClosingContent, WordmarkId } from "../closing-types";
+import type { ClosingContent, ContactContent, WordmarkId } from "../closing-types";
 
 /** Demo content (canvas "Concept A · The Collective" + "Footer"). The twelve partners are clearly-marked placeholders, not real RMZ collaborations. */
 const P: [string, string, WordmarkId][] = [
@@ -65,4 +65,25 @@ export const devClosingContent: ClosingContent = {
     placeholderNote: "",
     toTop: "Back to top ↑",
   },
+};
+
+/** Built-in text of the contact form section (the default for the dashboard's "Contact form"). */
+export const devContactContent: ContactContent = {
+  kicker: "Start a project",
+  headingLead: "Tell us what you\u2019re",
+  headingEmphasis: "building.",
+  nameLabel: "Name",
+  nameHint: "Tell us your name.",
+  emailLabel: "Email",
+  emailHint: "Where can we reply?",
+  emailError: "We need an email to reply to.",
+  companyLabel: "Company",
+  companyOptional: "optional",
+  messageLabel: "Message",
+  messageHint: "Tell us a little about what you have in mind.",
+  buttonLabel: "Send enquiry",
+  sendingLabel: "Sending\u2026",
+  sentLabel: "Received \u2014 thank you",
+  mailPrefix: "or write",
+  email: "management@rmz.solutions",
 };

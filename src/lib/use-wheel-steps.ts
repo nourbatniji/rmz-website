@@ -14,6 +14,7 @@ import { useEffect, useRef } from "react";
  * Card state is independent of the page's scroll position.
  */
 const SIL = 200; // ms of silence that ends a wheel gesture
+const SETTLE_MAX = 450; // ms an approach gesture may keep the wheel native once the cards are in place
 const THR = 40; // px of wheel travel that counts as a step
 const BUSY = 700; // ms a step takes to land
 
@@ -36,11 +37,12 @@ export function useWheelSteps(opts: Opts) {
     let g: { last: number; lastAbs: number; mode: "native" | "handled"; fired: boolean; sum: number; dec: boolean; inc: number } | null = null;
     let busy = 0;
     let offAt = -1e9; // last wheel event seen while the cards were NOT in control (settle option)
+    let offFirst = -1e9; // when that run of events began: an approach gesture stays native for at most SETTLE_MAX, however long the momentum lasts
     const onWheel = (e: WheelEvent) => {
       const o = ref.current;
       if (e.ctrlKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-      if (!o.over(e)) { g = null; offAt = performance.now(); return; } // pointer off the cards / stage not in place: ordinary page scrolling, untouched
-      if (o.settle && performance.now() - offAt < SIL) { offAt = performance.now(); return; } // same gesture as an approach scroll: stays native
+      if (!o.over(e)) { const t = performance.now(); if (t - offAt >= SIL) offFirst = t; g = null; offAt = t; return; } // pointer off the cards / stage not in place: ordinary page scrolling, untouched
+      if (o.settle && performance.now() - offAt < SIL && performance.now() - offFirst < SETTLE_MAX) { offAt = performance.now(); return; } // same gesture as an approach scroll: stays native
       let dy = e.deltaY;
       if (e.deltaMode === 1) dy *= 16;
       else if (e.deltaMode === 2) dy *= window.innerHeight;

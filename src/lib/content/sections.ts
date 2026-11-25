@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import { devHomepageContent as dev } from "@/content/dev/homepage";
 import { devWorkContent as devWork } from "@/content/dev/work";
-import { devClosingContent } from "@/content/dev/closing";
+import { devClosingContent, devContactContent } from "@/content/dev/closing";
 import type { CollaborationsContent } from "@/content/collab-types";
 import * as s from "@/content/schemas";
 import { SECTION_KEYS, type SectionKey } from "@/lib/admin/section-meta";

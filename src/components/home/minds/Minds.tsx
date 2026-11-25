@@ -1,7 +1,8 @@
 "use client";
 
 import "./minds.css";
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { flushSync } from "react-dom";
 import type { MindsContent } from "@/content/types";
 import { useEntrance } from "@/lib/use-entrance";
 
@@ -50,6 +51,8 @@ export function Minds({ content }: { content: MindsContent }) {
   const n = items.length;
   const rootRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const hoverT = useRef(0); // hover-to-open (mouse only): a short rest on a column / row opens it
+  const hoverI = useRef(-1);
   // Desktop scroll-linked reveal. The columns are laid out at their FINAL size from the start (nothing reflows); each `.mind` (the single outer wrapper
   // holding the red panel, the cream card, portrait, name, role, biography — everything) is masked from the bottom with clip-path, its top edge fixed at
   // the junction; nothing is scaled, translated or faded. Everything starts completely hidden (0 %). `--rp` (0…1) is a pure function of the scroll
@@ -134,41 +137,79 @@ export function Minds({ content }: { content: MindsContent }) {
       off();
     };
   }, [n]);
-  // Phone / tablet accordion: every row starts shut; the first time the list scrolls into view, Mind 04 drops open by itself (unless the visitor already tapped a row).
-  // Desktop keeps its initially open column.
-  const touched = useRef(false);
+  // Phone / tablet accordion: every row starts shut. Mind 04 drops open each time the list scrolls into view, and shuts again once the list has scrolled
+  // completely out of view (above or below), so it drops again on the way back. Desktop keeps its initially open column.
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
     const mq = window.matchMedia(DESKTOP);
-    let io: IntersectionObserver | null = null;
+    let enter: IntersectionObserver | null = null;
+    let leave: IntersectionObserver | null = null;
+    let wait = 0; // the drop starts a beat after the list has been reached
+    const root = rootRef.current;
+    const close = () => {
+      window.clearTimeout(wait);
+      const above = list.getBoundingClientRect().bottom <= 0;
+      const h0 = list.offsetHeight;
+      if (root) root.dataset.snap = "1"; // no height transition while it is out of sight: the collapse must be instant
+      flushSync(() => setSel((s) => (s < 0 ? s : -1)));
+      if (above) window.scrollBy(0, list.offsetHeight - h0); // keep what is on screen where it was when the list above it collapses
+      if (root) delete root.dataset.snap;
+    };
     const arm = () => {
-      io?.disconnect();
-      io = null;
+      enter?.disconnect();
+      leave?.disconnect();
+      window.clearTimeout(wait);
+      enter = leave = null;
       if (mq.matches) {
         setSel((s) => (s < 0 ? initial : s));
         return;
       }
-      if (touched.current) return;
       setSel(-1);
-      io = new IntersectionObserver(
+      enter = new IntersectionObserver(
         (entries) => {
-          if (!entries.some((e) => e.isIntersecting) || touched.current) return;
-          touched.current = true;
-          io?.disconnect();
-          setSel(Math.min(3, n - 1));
+          window.clearTimeout(wait);
+          if (!entries[entries.length - 1].isIntersecting) return;
+          wait = window.setTimeout(() => setSel((s) => (s < 0 ? Math.min(3, n - 1) : s)), 450);
         },
-        { rootMargin: "0px 0px -35% 0px", threshold: 0.2 },
+        { rootMargin: "0px 0px -40% 0px", threshold: 0.3 },
       );
-      io.observe(list);
+      leave = new IntersectionObserver(
+        (entries) => {
+          if (!entries[entries.length - 1].isIntersecting) close();
+        },
+        { threshold: 0 },
+      );
+      enter.observe(list);
+      leave.observe(list);
     };
     arm();
     mq.addEventListener("change", arm);
     return () => {
       mq.removeEventListener("change", arm);
-      io?.disconnect();
+      enter?.disconnect();
+      leave?.disconnect();
+      window.clearTimeout(wait);
     };
   }, [n, initial]);
+  // Mouse hover opens a column (desktop) or drops a row (phone / tablet). It reacts only to real pointer MOVEMENT (never to rows sliding under a still cursor while
+  // another one closes) and after a brief rest, so the accordion cannot cascade. Touch keeps tap-to-open; keyboard / click are unchanged.
+  const onHover = (e: ReactPointerEvent<HTMLUListElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const li = (e.target as HTMLElement).closest("li");
+    const i = li ? Array.prototype.indexOf.call(e.currentTarget.children, li) : -1;
+    if (i < 0 || i === hoverI.current) return;
+    hoverI.current = i;
+    window.clearTimeout(hoverT.current);
+    if (i === sel) return;
+    const desk = window.matchMedia(DESKTOP).matches;
+    hoverT.current = window.setTimeout(() => setSel(i), desk ? 50 : 140);
+  };
+  const onHoverEnd = () => {
+    hoverI.current = -1;
+    window.clearTimeout(hoverT.current);
+  };
+  useEffect(() => () => window.clearTimeout(hoverT.current), []);
   useEntrance(rootRef, { mediaQuery: "(max-width: 1023.98px)" }); // mobile accordion only: unchanged one-shot staggered lift (see minds.css)
 
   return (
@@ -179,7 +220,7 @@ export function Minds({ content }: { content: MindsContent }) {
           {content.label}
         </h2>
 
-        <ul ref={listRef} className="minds-list" style={{ "--n": n } as CSSProperties}>
+        <ul ref={listRef} className="minds-list" style={{ "--n": n } as CSSProperties} onPointerMove={onHover} onPointerLeave={onHoverEnd}>
           {items.map((item, i) => {
             const open = i === sel;
             // Desktop geometry: left = columns before × (closed + gap) + the open column's extra width if it precedes.
@@ -188,7 +229,7 @@ export function Minds({ content }: { content: MindsContent }) {
             const plateId = `${uid}-p${i}`;
             return (
               <li key={item.id} className={`mind ${open ? "mind-open" : ""}`} style={style}>
-                <button type="button" className="mind-cover" aria-expanded={open} aria-controls={plateId} onClick={() => { touched.current = true; setSel(i); }}>
+                <button type="button" className="mind-cover" aria-expanded={open} aria-controls={plateId} onClick={() => setSel(i)}>
                   <span className="mind-num t-meta" aria-hidden="true">
                     {item.number}
                   </span>

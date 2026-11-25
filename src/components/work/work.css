@@ -59,10 +59,11 @@
 .wk-arr:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
 .wk-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* Mouse / trackpad desktop: a SHORT dwell seats the stage below the header (sticky) so the aligned state lasts long enough to be used — a fraction of
-   one screen, not a pinned scroll track. Nothing is captured or snapped: the page scrolls through it normally; card stepping is gated in JS (WorkArchive). */
+/* Mouse / trackpad desktop: a dwell seats the stage below the header (sticky) so the aligned state lasts long enough to be used — a fraction of
+   one screen, not a pinned scroll track. Nothing is captured or snapped: the page scrolls through it normally; card stepping happens only while the
+   pointer is over the project items (the cards, their caption and the controls) — gated in JS (WorkArchive). */
 @media (min-width: 1024px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .wk-track { height: calc(100svh - var(--wk-hh, var(--header-h)) + min(26svh, 240px)); } /* a sticky element can only travel inside its container's content box, so the dwell is height, not padding */
+  .wk-track { height: calc(100svh - var(--wk-hh, var(--header-h)) + min(40svh, 360px)); } /* a sticky element can only travel inside its container's content box, so the dwell is height, not padding */
   .wk-pin { position: sticky; top: var(--wk-hh, var(--header-h)); }
 }
 
@@ -98,13 +99,16 @@
 /* ── Mobile (< 1024px) ────────────────────────────────────────────────── */
 @media (max-width: 1023px) {
   .wk-box { width: 390px; height: 672px; }
-  .wk-head { left: calc(var(--gutter) / var(--wk-sc, 1)); right: calc(var(--gutter) / var(--wk-sc, 1)); top: 20px; }
-  .wk-h2 { font-size: 56px; }
+  .wk-head { left: calc(var(--gutter) / var(--wk-sc, 1)); right: calc(var(--gutter) / var(--wk-sc, 1)); top: 14px; }
+  .wk-h2 { font-size: 34px; line-height: 1; }
+  .wk-head .wk-nm { font-size: 10px; }
+  .wk-chip { height: 34px; padding: 0 12px; font-size: 10px; letter-spacing: 0.12em; gap: 6px; }
+  .wk-chip i { font-size: 9px; }
   .wk-intro { display: none; }
-  .wk-chips { flex-wrap: nowrap; overflow-x: auto; margin-top: 18px; margin-right: calc(var(--gutter) / var(--wk-sc, 1) * -1); padding-right: calc(var(--gutter) / var(--wk-sc, 1)); scrollbar-width: none; }
+  .wk-chips { flex-wrap: nowrap; overflow-x: auto; margin-top: 12px; margin-right: calc(var(--gutter) / var(--wk-sc, 1) * -1); padding-right: calc(var(--gutter) / var(--wk-sc, 1)); scrollbar-width: none; }
   .wk-chips::-webkit-scrollbar { display: none; }
   .wk-empty { left: calc(var(--gutter) / var(--wk-sc, 1)); right: calc(var(--gutter) / var(--wk-sc, 1)); top: 200px; }
-  .wk-stage { left: 0; width: 100%; top: 160px; height: 512px; perspective: 900px; perspective-origin: 50% 40%; --cx: 50%; --ty: 90px; --cw: clamp(281px, calc(var(--wk-bw, 390px) * 0.78), 600px); --dx: calc(var(--cw) * 0.83); }
+  .wk-stage { left: 0; width: 100%; top: 108px; height: 564px; perspective: 900px; perspective-origin: 50% 40%; --cx: 50%; --ty: 64px; --cw: clamp(300px, calc(var(--wk-bw, 390px) * 0.86), 640px); --dx: calc(var(--cw) * 0.83); }
   .wk-bs { transform: translateX(calc(var(--d) * var(--dx))) translateZ(calc(var(--ad) * -120px)) rotateY(calc(var(--d) * -26deg)); }
   .wk-bs.op { transform: translateX(0) translateZ(260px) rotateY(0); }
   .wk-ctl { gap: 10px; bottom: 14px; }
