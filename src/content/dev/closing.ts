@@ -55,14 +55,14 @@ export const devClosingContent: ClosingContent = {
     elsewhere: {
       heading: "Elsewhere",
       links: [
-        { label: "Instagram", href: "https://www.instagram.com/" },
-        { label: "Behance", href: "https://www.behance.net/" },
-        { label: "LinkedIn", href: "https://www.linkedin.com/" },
-        { label: "TikTok", href: "https://www.tiktok.com/" },
+        { label: "Instagram", href: "" },
+        { label: "Behance", href: "" },
+        { label: "LinkedIn", href: "" },
+        { label: "TikTok", href: "" },
       ],
     },
     copyright: "© 2026 Rebel Mind Zone · All rights reserved",
-    placeholderNote: "Social links are placeholders, swap in real profiles",
+    placeholderNote: "",
     toTop: "Back to top ↑",
   },
 };

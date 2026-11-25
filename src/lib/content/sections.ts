@@ -21,7 +21,6 @@ export const sectionSchemas: Record<SectionKey, z.ZodType<unknown>> = {
   minds: s.mindsSchema,
   workIntro: s.workIntroSchema,
   collaborations: s.collaborationsSchema,
-  contact: s.contactSchema,
   footer: s.footerSchema,
 };
 
@@ -46,8 +45,6 @@ export function defaultSection(key: SectionKey): unknown {
       return dev.minds;
     case "collaborations":
       return defaultCollaborations();
-    case "contact":
-      return devContactContent;
     case "footer":
       return devClosingContent.footer;
     case "workIntro": {

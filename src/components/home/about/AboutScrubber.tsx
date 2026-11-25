@@ -17,7 +17,7 @@ import "./about.css";
  * Mobile / reduced motion / no JS: a plain vertical list of the same content (CSS decides; the stage is not in the accessibility tree then).
  * Pointer over the current image (desktop, fine pointer, scroll at rest): the subtle liquid effect (liquid-image.ts).
  *
- * Content reuses the existing `featured` section data (name = title, category = kicker, description = text, image), so the admin editor keeps working.
+ * Content reuses the `featured` section data (name = step title, description = text, image). Legacy `category` / `copyStatus` values are kept in storage but not shown.
  */
 
 const DESKTOP = "(min-width: 1024px)";
@@ -129,7 +129,7 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
   }, [n]);
 
   // Mobile / tablet (< 1024 px, motion allowed): the same scroll-linked idea, but the image is a stack of cards: as the page scrolls the next one slides in over the
-  // current one and covers it; the text under it cross-fades. Arrows jump one project. Reduced motion / no JS keep the plain list.
+  // current one and covers it; the text under it cross-fades. Arrows jump one step. Reduced motion / no JS keep the plain list.
   useEffect(() => {
     const root = rootRef.current, track = mTrackRef.current, stage = mStageRef.current;
     if (!root || !track || !stage || n < 1) return;
@@ -207,16 +207,32 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
     };
   }, [n]);
 
-  useWheelSteps({
-    active: n > 1,
-    over: () => stepsRef.current.some((x) => x.seated()),
-    settle: true,
-    canStep: (dir) => !!stepsRef.current.find((x) => x.seated())?.canStep(dir),
-    step: (dir) => stepsRef.current.find((x) => x.seated())?.step(dir),
-  });
+  // Framed admin preview only: the editor tells us which step is open and the page scrolls to it.
+  useEffect(() => {
+    let framed = false;
+    try {
+      framed = window.parent !== window && window.parent.location.origin === window.location.origin;
+    } catch {
+      framed = false;
+    }
+    if (!framed) return;
+    const onMsg = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== window.parent) return;
+      const d = e.data as { type?: string; id?: unknown } | null;
+      if (d?.type !== "rmz-open-service" || typeof d.id !== "string") return;
+      const i = items.findIndex((it) => it.id === d.id);
+      const track = window.matchMedia(DESKTOP).matches ? trackRef.current : mTrackRef.current;
+      const stage = window.matchMedia(DESKTOP).matches ? stageRef.current : mStageRef.current;
+      if (i < 0 || !track || !stage) return;
+      const hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 92;
+      const extra = Math.max(1, track.offsetHeight - stage.offsetHeight);
+      window.scrollTo({ top: window.scrollY + track.getBoundingClientRect().top - hh + ((i + 0.5) / n) * extra });
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, [items, n]);
 
   const pending = "Image pending";
-  const cta = { href: "#services", label: "What we do ↓" };
 
   return (
     <section ref={rootRef} id="selected" aria-labelledby={`${uid}-h`} className="ab-root" style={{ "--ab-n": n } as CSSProperties}>
@@ -258,15 +274,8 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
               <div className="ab-txtcol">
                 {items.map((item, i) => (
                   <div key={item.id} data-ab-txt className="ab-txt" style={{ opacity: i === 0 ? 1 : 0 }} aria-hidden={i === 0 ? undefined : true}>
-                    <p className="ab-kicker">
-                      {item.category}
-                      {item.copyStatus === "placeholder" && <span className="ab-prov">Provisional copy</span>}
-                    </p>
                     <h3 className="ab-title">{item.name}</h3>
                     <p className="ab-body">{item.description}</p>
-                    <a className="ab-cta" href={cta.href}>
-                      {cta.label}
-                    </a>
                   </div>
                 ))}
               </div>
@@ -303,25 +312,14 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
             <div className="ab-mtxts">
               {items.map((item, i) => (
                 <div key={item.id} data-ab-mtxt className="ab-mtxt" style={{ opacity: i === 0 ? 1 : 0 }} aria-hidden={i === 0 ? undefined : true}>
-                  <p className="ab-kicker">
-                    {item.category}
-                    {item.copyStatus === "placeholder" && <span className="ab-prov">Provisional copy</span>}
-                  </p>
                   <h3 className="ab-title">{item.name}</h3>
                   <p className="ab-body">{item.description}</p>
                 </div>
               ))}
             </div>
             <div className="ab-mctl">
-              <a className="ab-cta" href={cta.href}>
-                {cta.label}
-              </a>
-              <button type="button" className="ab-marr" data-ab-mprev aria-label="Previous project">
-                <svg width="20" height="14" viewBox="0 0 22 14" fill="none" aria-hidden="true"><path d="M22 7H2M8 1L2 7l6 6" stroke="currentColor" strokeWidth="2" /></svg>
-              </button>
-              <button type="button" className="ab-marr" data-ab-mnext aria-label="Next project">
-                <svg width="20" height="14" viewBox="0 0 22 14" fill="none" aria-hidden="true"><path d="M0 7h20M14 1l6 6-6 6" stroke="currentColor" strokeWidth="2" /></svg>
-              </button>
+              <button type="button" className="ab-marr" data-ab-mprev aria-label="Previous step">←</button>
+              <button type="button" className="ab-marr" data-ab-mnext aria-label="Next step">→</button>
             </div>
           </div>
         </div>
@@ -336,18 +334,11 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
               <div className="ab-simg" style={{ "--c": item.placeholderColor } as CSSProperties}>
                 <StepImage item={item} pending={pending} />
               </div>
-              <p className="ab-kicker">
-                {item.category}
-                {item.copyStatus === "placeholder" && <span className="ab-prov">Provisional copy</span>}
-              </p>
               <h3 className="ab-title">{item.name}</h3>
               <p className="ab-body">{item.description}</p>
             </li>
           ))}
         </ol>
-        <a className="ab-cta" href={cta.href}>
-          {cta.label}
-        </a>
       </div>
       <noscript>
         <style>{`.ab-flip,.ab-mob{display:none!important}.ab-static{display:block!important}`}</style>

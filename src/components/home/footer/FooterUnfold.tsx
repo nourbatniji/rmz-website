@@ -1,5 +1,6 @@
 "use client";
 
+import { realSocial } from "./social";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
@@ -127,6 +128,10 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
   const sh = [shade(0.5 * e, 0.28 * e), shade(0.1 * e, 0.27 * e), shade(0.55 * e, 0.27 * e), shade(0.1 * e, 0.29 * e)];
   const gf = 1 - cl((o - 0.45) / 0.55); // the big RMZ. letters across the folded paper fade out slowly as it opens
   const fg = mix("#f3e8cc", "#0f0f0e", m);
+  const kc = mix("#ffca26", "#d52518", m);
+  const [mailUser, mailHost] = content.email.split("@");
+
+  const social = realSocial(content.elsewhere.links);
   const bodies: ReactNode[] = [
     <>
       <Link href="/#top" className="fu-lg" aria-label="RMZ — home">RMZ<span>.</span></Link>
@@ -143,12 +148,12 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
       <p className="fu-k">{content.services.heading}</p>
       <div className="fu-sv">{content.services.items.map((s) => <span key={s}>{s}</span>)}</div>
     </>,
-    <>
+    social.length ? <>
       <p className="fu-k">{content.elsewhere.heading}</p>
-      <div className="fu-nav">
-        {content.elsewhere.links.map((l) => <a key={l.label} className="fu-lk" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}
+      <div className="fu-soc">
+        {social.map((l) => <a key={l.label} className="fu-so" href={l.href} {...ext(l.href)}>{l.label} <span aria-hidden="true">↗</span></a>)}
       </div>
-    </>,
+    </> : null,
   ];
 
   const panel = (i: number): ReactNode => (
@@ -180,8 +185,7 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
             </div>
             <div className="fu-bar" style={{ color: fg }}>
               <span>{content.copyright}</span>
-              <span className="fu-hint" style={{ opacity: cl(1 - tt / 0.12) }}>Scroll to open ↓</span>
-              <span className="fu-note" style={{ opacity: cr }}>{content.placeholderNote}</span>
+              {content.placeholderNote ? <span>{content.placeholderNote}</span> : <span />}
             </div>
           </div>
         </footer>

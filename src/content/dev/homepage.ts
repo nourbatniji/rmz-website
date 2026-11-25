@@ -1,7 +1,14 @@
 import type { HeroBanner, HomepageContent } from "../types";
 
 /**
- * Banner 1: 25 delivered PNG frames (1478 × 622) of a woman surrounded by golden fish and red grass, converted to WebP
+ * Banner 1 (hero): 50 frames (2880 × 1800 WebP, public/media/hero/rabbit/frame_001.webp … frame_050.webp) of a rabbit magician pulling a man's head from a top hat in a red room.
+ * Frame 001 is also the poster, so it is shown as soon as the banner appears (and is the image inside the opening animation's word).
+ */
+const rabbitSequence: HeroBanner["sequence"] = { pattern: "/media/hero/rabbit/frame_{n}.webp", frameCount: 50, startAt: 1, digits: 3 };
+const rabbitPoster = "/media/hero/rabbit/frame_001.webp";
+
+/**
+ * Banner 2 (hero): 25 delivered PNG frames (1478 × 622) of a woman surrounded by golden fish and red grass, converted to WebP
  * (public/media/hero/identity/frame-01.webp … frame-25.webp). Frame 01 is also the poster, so it is shown as soon as the banner appears.
  */
 const identitySequence: HeroBanner["sequence"] = {
@@ -38,7 +45,7 @@ export const devHomepageContent: HomepageContent = {
     ctaLabel: "Explore our work",
     ctaHref: "#work",
     // DEV SEQUENCES (public/media/dev/hero) — labelled, not final art. Each banner has its own
-    // frame count on purpose (50 / 36 / 64) to prove per-banner mapping. Replace with delivered frames.
+    // frame count on purpose (rabbit 50 / fish 25 / 64) to prove per-banner mapping. Replace with delivered frames.
     banners: [
       {
         id: "identity",
@@ -48,9 +55,9 @@ export const devHomepageContent: HomepageContent = {
         phraseEmphasis: "perspective.",
         accent: "#FFCA26",
         description:
-          "Banner 1, Identity: a woman in a cream dress stands among golden fish and red grass; the scene moves as you scroll.",
-        poster: { src: identityPoster, alt: "", width: 1478, height: 622 },
-        sequence: identitySequence,
+          "Banner 1, Identity: a rabbit in a tuxedo stands in a red room and lifts a top hat from a small table; the scene moves as you scroll.",
+        poster: { src: rabbitPoster, alt: "", width: 2880, height: 1800 },
+        sequence: rabbitSequence,
       },
       {
         id: "campaign",
@@ -59,9 +66,9 @@ export const devHomepageContent: HomepageContent = {
         phraseLead: "IMPOSSIBLE",
         phraseEmphasis: "to ignore.",
         accent: "#F86015",
-        description: "Banner 2, Campaign: a scene that plays forward and backward as you scroll the page.",
-        poster: { src: "/media/dev/hero/banner-2/poster.webp", alt: "", width: 1600, height: 1000 },
-        sequence: { pattern: "/media/dev/hero/banner-2/{n}.webp", frameCount: 36, startAt: 1, digits: 3 },
+        description: "Banner 2, Campaign: a woman in a cream dress stands among golden fish and red grass; the scene moves as you scroll.",
+        poster: { src: identityPoster, alt: "", width: 1478, height: 622 },
+        sequence: identitySequence,
       },
       {
         id: "digital",

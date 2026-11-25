@@ -399,6 +399,34 @@ export function HeroThreeWorlds({ hero, preview = false, ghostBanner = 0, sessio
     if (d === 2) d = -1;
     if (d !== 0) turn(d, true);
   };
+  // Admin preview only (the page runs inside the dashboard's same-origin frame): the editor tells the frame which banner is open. Show it, and hold auto-change so the banner being edited
+  // stays on screen. Nothing happens on the public site (no parent frame, no such messages).
+  const goRef = useRef(go);
+  useEffect(() => {
+    goRef.current = go;
+  });
+  useEffect(() => {
+    let framed = false;
+    try {
+      framed = window.parent !== window && window.parent.location.origin === window.location.origin;
+    } catch {
+      framed = false;
+    }
+    if (!framed) return;
+    const hold = window.setTimeout(() => setUserPaused(true), 0);
+    const onMsg = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== window.parent) return;
+      const d = e.data as { type?: string; id?: unknown } | null;
+      if (d?.type !== "rmz-open-service" || typeof d.id !== "string") return;
+      const i = banners.findIndex((b) => b.id === d.id);
+      if (i >= 0) goRef.current(i);
+    };
+    window.addEventListener("message", onMsg);
+    return () => {
+      window.clearTimeout(hold);
+      window.removeEventListener("message", onMsg);
+    };
+  }, [banners]);
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowRight") { e.preventDefault(); turn(1, true); }
     if (e.key === "ArrowLeft") { e.preventDefault(); turn(-1, true); }
