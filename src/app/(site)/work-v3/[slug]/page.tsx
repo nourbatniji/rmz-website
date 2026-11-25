@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { FooterCompact } from "@/components/home/footer/FooterCompact";
+import { FooterUnfold } from "@/components/home/footer/FooterUnfold";
 import { ProjectPageV3 } from "@/components/work-v3/ProjectPageV3";
 import { getFooterContent } from "@/lib/content/closing";
 import { getProject, projects } from "@/content/work-v3/projects";
@@ -30,7 +30,7 @@ export default async function WorkV3Page({ params }: { params: Promise<Params> }
   return (
     <>
       <ProjectPageV3 project={project} next={next} />
-      <FooterCompact content={footer} />
+      <FooterUnfold solo content={footer} />
     </>
   );
 }
