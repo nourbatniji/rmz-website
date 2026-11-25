@@ -17,7 +17,7 @@ export type SectionMeta = {
 
 export const SECTION_META: Record<SectionKey, SectionMeta> = {
   site: { label: "Header and menu", about: "Brand name, logo and the links in the top menu.", anchor: "top", group: "site" },
-  hero: { label: "Top banner", about: "The first thing visitors see: headline, intro and the three animated banners.", anchor: "top", group: "page" },
+  hero: { label: "Top banner", about: "The three banners: each one's headline, selector label and artwork, plus the shared tagline and link.", anchor: "top", group: "page" },
   corridor: { label: "Showreel video", about: "The big showreel video, its cover image and the words around it.", anchor: "showreel", group: "page" },
   statement: { label: "Statement", about: "The one-sentence statement and the words that rotate in it.", anchor: "statement", group: "page" },
   featured: { label: "About", about: "The scroll-linked About steps: an image, a title and a short text for each step.", anchor: "featured", group: "page" },

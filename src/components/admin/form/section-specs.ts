@@ -1,7 +1,6 @@
 import { COPY_STATUS_FULL, type Field, type Obj } from "./spec";
 import type { SectionKey } from "@/lib/admin/section-meta";
 
-const SERVICE_IDS = ["branding", "creative-strategy", "content-production", "social-media", "design", "paid-media", "web-experiences"];
 const MIND_IDS = Array.from({ length: 8 }, (_, i) => `mind-0${i + 1}`);
 const cs = (values: string[]) => COPY_STATUS_FULL.filter((o) => values.includes(o.value));
 
@@ -43,29 +42,55 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       ],
     },
   ],
+  // Hero: only what HeroThreeWorlds actually renders. Not shown (kept untouched in the saved content): `headline` (old fallback if a banner has no headline pair), `intro` and `scrollHint`
+  // (no longer displayed), and each banner's `number` (only used by the empty-artwork placeholder).
   hero: [
-    headline(),
-    { kind: "text", name: "intro", label: "Intro paragraph", multiline: true, rows: 3 },
-    { kind: "text", name: "scrollHint", label: "Scroll hint" },
-    { kind: "text", name: "tagline", label: "Description under the headline", help: "Shown inside the picture, under the banner headline." },
-    { kind: "text", name: "ctaLabel", label: "Link text" },
-    { kind: "text", name: "ctaHref", label: "Link target", help: "#work for a section, /path for a page, https://… for another site." },
+    {
+      kind: "group",
+      label: "Shared by all banners",
+      help: "Appears inside the picture, under the headline of whichever banner is showing.",
+      fields: [
+        { kind: "text", name: "tagline", label: "Tagline (under the headline)", multiline: true, rows: 2 },
+        { kind: "text", name: "ctaLabel", label: "Link text", help: "The link under the tagline." },
+        { kind: "text", name: "ctaHref", label: "Link target", help: "#work for a section, /path for a page, https://… for another site." },
+      ],
+    },
     {
       kind: "list",
       name: "banners",
-      label: "Banners",
+      label: "Banners (in homepage order)",
+      help: "Banner 1 is the first one visitors see. Its poster is also the picture inside the word of the opening animation. Open a banner to see it in the preview.",
       fixed: true,
       fixedOrder: true,
       min: 1,
-      title: (it, i) => `${str(it, "number", String(i + 1))} · ${str(it, "label", "Banner")}`,
+      thumb: (it) => (it.poster && typeof (it.poster as Obj).src === "string" ? ((it.poster as Obj).src as string) : null),
+      title: (it, i) => `Banner ${i + 1} · ${str(it, "phraseEmphasis", str(it, "label", "Banner"))}`,
       item: [
-        { kind: "text", name: "label", label: "Chip label" },
-        { kind: "text", name: "phraseLead", label: "Headline — bold cream line", help: "e.g. A DIFFERENT" },
-        { kind: "text", name: "phraseEmphasis", label: "Headline — red italic line", help: "e.g. perspective." },
-        { kind: "color", name: "accent", label: "Chip colour" },
-        { kind: "text", name: "description", label: "Description for screen readers", multiline: true, rows: 2 },
-        { kind: "image", name: "poster", label: "Poster (first frame)", help: "Shown immediately and as the fallback." },
-        { kind: "sequence", name: "sequence", label: "Image sequence" },
+        {
+          kind: "group",
+          label: "Headline",
+          fields: [
+            { kind: "text", name: "phraseLead", label: "First line (bold, cream)", help: "e.g. A DIFFERENT" },
+            { kind: "text", name: "phraseEmphasis", label: "Second line (red italic)", help: "e.g. perspective." },
+          ],
+        },
+        {
+          kind: "group",
+          label: "Selector",
+          fields: [
+            { kind: "text", name: "label", label: "Selector label", help: "The word at the bottom-left that switches to this banner, e.g. Identity." },
+            { kind: "color", name: "accent", label: "Selector underline colour" },
+          ],
+        },
+        {
+          kind: "group",
+          label: "Artwork",
+          fields: [
+            { kind: "image", name: "poster", label: "Poster (first frame)", help: "Shown immediately and as the fallback. For banner 1 it is also the image inside the opening animation." },
+            { kind: "sequence", name: "sequence", label: "Image sequence", help: "The frames that play as the page scrolls (forwards and in reverse)." },
+          ],
+        },
+        { kind: "text", name: "description", label: "Description for screen readers", multiline: true, rows: 2, help: "Not visible. Describe what the artwork shows." },
       ],
     },
   ],
@@ -140,10 +165,6 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
         { kind: "text", name: "emphasis", label: "Italic part" },
       ],
     },
-    { kind: "text", name: "intro", label: "Intro", multiline: true, rows: 3 },
-    { kind: "text", name: "hintDesktop", label: "Hint (desktop)" },
-    { kind: "text", name: "hintMobile", label: "Hint (mobile)" },
-    { kind: "select", name: "initialSelectedId", label: "Service selected on load", options: SERVICE_IDS.map((v) => ({ value: v, label: v })) },
     {
       kind: "list",
       name: "items",
