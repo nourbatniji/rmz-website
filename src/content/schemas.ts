@@ -11,7 +11,7 @@ import type {
   StatementContent,
 } from "./types";
 import type { WorkContent, WorkProject } from "./work-types";
-import type { FooterContent } from "./closing-types";
+import type { ContactContent, FooterContent } from "./closing-types";
 import { MAGNET_SCALE, PARTNER_SCALE, type CollaborationsContent } from "./collab-types";
 
 /**
@@ -269,7 +269,28 @@ export const collaborationsSchema: z.ZodType<CollaborationsContent> = z.object({
     .refine((l) => new Set(l.map((p) => p.id)).size === l.length, "Each entry needs a unique id"),
 }) as z.ZodType<CollaborationsContent>;
 
-/** Footer / contact (closing sequence). Every field is rendered by the footer; `placeholderNote` may be empty (then nothing is shown). */
+/** Contact form section: the words around the form. */
+export const contactSchema: z.ZodType<ContactContent> = z.object({
+  kicker: required("Small label"),
+  headingLead: required("Heading"),
+  headingEmphasis: text,
+  nameLabel: required("Name label"),
+  nameHint: text,
+  emailLabel: required("Email label"),
+  emailHint: text,
+  emailError: text,
+  companyLabel: required("Company label"),
+  companyOptional: text,
+  messageLabel: required("Message label"),
+  messageHint: text,
+  buttonLabel: required("Button text"),
+  sendingLabel: required("Sending text"),
+  sentLabel: required("Thank-you text"),
+  mailPrefix: text,
+  email: required("Email address").refine((v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Enter a valid email address"),
+});
+
+/** Footer (closing sequence). Every field is rendered by the footer; `placeholderNote` may be empty (then nothing is shown). */
 const timeZone = z.string().trim().min(1, "Time zone is required").refine((v) => {
   try {
     new Intl.DateTimeFormat("en-GB", { timeZone: v });

@@ -277,6 +277,49 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
       ],
     },
   ],
+  contact: [
+    {
+      kind: "group",
+      label: "Heading",
+      fields: [
+        { kind: "text", name: "kicker", label: "Small label above the heading", help: "Default: Start a project." },
+        { kind: "text", name: "headingLead", label: "Heading: first part" },
+        { kind: "text", name: "headingEmphasis", label: "Heading: italic part" },
+      ],
+    },
+    {
+      kind: "group",
+      label: "Form fields",
+      fields: [
+        { kind: "text", name: "nameLabel", label: "Name: label" },
+        { kind: "text", name: "nameHint", label: "Name: hint under the field" },
+        { kind: "text", name: "emailLabel", label: "Email: label" },
+        { kind: "text", name: "emailHint", label: "Email: hint under the field" },
+        { kind: "text", name: "emailError", label: "Email: message when it is missing or invalid" },
+        { kind: "text", name: "companyLabel", label: "Company: label" },
+        { kind: "text", name: "companyOptional", label: "Company: small tag", help: "Shown next to the label, e.g. optional." },
+        { kind: "text", name: "messageLabel", label: "Message: label" },
+        { kind: "text", name: "messageHint", label: "Message: hint under the field" },
+      ],
+    },
+    {
+      kind: "group",
+      label: "Button and messages",
+      fields: [
+        { kind: "text", name: "buttonLabel", label: "Send button" },
+        { kind: "text", name: "sendingLabel", label: "Button while sending" },
+        { kind: "text", name: "sentLabel", label: "Button after it was sent" },
+      ],
+    },
+    {
+      kind: "group",
+      label: "Email link under the form",
+      fields: [
+        { kind: "text", name: "mailPrefix", label: "Text before the address", help: "Default: or write." },
+        { kind: "text", name: "email", label: "Email address", help: "Shown under the form and used for the mailto link." },
+      ],
+    },
+  ],
   footer: [
     {
       kind: "group",
