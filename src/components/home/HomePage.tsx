@@ -1,7 +1,9 @@
 import { Collaborations } from "@/components/home/collaborations/Collaborations";
 import { SiteHeader } from "@/components/shell/SiteHeader";
 import type { SectionKey } from "@/lib/admin/section-meta";
-import { Footer } from "@/components/home/footer/Footer";
+import { ContactReveal } from "@/components/home/contact/ContactReveal";
+import { ClosingCover } from "@/components/home/footer/ClosingCover";
+import { FooterCompact } from "@/components/home/footer/FooterCompact";
 import { FooterUnfold } from "@/components/home/footer/FooterUnfold";
 import { AboutScrubber } from "@/components/home/about/AboutScrubber";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
@@ -10,6 +12,7 @@ import { ServicesOrbit } from "@/components/home/services-orbit/ServicesOrbit";
 import { Minds } from "@/components/home/minds/Minds";
 import { StatementRotator } from "@/components/home/statement/StatementRotator";
 import { WorkArchive } from "@/components/work/WorkArchive";
+import { getContactContent } from "@/lib/content/closing";
 import { getCollaborationsContent, getFooterSection, getHomepageContent } from "@/lib/content/homepage";
 import { getWorkContent } from "@/lib/content/work";
 
@@ -24,7 +27,7 @@ import { getWorkContent } from "@/lib/content/work";
 export async function HomePage({ draft = false, only }: { draft?: boolean; only?: SectionKey }) {
   const { site, hero, corridor, statement, services, lens, minds, featured } = await getHomepageContent({ draft });
   const { projects, ...work } = await getWorkContent({ draft });
-  const [collaborations, footer] = await Promise.all([getCollaborationsContent({ draft }), getFooterSection({ draft })]);
+  const [collaborations, footer, contact] = await Promise.all([getCollaborationsContent({ draft }), getFooterSection({ draft }), getContactContent({ draft })]);
   const archive = (
     <WorkArchive
       {...work}
@@ -45,7 +48,8 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       minds: <Minds content={minds} />,
       workIntro: <>{header}{archive}</>,
       collaborations: <Collaborations content={collaborations} />,
-      footer: <Footer content={footer} />,
+      contact: <ContactReveal content={contact} />,
+      footer: <FooterCompact content={footer} />,
     }[only];
     return <main id="top">{one}</main>;
   }
