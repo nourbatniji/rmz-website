@@ -35,6 +35,7 @@ export function FooterCompact({ content, id = "contact" }: { content: FooterCont
       </div>
       <div className="fc-bar">
         <p>{content.copyright}</p>
+        <p>{content.placeholderNote}</p>
         <Link href="/#top" className="fc-up">{content.toTop}</Link>
       </div>
     </footer>

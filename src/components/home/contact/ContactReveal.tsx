@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
+import type { ContactContent } from "@/content/closing-types";
+import { devContactContent } from "@/content/dev/closing";
 import "./contact.css";
 
 /**
@@ -10,7 +12,7 @@ import "./contact.css";
  */
 type Status = "idle" | "sending" | "sent" | "error";
 
-export function ContactReveal() {
+export function ContactReveal({ content = devContactContent }: { content?: ContactContent }) {
   const [status, setStatus] = useState<Status>("idle");
   const [bad, setBad] = useState({ name: false, email: false });
   const [error, setError] = useState("");
@@ -58,30 +60,30 @@ export function ContactReveal() {
 
   const formEl = (
     <form className="ct-form" noValidate onSubmit={onSubmit} aria-label="Contact form">
-      <p className="ct-kk ct-orange">Start a project</p>
+      <p className="ct-kk ct-orange">{content.kicker}</p>
       <h2 className="ct-h">
-        Tell us what you&rsquo;re <span className="ct-ital">building.</span>
+        {content.headingLead} <span className="ct-ital">{content.headingEmphasis}</span>
       </h2>
       <div className="ct-row">
         <label className="ct-f" data-bad={bad.name ? "1" : "0"}>
-          <span className="ct-fl">Name</span>
+          <span className="ct-fl">{content.nameLabel}</span>
           <input className="ct-in" name="name" type="text" autoComplete="name" aria-invalid={bad.name} onChange={() => bad.name && setBad((b) => ({ ...b, name: false }))} />
-          <span className="ct-hint">Tell us your name.</span>
+          <span className="ct-hint">{content.nameHint}</span>
         </label>
         <label className="ct-f" data-bad={bad.email ? "1" : "0"}>
-          <span className="ct-fl">Email</span>
+          <span className="ct-fl">{content.emailLabel}</span>
           <input className="ct-in" name="email" type="email" autoComplete="email" aria-invalid={bad.email} onChange={() => bad.email && setBad((b) => ({ ...b, email: false }))} />
-          <span className="ct-hint">{bad.email ? "We need an email to reply to." : "Where can we reply?"}</span>
+          <span className="ct-hint">{bad.email ? content.emailError : content.emailHint}</span>
         </label>
       </div>
-      <label className="ct-f"><span className="ct-fl">Company <em>optional</em></span><input className="ct-in" name="company" type="text" autoComplete="organization" /></label>
-      <label className="ct-f"><span className="ct-fl">Message</span><textarea className="ct-in" name="message" rows={3} /><span className="ct-hint">Tell us a little about what you have in mind.</span></label>
+      <label className="ct-f"><span className="ct-fl">{content.companyLabel} <em>{content.companyOptional}</em></span><input className="ct-in" name="company" type="text" autoComplete="organization" /></label>
+      <label className="ct-f"><span className="ct-fl">{content.messageLabel}</span><textarea className="ct-in" name="message" rows={3} /><span className="ct-hint">{content.messageHint}</span></label>
       <input className="ct-hp" type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
       <div className="ct-act">
         <button type="submit" className="ct-cta" disabled={status === "sending"}>
-          {status === "sent" ? "Received — thank you" : status === "sending" ? "Sending…" : <>Send enquiry<i aria-hidden="true">→</i></>}
+          {status === "sent" ? content.sentLabel : status === "sending" ? content.sendingLabel : <>{content.buttonLabel}<i aria-hidden="true">→</i></>}
         </button>
-        <a className="ct-ln" href="mailto:management@rmz.solutions">or write management@rmz.solutions</a>
+        <a className="ct-ln" href={`mailto:${content.email}`}>{content.mailPrefix} {content.email}</a>
       </div>
       <p className="ct-err" role="status">{status === "error" ? error : ""}</p>
     </form>

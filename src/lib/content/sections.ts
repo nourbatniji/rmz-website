@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 import { devHomepageContent as dev } from "@/content/dev/homepage";
 import { devWorkContent as devWork } from "@/content/dev/work";
-import { devClosingContent } from "@/content/dev/closing";
+import { devClosingContent, devContactContent } from "@/content/dev/closing";
 import type { CollaborationsContent } from "@/content/collab-types";
 import * as s from "@/content/schemas";
 import { SECTION_KEYS, type SectionKey } from "@/lib/admin/section-meta";
@@ -21,6 +21,8 @@ export const sectionSchemas: Record<SectionKey, z.ZodType<unknown>> = {
   minds: s.mindsSchema,
   workIntro: s.workIntroSchema,
   collaborations: s.collaborationsSchema,
+  contact: s.contactSchema,
+  footer: s.footerSchema,
 };
 
 /** Built-in content (the dev files). Used when the database has nothing valid for a section, and by "Reset to default". */
@@ -44,6 +46,10 @@ export function defaultSection(key: SectionKey): unknown {
       return dev.minds;
     case "collaborations":
       return defaultCollaborations();
+    case "contact":
+      return devContactContent;
+    case "footer":
+      return devClosingContent.footer;
     case "workIntro": {
       const { label, headingLead, headingEmphasis, intro, categories, emptyTitle, emptyBody, contact } = devWork;
       return { label, headingLead, headingEmphasis, intro, categories, emptyTitle, emptyBody, contact };

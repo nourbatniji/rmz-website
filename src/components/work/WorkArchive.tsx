@@ -86,13 +86,9 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
     const hh = hhRef.current;
     const vh = window.innerHeight;
     const r = pin.getBoundingClientRect();
-    if (Math.abs(r.top - hh) > ALIGN_TOL || r.bottom > vh + ALIGN_TOL) return false; // stage not seated below the header yet (previous section still in view)
-    const parts = [tr.querySelector(".wk-head"), tr.querySelector(".wk-bs:not([aria-hidden])"), tr.querySelector(".wk-ctl")];
-    return parts.every((el) => {
-      if (!el) return true;
-      const q = el.getBoundingClientRect();
-      return q.top >= hh - ALIGN_TOL && q.bottom <= vh + ALIGN_TOL;
-    });
+    // seated = the stage sits on the header edge (a little slack) and ends inside the viewport; the cards are never judged piece by piece,
+    // so a short laptop screen or a taller header can never leave the wheel dead while the pointer is on the cards
+    return Math.abs(r.top - hh) <= ALIGN_TOL * 3 && r.bottom <= vh + ALIGN_TOL * 6;
   }, []);
   const overCards = useCallback(
     (e: WheelEvent) => {

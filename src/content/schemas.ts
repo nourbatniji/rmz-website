@@ -11,6 +11,7 @@ import type {
   StatementContent,
 } from "./types";
 import type { WorkContent, WorkProject } from "./work-types";
+import type { ContactContent, FooterContent } from "./closing-types";
 import { MAGNET_SCALE, PARTNER_SCALE, type CollaborationsContent } from "./collab-types";
 
 /**
@@ -266,3 +267,44 @@ export const collaborationsSchema: z.ZodType<CollaborationsContent> = z.object({
     .max(60, "At most 60 entries")
     .refine((l) => new Set(l.map((p) => p.id)).size === l.length, "Each entry needs a unique id"),
 }) as z.ZodType<CollaborationsContent>;
+
+/** Contact form section: the words around the form. */
+export const contactSchema: z.ZodType<ContactContent> = z.object({
+  kicker: required("Small label"),
+  headingLead: required("Heading"),
+  headingEmphasis: text,
+  nameLabel: required("Name label"),
+  nameHint: text,
+  emailLabel: required("Email label"),
+  emailHint: text,
+  emailError: text,
+  companyLabel: required("Company label"),
+  companyOptional: text,
+  messageLabel: required("Message label"),
+  messageHint: text,
+  buttonLabel: required("Button text"),
+  sendingLabel: required("Sending text"),
+  sentLabel: required("Thank-you text"),
+  mailPrefix: text,
+  email: required("Email address").refine((v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Enter a valid email address"),
+});
+
+const footerLink = z.object({ label: required("Label"), href: linkSchema });
+
+/** Footer: the studio blurb, the three link columns and the bottom bar. */
+export const footerSchema: z.ZodType<FooterContent> = z.object({
+  label: text,
+  place: text,
+  timeZone: text,
+  headlineLines: z.tuple([text, text]),
+  headlineEmphasis: text,
+  cta: z.object({ top: text, bottom: text, href: text }),
+  email: required("Email address").refine((v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Enter a valid email address"),
+  studio: z.object({ heading: text, body: required("Studio text") }),
+  explore: z.object({ heading: required("Heading"), links: z.array(footerLink).min(1).max(8) }),
+  services: z.object({ heading: required("Heading"), items: z.array(required("Service")).min(1).max(8) }),
+  elsewhere: z.object({ heading: required("Heading"), links: z.array(footerLink).min(1).max(8) }),
+  copyright: required("Copyright line"),
+  placeholderNote: text,
+  toTop: required("Back-to-top text"),
+});

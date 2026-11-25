@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/shell/SiteHeader";
 import type { SectionKey } from "@/lib/admin/section-meta";
 import { ContactReveal } from "@/components/home/contact/ContactReveal";
 import { ClosingCover } from "@/components/home/footer/ClosingCover";
+import { FooterCompact } from "@/components/home/footer/FooterCompact";
 import { FooterUnfold } from "@/components/home/footer/FooterUnfold";
 import { AboutScrubber } from "@/components/home/about/AboutScrubber";
 import { ShowreelCorridor } from "@/components/home/corridor/ShowreelCorridor";
@@ -11,7 +12,7 @@ import { ServicesOrbit } from "@/components/home/services-orbit/ServicesOrbit";
 import { Minds } from "@/components/home/minds/Minds";
 import { StatementRotator } from "@/components/home/statement/StatementRotator";
 import { WorkArchive } from "@/components/work/WorkArchive";
-import { getFooterContent } from "@/lib/content/closing";
+import { getContactContent, getFooterContent } from "@/lib/content/closing";
 import { getCollaborationsContent, getHomepageContent } from "@/lib/content/homepage";
 import { getWorkContent } from "@/lib/content/work";
 
@@ -26,7 +27,7 @@ import { getWorkContent } from "@/lib/content/work";
 export async function HomePage({ draft = false, only }: { draft?: boolean; only?: SectionKey }) {
   const { site, hero, corridor, statement, services, lens, minds, featured } = await getHomepageContent({ draft });
   const { projects, ...work } = await getWorkContent({ draft });
-  const [collaborations, footer] = await Promise.all([getCollaborationsContent({ draft }), getFooterContent()]);
+  const [collaborations, footer, contact] = await Promise.all([getCollaborationsContent({ draft }), getFooterContent({ draft }), getContactContent({ draft })]);
   const archive = (
     <WorkArchive
       {...work}
@@ -47,6 +48,8 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       minds: <Minds content={minds} />,
       workIntro: <>{header}{archive}</>,
       collaborations: <Collaborations content={collaborations} />,
+      contact: <ContactReveal content={contact} />,
+      footer: <FooterCompact content={footer} />,
     }[only];
     return <main id="top">{one}</main>;
   }
@@ -59,7 +62,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       <ServicesOrbit content={lens} services={services} />
       <Minds content={minds} />
       {archive}
-      <FooterUnfold cover={<ClosingCover logos={<Collaborations content={collaborations} />} form={<ContactReveal />} />} content={footer} />
+      <FooterUnfold cover={<ClosingCover logos={<Collaborations content={collaborations} />} form={<ContactReveal content={contact} />} />} content={footer} />
     </main>
   );
 }

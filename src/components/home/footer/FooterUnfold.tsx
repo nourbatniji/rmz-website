@@ -37,8 +37,24 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
   const box = useRef<HTMLDivElement>(null);
   const [t, setT] = useState(0);
   const [reduced, setReduced] = useState(false);
+  const [clock, setClock] = useState(content.place);
 
   useFit(wrap, box, 1440);
+
+  // the studio's local time (client only: the server renders the plain place name)
+  useEffect(() => {
+    const tick = () => {
+      try {
+        const time = new Intl.DateTimeFormat("en-GB", { timeZone: content.timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
+        setClock(`${content.place} · ${time}`);
+      } catch {
+        setClock(content.place);
+      }
+    };
+    tick();
+    const id = window.setInterval(tick, 15000);
+    return () => window.clearInterval(id);
+  }, [content.place, content.timeZone]);
 
   // the cover may be taller than one artboard (e.g. a pinned section); the wrapper's height and the curtain's stop point follow its real height
   useEffect(() => {
@@ -157,10 +173,15 @@ export function FooterUnfold({ cover, content }: { cover: ReactNode; content: Fo
                 {panel(0)}
               </div>
             </div>
+            <div className="fu-top" style={{ color: fg, opacity: cr }}>
+              <span className="fu-lab">{content.label}</span>
+              <span className="fu-clock">{clock}</span>
+              <Link href="/#top" className="fu-up" style={{ borderColor: fg }}>{content.toTop}</Link>
+            </div>
             <div className="fu-bar" style={{ color: fg }}>
               <span>{content.copyright}</span>
               <span className="fu-hint" style={{ opacity: cl(1 - tt / 0.12) }}>Scroll to open ↓</span>
-              <Link href="/#top" className="fu-up" style={{ borderColor: fg, opacity: cl((o - 0.7) / 0.3) }}>{content.toTop}</Link>
+              <span className="fu-note" style={{ opacity: cr }}>{content.placeholderNote}</span>
             </div>
           </div>
         </footer>
