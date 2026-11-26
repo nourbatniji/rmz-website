@@ -29,4 +29,4 @@ export const CALIBRATION_VIEWS: Record<string, LensView> = {
 /** Where a service with no saved view of its own points (centre, 3×): keeps the lens working for a service added later. */
 export const FALLBACK_VIEW: LensView = { target: { x: 0.5, y: 0.5 }, zoom: 3, focal: { x: 0.5, y: 0.5 }, image: null };
 
-export const WORLD_ZOOM = { min: 1.5, max: 6 } as const;
+export const WORLD_ZOOM = { min: 1, max: 6 } as const;

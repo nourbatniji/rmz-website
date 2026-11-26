@@ -199,7 +199,7 @@ export const SECTION_FIELDS: Record<SectionKey, Field[]> = {
           },
           fields: [
             { kind: "image", name: "image", label: "Service image", noAlt: true, help: "Shown full size once the lens has zoomed in. It must show the same scene as the highlighted window on the overview, only in more detail. Square works best." },
-            { kind: "range", name: "zoom", label: "Zoom into the overview", min: WORLD_ZOOM.min, max: WORLD_ZOOM.max, step: 0.1, unit: "×", def: 3, help: "How far the lens zooms in before showing the service image. Higher = a smaller part of the overview." },
+            { kind: "range", name: "zoom", label: "Zoom into the overview", min: WORLD_ZOOM.min, max: WORLD_ZOOM.max, step: 0.01, unit: "×", def: 3, help: "How far the lens zooms in before showing the service image. Higher = a smaller part of the overview. 1× shows the whole overview (use it when the service image is the full overview)." },
             { kind: "point", name: "target", role: "target", zoomKey: "zoom", label: "Target on the overview", help: "Click the overview where this service lives. The yellow frame is what the lens will show at the chosen zoom.", image: (root) => (root.overview as Obj | null | undefined)?.src as string | undefined ?? CALIBRATION_OVERVIEW.src },
             { kind: "point", name: "focal", role: "focal", label: "Focal point of the service image", help: "Only used if the image is not square: the part that stays visible when it is cropped.", image: (_root, local) => ((local.image as Obj | null | undefined)?.src as string | undefined) ?? null },
           ],
