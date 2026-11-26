@@ -27,5 +27,5 @@ One **overview** image shows all seven services together. Each service has a **t
 ## Homepage integration (Services lens)
 - Content: `lens.overview` (one image) and, per service, `lens.items[i].world = { target, zoom, focal, image }`. The old nine slots (`lens.images`) and per-service `scene` stay in saved content for compatibility but are no longer drawn or edited.
 - Older saved content with no shared-world data falls back to the built-in (temporary calibration) overview and views, so the lens is never blank; a service without its own image keeps the camera on the zoomed overview.
-- Dashboard: Services showcase → overview image; per service: service image, zoom (1.5–6×), target picker on the overview (yellow frame = the window shown at that zoom), focal point picker.
+- Dashboard: Services showcase → overview image; per service: service image, zoom (1–6×, 0.01 steps; 1× = the whole overview), target picker on the overview (yellow frame = the window shown at that zoom), focal point picker.
 - Scroll: desktop track is 1.5 × the previous one (`--orb-extra`: clamp(5340px, 780svh, 7380px), 3× the original clamp(1780px, 260svh, 2460px)); holds are longer (0.8 timeline units, last 1.2, previously 0.6). Phones keep their own 1500 px track.

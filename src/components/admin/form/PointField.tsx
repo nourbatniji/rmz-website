@@ -30,7 +30,7 @@ export function PointField({ label, help, error, value, onChange, image, zoom, r
     if (r) set((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
   };
   const key = (e: KeyboardEvent) => {
-    const s = e.shiftKey ? 0.05 : 0.01;
+    const s = e.shiftKey ? 0.05 : e.altKey ? 0.001 : 0.01; // Alt = 0.1 % for pixel-exact placement
     const d: Record<string, [number, number]> = { ArrowLeft: [-s, 0], ArrowRight: [s, 0], ArrowUp: [0, -s], ArrowDown: [0, s] };
     if (!d[e.key]) return;
     e.preventDefault();
@@ -70,8 +70,8 @@ export function PointField({ label, help, error, value, onChange, image, zoom, r
           />
         </div>
         <div className="flex items-center gap-2 text-xs text-fg/70">
-          <label className="flex items-center gap-1">Across %<input type="number" min={0} max={100} step={1} value={Math.round(p.x * 100)} onChange={(e) => num("x", e.target.value)} className={`${inputCls} w-20`} /></label>
-          <label className="flex items-center gap-1">Down %<input type="number" min={0} max={100} step={1} value={Math.round(p.y * 100)} onChange={(e) => num("y", e.target.value)} className={`${inputCls} w-20`} /></label>
+          <label className="flex items-center gap-1">Across %<input type="number" min={0} max={100} step={0.1} value={+(p.x * 100).toFixed(1)} onChange={(e) => num("x", e.target.value)} className={`${inputCls} w-20`} /></label>
+          <label className="flex items-center gap-1">Down %<input type="number" min={0} max={100} step={0.1} value={+(p.y * 100).toFixed(1)} onChange={(e) => num("y", e.target.value)} className={`${inputCls} w-20`} /></label>
         </div>
       </div>
     </FieldShell>
