@@ -45,10 +45,10 @@ export const devClosingContent: ClosingContent = {
       heading: "Explore",
       links: [
         { label: "Work", href: "/#work" },
-        { label: "Selected", href: "/#selected" },
+        { label: "About", href: "/#about" },
         { label: "Capabilities", href: "/#services" },
-        { label: "Studio", href: "/#minds" },
-        { label: "Collaborations", href: "/#collaborations" },
+        { label: "Studio", href: "/#team" },
+        { label: "Collaborations", href: "/#partners" },
       ],
     },
     services: { heading: "What we do", items: ["Brand identity", "Campaigns", "Content production", "Digital and web", "Growth"] },

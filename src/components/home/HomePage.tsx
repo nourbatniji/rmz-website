@@ -1,5 +1,6 @@
 import { Collaborations } from "@/components/home/collaborations/Collaborations";
 import { SiteHeader } from "@/components/shell/SiteHeader";
+import { AnchorAliases } from "@/components/shell/AnchorAliases";
 import type { SectionKey } from "@/lib/admin/section-meta";
 import { ContactReveal } from "@/components/home/contact/ContactReveal";
 import { ClosingCover } from "@/components/home/footer/ClosingCover";
@@ -51,10 +52,11 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       contact: <ContactReveal content={contact} />,
       footer: <FooterCompact content={footer} />,
     }[only];
-    return <main id="top">{one}</main>;
+    return <main id="top"><AnchorAliases />{one}</main>;
   }
   return (
     <main id="top">
+      <AnchorAliases />
       <HeroThreeWorlds hero={hero} />
       <ShowreelCorridor content={corridor} />
       <StatementRotator statement={statement} />

@@ -33,7 +33,7 @@ export const devHomepageContent: HomepageContent = {
     nav: [
       { label: "Work", href: "#work" },
       { label: "Capabilities", href: "#services" },
-      { label: "Studio", href: "#minds" },
+      { label: "Studio", href: "#team" },
       { label: "Contact", href: "#contact" },
     ],
   },

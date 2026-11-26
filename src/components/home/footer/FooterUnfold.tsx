@@ -192,8 +192,8 @@ export function FooterUnfold({ cover, content, solo = false }: { cover?: ReactNo
           </div>
         </footer>
       </div>
-      <span id="contact" className="fu-anchor" />
-      <div className="fu-stack"><FooterCompact content={content} id="contact-stack" /></div>
+      <span id="footer" className="fu-anchor" />
+      <div className="fu-stack"><FooterCompact content={content} id="footer-stack" /></div>
     </div>
   );
 }

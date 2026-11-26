@@ -8,7 +8,7 @@ import "./contact.css";
 
 /**
  * Contact form: a plain section on the dark background (the aperture circles were removed). It is the "cover" (curtain) of the closing sequence in
- * FooterUnfold: Collaborations → this form → the unfolding footer. Anchor: #contact-form. Submits to /api/contact.
+ * FooterUnfold: Collaborations → this form → the unfolding footer. Anchor: #contact. Submits to /api/contact.
  */
 type Status = "idle" | "sending" | "sent" | "error";
 
@@ -90,7 +90,7 @@ export function ContactReveal({ content = devContactContent }: { content?: Conta
   );
 
   return (
-    <section id="contact-form" className="ct-root" aria-label="Contact">
+    <section id="contact" className="ct-root" aria-label="Contact">
       <div className="ct-inner">{formEl}</div>
     </section>
   );

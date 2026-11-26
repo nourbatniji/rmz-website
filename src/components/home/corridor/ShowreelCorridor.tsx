@@ -319,7 +319,7 @@ export function ShowreelCorridor({ content }: { content: CorridorContent }) {
   const isPlaying = playing && !paused;
 
   return (
-    <section ref={rootRef} id="work" aria-label={`${content.headline.lead} ${content.headline.emphasis}`} className={`cor-root ${reduced ? "cor-static" : ""}`}>
+    <section ref={rootRef} id="showreel" aria-label={`${content.headline.lead} ${content.headline.emphasis}`} className={`cor-root ${reduced ? "cor-static" : ""}`}>
       {near && content.video && (
         <video ref={videoRef} className="cor-vid" src={content.video.src} muted loop playsInline preload="auto" aria-hidden="true" tabIndex={-1} />
       )}

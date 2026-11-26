@@ -365,7 +365,7 @@ export function Collaborations({ content }: { content: CollaborationsContent }) 
   const art = m.artwork && !magFailed ? m.artwork : null;
   const artPct = clamp(m.artworkScale, 30, 100);
   return (
-    <section ref={section} id="collaborations" className="cm" aria-labelledby="cm-h">
+    <section ref={section} id="partners" className="cm" aria-labelledby="cm-h">
       <div className="cm-wrap">
         <p className="cm-label">{content.label}</p>
         <h2 id="cm-h" className="cm-h">

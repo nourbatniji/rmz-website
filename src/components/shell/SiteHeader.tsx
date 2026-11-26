@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { SiteContent } from "@/content/types";
 import { Arrow, MenuIcon, useOverlay } from "./header-parts";
+import { anchorIdOf } from "@/lib/anchors";
 import "./site-header.css";
 
 /**
@@ -21,8 +22,8 @@ export function SiteHeader({ brand, nav }: SiteContent) {
   const followed = useRef(false);
   const pathname = usePathname();
   const onHome = pathname === "/" || pathname.startsWith("/admin/preview");
-  // Off the homepage (e.g. /work/[slug]) the section anchors must point back at the homepage; "Work" lands on the work archive.
-  const link = (href: string) => (onHome || !href.startsWith("#") ? href : href === "#work" ? "/#work-archive" : `/${href}`);
+  // Off the homepage (e.g. /work/[slug]) a bare "#section" must point back at the homepage. The saved destination is honoured as written: nothing is inferred from the label.
+  const link = (href: string) => (onHome || !href.startsWith("#") ? href : `/${href}`);
   const close = () => setOpen(false);
   useOverlay(open, close, panel, trigger, followed);
 
@@ -41,14 +42,14 @@ export function SiteHeader({ brand, nav }: SiteContent) {
       const t = window.setTimeout(() => setActive(null), 0);
       return () => window.clearTimeout(t);
     }
-    const ids = nav.map((n) => n.href).filter((h) => h.startsWith("#") && h !== "#top").map((h) => h.slice(1));
+    const ids = nav.map((n) => anchorIdOf(n.href)).filter((id): id is string => !!id && id !== "top");
     let raf = 0;
     const update = () => {
       raf = 0;
       let cur: string | null = null;
       for (const id of ids) {
         const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= 72 + window.innerHeight * 0.3) cur = `#${id}`;
+        if (el && el.getBoundingClientRect().top <= 72 + window.innerHeight * 0.3) cur = id;
       }
       setActive((a) => (a === cur ? a : cur));
     };
@@ -80,14 +81,14 @@ export function SiteHeader({ brand, nav }: SiteContent) {
 
         <nav aria-label="Primary" className="sh-links">
           {links.map((item) => (
-            <a key={item.href} href={link(item.href)} className="sh-link" aria-current={onHome && active === item.href ? "location" : undefined}>
+            <a key={item.href} href={link(item.href)} className="sh-link" aria-current={onHome && active === anchorIdOf(item.href) ? "location" : undefined}>
               {item.label}
             </a>
           ))}
         </nav>
 
         <div className="sh-end">
-          <a href={link(contact.href)} className="sh-link" aria-current={onHome && active === contact.href ? "location" : undefined}>
+          <a href={link(contact.href)} className="sh-link" aria-current={onHome && active === anchorIdOf(contact.href) ? "location" : undefined}>
             {contact.label}
             <Arrow />
           </a>
@@ -102,7 +103,7 @@ export function SiteHeader({ brand, nav }: SiteContent) {
       <div id="site-menu" ref={panel} className="sh-sheet" aria-hidden={!open} inert={!open}>
         <nav aria-label="Primary" className="sh-sheet-nav">
           {links.map((item) => (
-            <a key={item.href} href={link(item.href)} className="sh-slink" aria-current={onHome && active === item.href ? "location" : undefined} onClick={() => { followed.current = true; close(); }}>
+            <a key={item.href} href={link(item.href)} className="sh-slink" aria-current={onHome && active === anchorIdOf(item.href) ? "location" : undefined} onClick={() => { followed.current = true; close(); }}>
               {item.label}
             </a>
           ))}
