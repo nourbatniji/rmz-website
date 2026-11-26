@@ -229,7 +229,7 @@ export function ProjectCase({ project: p, prev, next, contact, editing }: Props)
       {!editing && <ProjectMotion />}
       <main className="wk-in">
         <section className="wk-top wk-px">
-          <Link href="/#work-archive" className="t-meta wk-nm wk-back">← All work</Link>
+          <Link href="/#work" className="t-meta wk-nm wk-back">← All work</Link>
           <div className="wk-g12" style={{ marginTop: 24, alignItems: "end" }}>
             <div style={col("1 / span 8")}>
               <p className="t-meta wk-nm wk-y">{[p.number, p.discipline, T("top.tag", "Demo project")].join(" · ")}</p>
@@ -244,7 +244,7 @@ export function ProjectCase({ project: p, prev, next, contact, editing }: Props)
         <section className="wk-px" style={{ marginTop: 160, paddingBottom: 96 }}>
           <div className="wk-rule" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, paddingTop: 20 }}>
             <Link href={`/work/${prev.slug}`} className="wk-chip">← Previous · {prev.name}</Link>
-            <Link href="/#work-archive" className="wk-chip">Back to all work</Link>
+            <Link href="/#work" className="wk-chip">Back to all work</Link>
             <a className="wk-cta" href={contact.href}>{contact.label}</a>
           </div>
           <Link href={`/work/${next.slug}`} className="wk-g12 wk-next" style={{ marginTop: 32 }} aria-label={`Next project ${next.number} ${next.name}`}>

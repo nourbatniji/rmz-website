@@ -106,7 +106,8 @@ function Mark({ p, w, h, failed, onFail, onMeasure }: { p: CollabPartner; w: num
   );
 }
 
-export function Collaborations({ content }: { content: CollaborationsContent }) {
+/** `anchorId`: the section's DOM id; `null` when a wrapper that does not move owns the #collaborations anchor (the pinned closing cover). */
+export function Collaborations({ content, anchorId = "collaborations" }: { content: CollaborationsContent; anchorId?: string | null }) {
   const phone = useMedia("(max-width: 767px)");
   const reduced = useMedia("(prefers-reduced-motion: reduce)");
   const partners = useMemo(() => content.partners.filter((p) => p.visible), [content.partners]);
@@ -365,7 +366,7 @@ export function Collaborations({ content }: { content: CollaborationsContent }) 
   const art = m.artwork && !magFailed ? m.artwork : null;
   const artPct = clamp(m.artworkScale, 30, 100);
   return (
-    <section ref={section} id="collaborations" className="cm" aria-labelledby="cm-h">
+    <section ref={section} id={anchorId ?? undefined} className="cm" aria-labelledby="cm-h">
       <div className="cm-wrap">
         <p className="cm-label">{content.label}</p>
         <h2 id="cm-h" className="cm-h">

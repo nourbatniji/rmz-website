@@ -235,7 +235,7 @@ export function AboutScrubber({ content }: { content: FeaturedWorkContent }) {
   const pending = "Image pending";
 
   return (
-    <section ref={rootRef} id="selected" aria-labelledby={`${uid}-h`} className="ab-root" style={{ "--ab-n": n } as CSSProperties}>
+    <section ref={rootRef} id="about" aria-labelledby={`${uid}-h`} className="ab-root" style={{ "--ab-n": n } as CSSProperties}>
       <h2 id={`${uid}-h`} className="sr-only">
         {content.label}
       </h2>

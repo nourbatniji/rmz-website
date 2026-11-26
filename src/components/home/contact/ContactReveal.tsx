@@ -8,11 +8,12 @@ import "./contact.css";
 
 /**
  * Contact form: a plain section on the dark background (the aperture circles were removed). It is the "cover" (curtain) of the closing sequence in
- * FooterUnfold: Collaborations → this form → the unfolding footer. Anchor: #contact-form. Submits to /api/contact.
+ * FooterUnfold: Collaborations → this form → the unfolding footer. Anchor: #contact. Submits to /api/contact.
  */
 type Status = "idle" | "sending" | "sent" | "error";
 
-export function ContactReveal({ content = devContactContent }: { content?: ContactContent }) {
+/** `anchorId`: the section's DOM id; `null` when an anchor that does not move stands in for it (the closing cover, see FooterUnfold). */
+export function ContactReveal({ content = devContactContent, anchorId = "contact" }: { content?: ContactContent; anchorId?: string | null }) {
   const [status, setStatus] = useState<Status>("idle");
   const [bad, setBad] = useState({ name: false, email: false });
   const [error, setError] = useState("");
@@ -90,7 +91,7 @@ export function ContactReveal({ content = devContactContent }: { content?: Conta
   );
 
   return (
-    <section id="contact-form" className="ct-root" aria-label="Contact">
+    <section id={anchorId ?? undefined} className="ct-root" aria-label="Contact">
       <div className="ct-inner">{formEl}</div>
     </section>
   );

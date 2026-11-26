@@ -45,7 +45,7 @@ export const devClosingContent: ClosingContent = {
       heading: "Explore",
       links: [
         { label: "Work", href: "/#work" },
-        { label: "Selected", href: "/#selected" },
+        { label: "About", href: "/#about" },
         { label: "Capabilities", href: "/#services" },
         { label: "Studio", href: "/#minds" },
         { label: "Collaborations", href: "/#collaborations" },

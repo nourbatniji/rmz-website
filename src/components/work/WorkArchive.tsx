@@ -280,7 +280,7 @@ export function WorkArchive({ label, headingLead, headingEmphasis, intro, catego
 
   return (
     <div ref={rootRef} className="wk">
-      <section id="work-archive" className="wk-in" aria-label="Selected work">
+      <section id="work" className="wk-in" aria-label="Selected work">
         <div ref={trackRef} className="wk-track" style={{ "--wk-n": n } as CSSProperties}>
           <div ref={pinRef} className="wk-pin">
             <div ref={boxRef} className="wk-box">

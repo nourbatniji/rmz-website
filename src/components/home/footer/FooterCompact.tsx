@@ -8,12 +8,12 @@ import "./footer-compact.css";
  * Compact footer — the flat state the home page's unfolding footer opens into (canvas "FOOTER OPTION B"): one continuous cream band,
  * four plain columns (brand + email · Explore · What we do · Elsewhere) and a thin bar underneath. Fully fluid, no artboard:
  * 4 columns ≥ 1024 px, 2 columns on tablets, single column with two-up link lists on phones.
- * Used on the project pages, and as the stacked version of FooterUnfold below 1024 px. Anchor: #contact (id prop).
+ * Used on the project pages, and as the stacked version of FooterUnfold below 1024 px. Anchor: #footer (id prop).
  */
 const external = (href: string) => /^https?:/.test(href);
 const ext = (href: string) => (external(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
 
-export function FooterCompact({ content, id = "contact" }: { content: FooterContent; id?: string }) {
+export function FooterCompact({ content, id = "footer" }: { content: FooterContent; id?: string }) {
   return (
     <footer id={id} className="fc-root" aria-label={content.label}>
       <div className="fc-top">

@@ -10,7 +10,7 @@
  */
 .cor-root {
   position: relative; background: #0f0f0e; color: #f3e8cc;
-  scroll-margin-top: -16px; /* cancels the global +16px so #work lands exactly under the header = walk start */
+  scroll-margin-top: -16px; /* cancels the global +16px so #showreel lands exactly under the header = walk start */
   --cor-total: 2500px; /* scroll distance of approach + reveal + hold (desktop: 1600 + 450 + 450) */
 }
 @media (max-width: 1023px) { .cor-root { --cor-total: 3350px; } /* mobile: 2500 + 400 + 450 */ }

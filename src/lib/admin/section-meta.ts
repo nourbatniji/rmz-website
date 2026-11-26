@@ -20,14 +20,14 @@ export const SECTION_META: Record<SectionKey, SectionMeta> = {
   hero: { label: "Top banner", about: "The three banners: each one's headline, selector label and artwork, plus the shared tagline and link.", anchor: "top", group: "page" },
   corridor: { label: "Showreel video", about: "The big showreel video, its cover image and the words around it.", anchor: "showreel", group: "page" },
   statement: { label: "Statement", about: "The one-sentence statement and the words that rotate in it.", anchor: "statement", group: "page" },
-  featured: { label: "About", about: "The scroll-linked About steps: an image, a title and a short text for each step.", anchor: "featured", group: "page" },
+  featured: { label: "About", about: "The scroll-linked About steps: an image, a title and a short text for each step.", anchor: "about", group: "page" },
   services: { label: "Service names", about: "The names of the services the studio offers.", anchor: "services", group: "page" },
   lens: { label: "Services showcase", about: "The lens: one overview image for all seven services and, for each service, a target on it, a zoom and its own image, plus its description and labels.", anchor: "services", group: "page" },
   minds: { label: "Team", about: "The eight team members: names, roles, short bios and portraits.", anchor: "minds", group: "page" },
   collaborations: { label: "Collaborations", about: "The partner logos around the red RMZ square: add, hide, resize and reorder logos, and set the square's artwork.", anchor: "collaborations", group: "page" },
-  contact: { label: "Contact form", about: "The words around the contact form: heading, field labels and hints, the button and the email address next to it.", anchor: "contact-form", group: "page" },
-  footer: { label: "Footer", about: "The closing footer: headline, big contact link, email, studio text, link lists, social links and small print.", anchor: "contact", group: "page" },
-  workIntro: { label: "Work archive intro", about: "The heading, intro text and filters above the grid of projects.", anchor: "work-archive", group: "page" },
+  contact: { label: "Contact form", about: "The words around the contact form: heading, field labels and hints, the button and the email address next to it.", anchor: "contact", group: "page" },
+  footer: { label: "Footer", about: "The closing footer: headline, big contact link, email, studio text, link lists, social links and small print.", anchor: "footer", group: "page" },
+  workIntro: { label: "Work archive intro", about: "The heading, intro text and filters above the grid of projects.", anchor: "work", group: "page" },
 };
 
 /** Sidebar order for the "Homepage" group (page order). */
