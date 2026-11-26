@@ -39,7 +39,9 @@ export function ClosingCover({ logos, form }: { logos: ReactNode; form: ReactNod
     };
     const set = () => {
       el.style.setProperty("--hl", `${a.offsetHeight}px`);
+      el.closest<HTMLElement>(".fu-wrap")?.style.setProperty("--cc-hl", `${a.offsetHeight}px`); // lets FooterUnfold seat the #contact anchor outside the moving cover
       el.style.setProperty("--hf", `${b.offsetHeight}px`);
+      window.dispatchEvent(new Event("rmz:layout")); // the #contact anchor sits at --cc-hl: tell the anchor navigator it moved
       req();
     };
     set();

@@ -12,7 +12,8 @@ import "./contact.css";
  */
 type Status = "idle" | "sending" | "sent" | "error";
 
-export function ContactReveal({ content = devContactContent }: { content?: ContactContent }) {
+/** `anchorId`: the section's DOM id; `null` when an anchor that does not move stands in for it (the closing cover, see FooterUnfold). */
+export function ContactReveal({ content = devContactContent, anchorId = "contact" }: { content?: ContactContent; anchorId?: string | null }) {
   const [status, setStatus] = useState<Status>("idle");
   const [bad, setBad] = useState({ name: false, email: false });
   const [error, setError] = useState("");
@@ -90,7 +91,7 @@ export function ContactReveal({ content = devContactContent }: { content?: Conta
   );
 
   return (
-    <section id="contact" className="ct-root" aria-label="Contact">
+    <section id={anchorId ?? undefined} className="ct-root" aria-label="Contact">
       <div className="ct-inner">{formEl}</div>
     </section>
   );

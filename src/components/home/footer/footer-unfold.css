@@ -2,6 +2,9 @@
 .fu-wrap { position: relative; background: #0f0f0e; }
 .fu-track { display: none; }
 .fu-anchor { display: block; height: 0; }
+.fu-mark { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; }
+.fu-mark-cover { top: 0; }
+.fu-mark-form { top: var(--cc-hl, 0px); }
 
 @media (min-width: 1024px) {
   .fu-wrap {
@@ -20,6 +23,8 @@
   .fu-wrap.is-static { height: calc(var(--hc) + var(--hf)); margin-top: 0; }
   /* closing cover: the logos stay put while the cream contact panel rises over them (see ClosingCover) */
   .cc-t1 { position: relative; z-index: 1; height: calc(var(--hl, 0px) + var(--hf, 0px)); }
+  .fu-mark-cover { scroll-margin-top: calc((var(--header-h) + 16px) * -1); } /* #collaborations: the pinned panel seats at the very top of the viewport, where it sticks */
+  .fu-wrap.is-static .fu-mark-cover { scroll-margin-top: 0; }
   .cc-lg { position: sticky; top: 0; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; background: #0f0f0e; transform-origin: 50% 50%; transform: translate3d(0, calc(var(--p, 0) * -70px), 0) scale(calc(1 - var(--p, 0) * 0.05)); opacity: calc(1 - var(--p, 0) * 0.55); will-change: transform, opacity; }
   .cc-fm { position: relative; z-index: 2; margin-top: calc(var(--hf, 0px) * -1); }
   .fu-wrap.is-static .cc-t1 { height: auto; }

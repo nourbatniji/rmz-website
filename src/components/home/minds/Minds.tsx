@@ -213,7 +213,7 @@ export function Minds({ content }: { content: MindsContent }) {
   useEntrance(rootRef, { mediaQuery: "(max-width: 1023.98px)" }); // mobile accordion only: unchanged one-shot staggered lift (see minds.css)
 
   return (
-    <section ref={rootRef} id="team" aria-labelledby={`${uid}-h`} className="minds-root">
+    <section ref={rootRef} id="minds" aria-labelledby={`${uid}-h`} className="minds-root">
       <div className="minds-stage">
         {/* Visually hidden: the section keeps an accessible name without any visible caption block. */}
         <h2 id={`${uid}-h`} className="sr-only">

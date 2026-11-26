@@ -1,6 +1,6 @@
 import { Collaborations } from "@/components/home/collaborations/Collaborations";
 import { SiteHeader } from "@/components/shell/SiteHeader";
-import { AnchorAliases } from "@/components/shell/AnchorAliases";
+import { AnchorNavigator } from "@/components/shell/AnchorNavigator";
 import type { SectionKey } from "@/lib/admin/section-meta";
 import { ContactReveal } from "@/components/home/contact/ContactReveal";
 import { ClosingCover } from "@/components/home/footer/ClosingCover";
@@ -52,11 +52,11 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       contact: <ContactReveal content={contact} />,
       footer: <FooterCompact content={footer} />,
     }[only];
-    return <main id="top"><AnchorAliases />{one}</main>;
+    return <main id="top"><AnchorNavigator />{one}</main>;
   }
   return (
     <main id="top">
-      <AnchorAliases />
+      <AnchorNavigator />
       <HeroThreeWorlds hero={hero} />
       <ShowreelCorridor content={corridor} />
       <StatementRotator statement={statement} />
@@ -64,7 +64,7 @@ export async function HomePage({ draft = false, only }: { draft?: boolean; only?
       <ServicesOrbit content={lens} services={services} />
       <Minds content={minds} />
       {archive}
-      <FooterUnfold cover={<ClosingCover logos={<Collaborations content={collaborations} />} form={<ContactReveal content={contact} />} />} content={footer} />
+      <FooterUnfold cover={<ClosingCover logos={<Collaborations content={collaborations} anchorId={null} />} form={<ContactReveal content={contact} anchorId={null} />} />} coverAnchor="collaborations" formAnchor="contact" content={footer} />
     </main>
   );
 }

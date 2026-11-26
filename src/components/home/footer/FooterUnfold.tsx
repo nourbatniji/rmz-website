@@ -17,6 +17,7 @@ import "./footer-unfold.css";
  * a 3D accordion) into one compact, continuous footer (no dividers). Canvas: "UNFOLD V3-A" + "RMZ Footer · Unfold on scroll" (1440 artboard, scaled to the width).
  * Below 1024 px, or with reduced motion, nothing is scroll-driven: the cover is followed by the existing stacked footer / the flat footer.
  *
+ * `coverAnchor` / `formAnchor`: ids for the first section of the cover (collaborations) and the contact form, seated by CSS (see footer-unfold.css).
  * Layout: .fu-wrap = cover (sticky, stops at the footer's top) + .fu-track (pulls up under the cover) holding the sticky footer stage.
  * Progress `t` is read from the wrapper's position: 0 when `START_AT` of the footer is uncovered, 1 after `UNFOLD_VH` viewport heights of scrolling.
  */
@@ -36,7 +37,7 @@ const isExternal = (href: string) => /^https?:/.test(href);
 const ext = (href: string) => (isExternal(href) ? { target: "_blank", rel: "noopener noreferrer" } : {});
 
 /** `solo`: the footer on its own, already open (project pages) — same paper, same columns, no curtain and no scroll motion. */
-export function FooterUnfold({ cover, content, solo = false }: { cover?: ReactNode; content: FooterContent; solo?: boolean }) {
+export function FooterUnfold({ cover, content, solo = false, coverAnchor, formAnchor }: { cover?: ReactNode; content: FooterContent; solo?: boolean; coverAnchor?: string; formAnchor?: string }) {
   const wrap = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const [t, setT] = useState(0);
@@ -172,6 +173,9 @@ export function FooterUnfold({ cover, content, solo = false }: { cover?: ReactNo
   return (
     <div ref={wrap} className={`fu-wrap${reduced ? " is-static" : ""}${solo ? " fu-solo" : ""}`}>
       {!solo && <div className="fu-cover">{cover}</div>}
+      {/* Anchors for the sections inside the cover. They live OUTSIDE it: the cover is sticky and translated while it is scrolled, so an element inside it sits somewhere different at every scroll position and a hash jump to it landed differently each time. These do not move. */}
+      {!solo && coverAnchor && <span id={coverAnchor} className="fu-mark fu-mark-cover" aria-hidden="true" />}
+      {!solo && formAnchor && <span id={formAnchor} className="fu-mark fu-mark-form" aria-hidden="true" />}
       <div className="fu-track">
         <footer className="fu-stage" aria-label={content.label}>
           <div ref={box} className="fu-box">
