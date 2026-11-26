@@ -9,7 +9,7 @@
     --hf: calc(var(--sc, 1) * 300px);
     height: calc(var(--hc) + var(--hf) + 130svh + 112svh); /* 112svh = dwell (32) + heavy pull (80), see FooterUnfold */
   }
-  .fu-cover { position: sticky; z-index: 2; top: calc(100svh - var(--hc)); will-change: transform; box-shadow: 0 26px 60px rgb(0 0 0 / 0.6); }
+  .fu-cover { position: sticky; z-index: 2; top: calc(100svh - var(--hc)); will-change: transform; }
   .fu-track { display: block; position: relative; z-index: 1; margin-top: calc(var(--hf) * -1); height: calc(var(--hf) * 2 + 130svh + 112svh); }
   .fu-stage { position: sticky; top: calc(100svh - var(--hf)); height: var(--hf); overflow: hidden; background: #0f0f0e; color: #f3e8cc; font-family: var(--font-sans); }
   .fu-anchor { display: block; position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; pointer-events: none; }

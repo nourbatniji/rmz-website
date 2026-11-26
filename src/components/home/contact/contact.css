@@ -1,5 +1,5 @@
 /* Contact — plain form section. Prefix: ct-. */
-.ct-root { position: relative; background: radial-gradient(ellipse at 50% 46%, #1c1a17 0%, #0f0f0e 62%, #0a0a09 100%); color: #f3e8cc; border-top: 1px solid rgb(243 232 204 / 0.14); box-shadow: 0 -26px 60px rgb(0 0 0 / 0.6); font-family: var(--font-sans); padding: clamp(96px, 14vw, 160px) clamp(20px, 5vw, 64px) clamp(80px, 10vw, 120px); }
+.ct-root { position: relative; background: radial-gradient(ellipse at 50% 46%, #1c1a17 0%, #0f0f0e 62%, #0a0a09 100%); color: #f3e8cc; border-top: 1px solid rgb(243 232 204 / 0.14); font-family: var(--font-sans); padding: clamp(96px, 14vw, 160px) clamp(20px, 5vw, 64px) clamp(80px, 10vw, 120px); }
 .ct-root a { color: inherit; text-decoration: none; }
 .ct-root a:focus-visible, .ct-root button:focus-visible { outline: 2px solid #ffca26; outline-offset: 4px; }
 .ct-inner { max-width: 560px; margin: 0 auto; }
